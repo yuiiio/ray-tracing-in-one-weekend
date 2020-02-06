@@ -1,24 +1,38 @@
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
-pub use crate::Object;
 
 pub struct HitableList {
-    pub list: Vec<Object>,
+    list: Vec<Box<dyn Hitable>>,
+}
+
+impl HitableList {
+    pub fn new() -> Self {
+        HitableList { list: Vec::new() }
+    }
+
+    pub fn push<H: Hitable + 'static>(&mut self, hitable: H) {
+        self.list.push(Box::new(hitable))
+    }
+}
+
+impl ::std::ops::Deref for HitableList {
+    type Target = Vec<Box<dyn Hitable>>;
+
+    fn deref(&self) -> &Vec<Box<dyn Hitable>> {
+        &self.list
+    }
 }
 
 impl Hitable for HitableList {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut rec: Option<HitRecord> = None;
         let mut closer_so_far = t_max;
-        for i in 0..self.list.len() {
-            match self.list.get(i as usize).unwrap().call().unwrap().hit(r, t_min, closer_so_far) {
-                Some(temp_rec) => {
+        for i in self.list.iter() {
+            if let Some(temp_rec) = i.hit(r, t_min, closer_so_far) {
                 closer_so_far = temp_rec.t;
                 rec = Some(temp_rec);
-                },
-                None => (),
-            };
-        };
+            }
+        }
         rec
     }
 }
