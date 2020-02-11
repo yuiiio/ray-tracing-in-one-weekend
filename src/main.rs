@@ -43,8 +43,8 @@ fn color(r:  &Ray, world: &HitableList) -> Vector3<f64> {
 }
 
 fn main() {
-    let nx: u32 = 200;
-    let ny: u32 = 100;
+    let nx: u32 = 400;
+    let ny: u32 = 200;
     let ns: u32 = 100; //anti-aliasing sample-per-pixel
     let mut rng = rand::thread_rng();
     println!("P3\n {} {} \n255\n", nx, ny);
