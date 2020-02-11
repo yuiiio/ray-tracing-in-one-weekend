@@ -10,7 +10,7 @@ pub struct Sphere {
 
 impl Hitable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut rec: Option<HitRecord> = None;
+        let rec: Option<HitRecord> = None;
         let oc = vec3_sub(r.origin(), self.center);
         let a = vec3_dot(r.direction(), r.direction());
         let b = 2.0 * vec3_dot(r.direction(), oc);
@@ -21,13 +21,13 @@ impl Hitable for Sphere {
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                rec = Some(HitRecord{ normal: nnormal, p: point, t: temp });
+                return Some(HitRecord{ normal: nnormal, p: point, t: temp });
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                rec = Some(HitRecord{ normal: nnormal, p: point, t: temp });
+                return Some(HitRecord{ normal: nnormal, p: point, t: temp });
             }
         }
         rec
