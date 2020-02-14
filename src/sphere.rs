@@ -2,10 +2,12 @@ use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
 use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_div_b};
 use std::f64;
+use crate::material::{Material};
 
 pub struct Sphere {
     pub center: Vector3<f64>,
     pub radius: f64,
+    pub mat_ptr: Box<dyn Material>,
 }
 
 impl Hitable for Sphere {
@@ -21,13 +23,13 @@ impl Hitable for Sphere {
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord{ normal: nnormal, p: point, t: temp });
+                return Some(HitRecord{ normal: nnormal, p: point, t: temp , mat_ptr: &self.mat_ptr});
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord{ normal: nnormal, p: point, t: temp });
+                return Some(HitRecord{ normal: nnormal, p: point, t: temp , mat_ptr: &self.mat_ptr});
             }
         }
         rec

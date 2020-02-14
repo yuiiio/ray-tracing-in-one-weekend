@@ -1,4 +1,4 @@
-use std::ops::{ Add, Mul, Sub, Div};
+use std::ops::{Add, Mul, Sub, Div};
 use std::f64;
 
 pub type Vector3<T> = [T; 3];
