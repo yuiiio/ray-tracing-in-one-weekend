@@ -16,5 +16,4 @@ impl Ray {
     pub fn point_at_parameter(&self, t: f64) -> Vector3<f64> {
         vec3_add(self.a, vec3_mul_b(self.b, t))
     }
-
 }

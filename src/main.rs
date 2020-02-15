@@ -18,21 +18,21 @@ use std::f64;
 use material::{Metal, Lambertion};
 
 fn color(r: &Ray, world: &HitableList, depth: u32) -> Vector3<f64> {
-    match world.hit(r, 0.00001, 10000.0) {
-        Some(rec) => {
-            if depth < 50 {
+    if depth < 50 {
+        match world.hit(r, 0.00001, 10000.0) {
+            Some(rec) => {
                 if let Some(mat_rec) = rec.mat_ptr.scatter(r, &rec) {
                     return vec3_mul(mat_rec.attenuation , color(&mat_rec.scatterd, &world, depth + 1))
                 }
-            }
-            [0.0, 0.0, 0.0]
-        },
-        None => {
-            let unit_direction = vec3_unit_vector_f64(r.direction());
-            let t  = 0.5*(unit_direction[1] + 1.0);
-            vec3_add(vec3_mul_b([1.0, 1.0, 1.0], 1.0 - t), vec3_mul_b([0.5, 0.7, 1.0], t))
-        },
+            },
+            None => {
+                let unit_direction = vec3_unit_vector_f64(r.direction());
+                let t  = 0.5*(unit_direction[1] + 1.0);
+                return vec3_add(vec3_mul_b([1.0, 1.0, 1.0], 1.0 - t), vec3_mul_b([0.5, 0.7, 1.0], t))
+            },
+        }
     }
+    [0.0, 0.0, 0.0]
 }
 
 fn main() {
@@ -66,7 +66,7 @@ fn main() {
             let ig: u32 = (255.99 * col[1]) as u32;
             let ib: u32 = (255.99 * col[2]) as u32;
             println!("{} {} {}\n", ir, ig, ib);
-            }
         }
+    }
 }
 
