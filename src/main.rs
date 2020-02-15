@@ -15,14 +15,14 @@ use hitablelist::{HitableList};
 use sphere::{Sphere};
 use camera::{Camera};
 use std::f64;
-use material::{Metal, Lambertion};
+use material::{Metal, Lambertian};
 
 fn color(r: &Ray, world: &HitableList, depth: u32) -> Vector3<f64> {
     if depth < 50 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
-                if let Some(mat_rec) = rec.mat_ptr.scatter(r, &rec) {
-                    return vec3_mul(mat_rec.attenuation , color(&mat_rec.scatterd, &world, depth + 1))
+                if let Some(mat_rec) = rec.get_mat_ptr().scatter(r, &rec) {
+                    return vec3_mul(mat_rec.get_attenuation() , color(mat_rec.get_scatterd(), &world, depth + 1))
                 }
             },
             None => {
@@ -36,16 +36,16 @@ fn color(r: &Ray, world: &HitableList, depth: u32) -> Vector3<f64> {
 }
 
 fn main() {
-    let nx: u32 = 400;
-    let ny: u32 = 200;
+    let nx: u32 = 800;
+    let ny: u32 = 400;
     let ns: u32 = 100; //anti-aliasing sample-per-pixel
     let mut rng = rand::thread_rng();
     println!("P3\n {} {} \n255\n", nx, ny);
     let mut obj_list = HitableList::new();
-    obj_list.push(Sphere { center: [0.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Lambertion::new([0.8, 0.3, 0.3])) });
-    obj_list.push(Sphere { center: [0.0, -100.5, -1.0], radius: 100.0 , mat_ptr: Box::new(Lambertion::new([0.8, 0.8, 0.0])) });
-    obj_list.push(Sphere { center: [1.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Metal::new([0.8, 0.6, 0.2], 0.3)) });
-    obj_list.push(Sphere { center: [-1.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Metal::new([0.8, 0.8, 0.8], 0.1)) });
+    obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, Box::new(Lambertian::new([0.8, 0.3, 0.3]))));
+    obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, Box::new(Lambertian::new([0.8, 0.8, 0.0]))));
+    obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, Box::new(Metal::new([0.8, 0.6, 0.2], 0.3))));
+    obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, Box::new(Metal::new([0.8, 0.8, 0.8], 0.1))));
 
     let cam = Camera::new();
 

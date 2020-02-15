@@ -1,11 +1,15 @@
 use crate::vec3::{Vector3, vec3_add, vec3_mul_b};
 
 pub struct Ray {
-    pub a: Vector3<f64>,
-    pub b: Vector3<f64>,
+    a: Vector3<f64>,
+    b: Vector3<f64>,
 }
 
 impl Ray {
+    pub fn new(a: Vector3<f64>, b: Vector3<f64>) -> Ray {
+        Ray{a, b}
+    }
+
     pub fn origin(&self) -> Vector3<f64> {
         self.a
     }

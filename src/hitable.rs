@@ -3,10 +3,32 @@ use crate::vec3::{Vector3};
 use crate::material::{Material};
 
 pub struct HitRecord<'a> {
-    pub t: f64,
-    pub p: Vector3<f64>,
-    pub normal: Vector3<f64>,
-    pub mat_ptr: &'a Box<dyn Material>
+    t: f64,
+    p: Vector3<f64>,
+    normal: Vector3<f64>,
+    mat_ptr: &'a Box<dyn Material>
+}
+
+impl<'a> HitRecord<'a> {
+    pub fn new(t: f64, p: Vector3<f64>, normal: Vector3<f64>, mat_ptr: &'a Box<dyn Material>) -> HitRecord {
+        HitRecord {t, p, normal, mat_ptr}
+    }
+
+    pub fn get_mat_ptr(&self) -> &Box<dyn Material> {
+        self.mat_ptr
+    }
+
+    pub fn get_t(&self) -> f64 {
+        self.t
+    }
+
+    pub fn get_p(&self) -> Vector3<f64> {
+        self.p
+    }
+
+    pub fn get_normal(&self) -> Vector3<f64> {
+        self.normal
+    }
 }
 
 pub trait Hitable {

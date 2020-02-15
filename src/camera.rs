@@ -18,6 +18,6 @@ impl Camera {
     }
 
     pub fn get_ray(&self, u: f64, v: f64) -> Ray {
-        Ray {a: self.origin, b: vec3_add(vec3_add(self.lower_left_corner, vec3_mul_b(self.horizontal, u)), vec3_mul_b(self.vertical, v))}
+        Ray::new(self.origin, vec3_add(vec3_add(self.lower_left_corner, vec3_mul_b(self.horizontal, u)), vec3_mul_b(self.vertical, v)))
     }
 }

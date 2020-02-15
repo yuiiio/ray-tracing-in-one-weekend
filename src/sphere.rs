@@ -5,9 +5,15 @@ use std::f64;
 use crate::material::{Material};
 
 pub struct Sphere {
-    pub center: Vector3<f64>,
-    pub radius: f64,
-    pub mat_ptr: Box<dyn Material>,
+    center: Vector3<f64>,
+    radius: f64,
+    mat_ptr: Box<dyn Material>,
+}
+
+impl Sphere {
+    pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: Box<dyn Material>) -> Sphere {
+        Sphere {center, radius, mat_ptr}
+    }
 }
 
 impl Hitable for Sphere {
@@ -23,13 +29,13 @@ impl Hitable for Sphere {
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord{ normal: nnormal, p: point, t: temp , mat_ptr: &self.mat_ptr});
+                return Some(HitRecord::new(temp, point, nnormal, &self.mat_ptr));
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord{ normal: nnormal, p: point, t: temp , mat_ptr: &self.mat_ptr});
+                return Some(HitRecord::new(temp, point, nnormal, &self.mat_ptr));
             }
         }
         rec
