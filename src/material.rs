@@ -14,7 +14,16 @@ pub trait Material {
 }
 
 pub struct Metal {
-    pub albedo: Vector3<f64>,
+    albedo: Vector3<f64>,
+    fuzz: f64,
+}
+
+impl Metal {
+    pub fn new(albedo: Vector3<f64>, f: f64) -> Metal {
+        let fuzz;
+        if f < 1.0 { fuzz = f; } else { fuzz = 1.0; }
+        Metal{ albedo, fuzz }
+    }
 }
 
 fn reflect(v: Vector3<f64>, n: Vector3<f64>) -> Vector3<f64> {
@@ -24,7 +33,7 @@ fn reflect(v: Vector3<f64>, n: Vector3<f64>) -> Vector3<f64> {
 impl Material for Metal {
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let reflected = reflect(vec3_unit_vector_f64(r_in.direction()), hit_record.normal);
-        let scatterd = Ray{ a: hit_record.p, b: reflected };
+        let scatterd = Ray{ a: hit_record.p, b: vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz)) };
         let attenuation = self.albedo;
         if vec3_dot(scatterd.direction(), hit_record.normal) > 0.0 {
             Some(MatRecord{ scatterd, attenuation }) 
@@ -35,7 +44,13 @@ impl Material for Metal {
 }
 
 pub struct Lambertion {
-    pub albedo: Vector3<f64>,
+    albedo: Vector3<f64>,
+}
+
+impl Lambertion {
+    pub fn new(albedo: Vector3<f64>) -> Lambertion {
+        Lambertion{ albedo }
+    }
 }
 
 fn random_in_unit_sphere() -> Vector3<f64> {

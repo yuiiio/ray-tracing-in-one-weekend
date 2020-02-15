@@ -42,10 +42,10 @@ fn main() {
     let mut rng = rand::thread_rng();
     println!("P3\n {} {} \n255\n", nx, ny);
     let mut obj_list = HitableList::new();
-    obj_list.push(Sphere { center: [0.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Lambertion{ albedo: [0.8, 0.3, 0.3] }) });
-    obj_list.push(Sphere { center: [0.0, -100.5, -1.0], radius: 100.0 , mat_ptr: Box::new(Lambertion{ albedo: [0.8, 0.8, 0.0] }) });
-    obj_list.push(Sphere { center: [1.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Metal{ albedo: [0.8, 0.6, 0.2] }) });
-    obj_list.push(Sphere { center: [-1.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Metal{ albedo: [0.8, 0.8, 0.8] }) });
+    obj_list.push(Sphere { center: [0.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Lambertion::new([0.8, 0.3, 0.3])) });
+    obj_list.push(Sphere { center: [0.0, -100.5, -1.0], radius: 100.0 , mat_ptr: Box::new(Lambertion::new([0.8, 0.8, 0.0])) });
+    obj_list.push(Sphere { center: [1.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Metal::new([0.8, 0.6, 0.2], 0.3)) });
+    obj_list.push(Sphere { center: [-1.0 , 0.0 , -1.0], radius: 0.5 , mat_ptr: Box::new(Metal::new([0.8, 0.8, 0.8], 0.1)) });
 
     let cam = Camera::new();
 
