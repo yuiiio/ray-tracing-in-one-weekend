@@ -18,7 +18,7 @@ use std::f64;
 use material::{Metal, Lambertion};
 
 fn color(r: &Ray, world: &HitableList, depth: u32) -> Vector3<f64> {
-    match world.hit(r, 0.0, 1000.0) {
+    match world.hit(r, 0.00001, 10000.0) {
         Some(rec) => {
             if depth < 50 {
                 if let Some(mat_rec) = rec.mat_ptr.scatter(r, &rec) {
