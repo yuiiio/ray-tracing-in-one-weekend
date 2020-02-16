@@ -15,14 +15,14 @@ use hitablelist::{HitableList};
 use sphere::{Sphere};
 use camera::{Camera};
 use std::f64;
-use material::{Metal, Lambertian};
+use material::{Metal, Lambertian, Materials};
 
-fn color(r: &Ray, world: &HitableList, depth: u32) -> Vector3<f64> {
+fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) -> Vector3<f64> {
     if depth < 50 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
-                if let Some(mat_rec) = rec.get_mat_ptr().scatter(r, &rec) {
-                    return vec3_mul(mat_rec.get_attenuation() , color(mat_rec.get_scatterd(), &world, depth + 1))
+                if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
+                    return vec3_mul(mat_rec.get_attenuation() , color(mat_rec.get_scatterd(), &world, depth + 1, material_list))
                 }
             },
             None => {
@@ -42,10 +42,15 @@ fn main() {
     let mut rng = rand::thread_rng();
     println!("P3\n {} {} \n255\n", nx, ny);
     let mut obj_list = HitableList::new();
-    obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, Box::new(Lambertian::new([0.8, 0.3, 0.3]))));
-    obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, Box::new(Lambertian::new([0.8, 0.8, 0.0]))));
-    obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, Box::new(Metal::new([0.8, 0.6, 0.2], 0.3))));
-    obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, Box::new(Metal::new([0.8, 0.8, 0.8], 0.1))));
+    let mut material_list = Materials::new();
+    let mat1 = material_list.add_material(Lambertian::new([0.8, 0.3, 0.3]));
+    let mat2 = material_list.add_material(Lambertian::new([0.8, 0.8, 0.0]));
+    let mat3 = material_list.add_material(Metal::new([0.8, 0.6, 0.2], 0.3));
+    let mat4 = material_list.add_material(Metal::new([0.8, 0.8, 0.8], 0.1));
+    obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
+    obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
+    obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
+    obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
 
     let cam = Camera::new();
 
@@ -58,7 +63,7 @@ fn main() {
                 let u: f64 = (i as f64 + rand_x )/ nx as f64; 
                 let v: f64 = (j as f64 + rand_y )/ ny as f64; 
                 let r = cam.get_ray(u, v);
-                col = vec3_add(color(&r, &obj_list, 0), col);
+                col = vec3_add(color(&r, &obj_list, 0, &material_list), col);
             }
             col = vec3_div_b(col, ns as f64);
             col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];

@@ -1,21 +1,21 @@
 use crate::ray::{Ray};
 use crate::vec3::{Vector3};
-use crate::material::{Material};
+use crate::material::{MaterialHandle};
 
-pub struct HitRecord<'a> {
+pub struct HitRecord {
     t: f64,
     p: Vector3<f64>,
     normal: Vector3<f64>,
-    mat_ptr: &'a Box<dyn Material>
+    mat_ptr: MaterialHandle,
 }
 
-impl<'a> HitRecord<'a> {
-    pub fn new(t: f64, p: Vector3<f64>, normal: Vector3<f64>, mat_ptr: &'a Box<dyn Material>) -> HitRecord {
+impl HitRecord {
+    pub fn new(t: f64, p: Vector3<f64>, normal: Vector3<f64>, mat_ptr: MaterialHandle) -> HitRecord {
         HitRecord {t, p, normal, mat_ptr}
     }
 
-    pub fn get_mat_ptr(&self) -> &Box<dyn Material> {
-        self.mat_ptr
+    pub fn get_mat_ptr(&self) -> MaterialHandle {
+        MaterialHandle(self.mat_ptr.0)
     }
 
     pub fn get_t(&self) -> f64 {

@@ -23,6 +23,25 @@ pub trait Material {
     fn scatter(&self, r: &Ray, hit_record: &HitRecord) -> Option<MatRecord>;
 }
 
+pub struct MaterialHandle(pub usize);
+
+pub struct Materials(Vec<Box<dyn Material>>);
+
+impl Materials {
+    pub fn new() -> Materials {
+        Materials(Vec::new())
+    }
+
+    pub fn add_material<M: Material + 'static>(&mut self, material: M) -> MaterialHandle {
+        self.0.push(Box::new(material));
+        MaterialHandle(self.0.len() -1)
+    }
+
+    pub fn get(&self, handle: MaterialHandle) -> &dyn Material {
+        self.0[handle.0].as_ref()
+    }
+}
+
 pub struct Metal {
     albedo: Vector3<f64>,
     fuzz: f64,
