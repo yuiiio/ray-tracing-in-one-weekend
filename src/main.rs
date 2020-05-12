@@ -15,7 +15,7 @@ use hitablelist::{HitableList};
 use sphere::{Sphere};
 use camera::{Camera};
 use std::f64;
-use material::{Metal, Lambertian, Materials};
+use material::{Metal, Lambertian, Materials, Dielectric};
 
 fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) -> Vector3<f64> {
     if depth < 50 {
@@ -46,7 +46,7 @@ fn main() {
     let mat1 = material_list.add_material(Lambertian::new([0.8, 0.3, 0.3]));
     let mat2 = material_list.add_material(Lambertian::new([0.8, 0.8, 0.0]));
     let mat3 = material_list.add_material(Metal::new([0.8, 0.6, 0.2], 0.3));
-    let mat4 = material_list.add_material(Metal::new([0.8, 0.8, 0.8], 0.1));
+    let mat4 = material_list.add_material(Dielectric::new(1.5));
     obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
     obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
     obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
