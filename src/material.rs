@@ -126,27 +126,48 @@ fn refract(v: Vector3<f64>, n: Vector3<f64>, ni_over_nt: f64) -> Option<Vector3<
     }
 }
 
+fn schlick(cosine: f64, ref_idx: f64) -> f64 {
+    let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+    let r0 = r0 * r0;
+    r0 + ((1.0 - r0) * (1.0 - cosine).powi(5))
+}
+
 impl Material for Dielectric {
     fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let outward_normal :Vector3<f64>;
         let ni_over_nt :f64;
         let attenuation :Vector3<f64> = [1.0, 1.0, 1.0];
         let scatterd :Ray;
+        let reflect_prob :f64;
+        let cosine :f64;
         if vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal()) > 0.0 {
             outward_normal = hit_record.get_normal();
             ni_over_nt = 1.0 / self.ref_idx;
+            cosine = 1.0 * vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal());
         } else {
             outward_normal = vec3_mul_b(hit_record.get_normal(), -1.0);
             ni_over_nt = self.ref_idx / 1.0;
+            cosine = self.ref_idx * vec3_dot(_r_in.direction(), hit_record.get_normal());
         }
-        match refract(_r_in.direction(), outward_normal, ni_over_nt) {
+        let refracted = match refract(_r_in.direction(), outward_normal, ni_over_nt) {
             Some(refracted) => {
-                scatterd = Ray::new(hit_record.get_p(), refracted);
+                reflect_prob = schlick(cosine, self.ref_idx);
+                Some(refracted)
             },
             None => {
-                scatterd = Ray::new(hit_record.get_p(), reflect(_r_in.direction(), outward_normal));
+                reflect_prob = 1.0;
+                None
             },
         };
+
+        let mut rng = rand::thread_rng();
+        let rand :f64 = rng.gen();
+        if rand < reflect_prob {
+                scatterd = Ray::new(hit_record.get_p(), reflect(_r_in.direction(), outward_normal));
+        } else {
+                scatterd = Ray::new(hit_record.get_p(), refracted.unwrap());
+        }
+
         Some(MatRecord{ scatterd, attenuation })
     }
 }
