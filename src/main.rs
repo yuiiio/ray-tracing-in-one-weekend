@@ -36,14 +36,14 @@ fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) ->
 }
 
 fn main() {
-    let nx: u32 = 400;
-    let ny: u32 = 200;
+    let nx: u32 = 800;
+    let ny: u32 = 400;
     let ns: u32 = 100; //anti-aliasing sample-per-pixel
     let mut rng = rand::thread_rng();
     println!("P3\n {} {} \n255\n", nx, ny);
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
-    let mat1 = material_list.add_material(Lambertian::new([0.8, 0.3, 0.3]));
+    let mat1 = material_list.add_material(Lambertian::new([0.3, 0.3, 0.8]));
     let mat2 = material_list.add_material(Lambertian::new([0.8, 0.8, 0.0]));
     let mat3 = material_list.add_material(Metal::new([0.8, 0.6, 0.2], 0.3));
     let mat4 = material_list.add_material(Dielectric::new(1.5));
@@ -54,7 +54,7 @@ fn main() {
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], -0.45, mat5));
 
-    let cam = Camera::new();
+    let cam = Camera::new([-2.0, 2.0, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 90.0, (nx/ny) as f64);
 
     for j in (0..ny).rev() {
         for i in 0..nx {
@@ -76,4 +76,3 @@ fn main() {
         }
     }
 }
-

@@ -118,3 +118,13 @@ pub fn vec3_unit_vector_f64(a: Vector3<f64>) -> Vector3<f64>
     let b: f64 = vec3_length_f64(a);
     vec3_div_b(a, b)
 }
+
+#[inline(always)]
+pub fn cross(a: Vector3<f64>, b: Vector3<f64>) -> Vector3<f64>
+{
+    [
+        a[1] * b[2] - a[2] * b[1],
+        a[2] * b[0] - a[0] * b[2],
+        a[0] * b[1] - a[1] * b[0],
+    ]
+}
