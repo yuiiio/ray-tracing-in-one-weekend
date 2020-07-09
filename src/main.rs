@@ -1,4 +1,5 @@
 use rand::prelude::*;
+use image::{RgbaImage, Rgba};
 
 mod vec3;
 mod ray;
@@ -36,11 +37,11 @@ fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) ->
 }
 
 fn main() {
-    let nx: u32 = 800;
-    let ny: u32 = 400;
-    let ns: u32 = 100; //anti-aliasing sample-per-pixel
+    const NX: usize = 200;
+    const NY: usize = 100;
+    let mut imgbuf = vec![vec![[0, 0, 0, 255]; NY]; NX];
+    const NS: usize = 100; //anti-aliasing sample-per-pixel
     let mut rng = rand::thread_rng();
-    println!("P3\n {} {} \n255\n", nx, ny);
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
     let mat1 = material_list.add_material(Lambertian::new([0.3, 0.3, 0.8]));
@@ -54,25 +55,35 @@ fn main() {
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], -0.45, mat5));
 
-    let cam = Camera::new([-2.0, 2.0, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 90.0, (nx/ny) as f64);
+    let cam = Camera::new([-2.0, 2.0, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 90.0, (NX/NY) as f64);
 
-    for j in (0..ny).rev() {
-        for i in 0..nx {
-            let mut col = [0.0, 0.0, 0.0];
-            for _s in 0..ns {
+    for j in 0..NY {
+        for i in 0..NX {
+            let mut col = [0.0 as f64; 3];
+            for _s in 0..NS {
                 let rand_x: f64 = rng.gen();
                 let rand_y: f64 = rng.gen();
-                let u: f64 = (i as f64 + rand_x )/ nx as f64; 
-                let v: f64 = (j as f64 + rand_y )/ ny as f64; 
+                let u: f64 = (i as f64 + rand_x )/ NX as f64; 
+                let v: f64 = (j as f64 + rand_y )/ NY as f64; 
                 let r = cam.get_ray(u, v);
                 col = vec3_add(color(&r, &obj_list, 0, &material_list), col);
             }
-            col = vec3_div_b(col, ns as f64);
+            col = vec3_div_b(col, NS as f64);
             col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];
-            let ir: u32 = (255.99 * col[0]) as u32;
-            let ig: u32 = (255.99 * col[1]) as u32;
-            let ib: u32 = (255.99 * col[2]) as u32;
-            println!("{} {} {}\n", ir, ig, ib);
+            let ir: u8 = (255.99 * col[0]) as u8;
+            let ig: u8 = (255.99 * col[1]) as u8;
+            let ib: u8 = (255.99 * col[2]) as u8;
+            imgbuf[i][j][0] = ir;
+            imgbuf[i][j][1] = ig;
+            imgbuf[i][j][2] = ib;
         }
     }
+
+    let mut img = RgbaImage::new(NX as u32, NY as u32);
+    for x in 0..NX {
+        for y in 0..NY {
+            img.put_pixel(x as u32, y as u32, Rgba(imgbuf[x][NY-(y+1)]));
+        }
+    }
+    img.save("image.png").unwrap()
 }
