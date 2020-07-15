@@ -1,5 +1,6 @@
 use rand::prelude::*;
 use image::{RgbaImage, Rgba};
+use std::time::SystemTime;
 
 mod vec3;
 mod ray;
@@ -37,6 +38,7 @@ fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) ->
 }
 
 fn main() {
+    let now = SystemTime::now();
     const NX: usize = 200;
     const NY: usize = 100;
     let mut imgbuf = vec![vec![[0, 0, 0, 255]; NY]; NX];
@@ -78,6 +80,8 @@ fn main() {
             imgbuf[i][j][2] = ib;
         }
     }
+
+    println!("Time elapsed: {}",now.elapsed().unwrap().as_secs_f64());
 
     let mut img = RgbaImage::new(NX as u32, NY as u32);
     for x in 0..NX {
