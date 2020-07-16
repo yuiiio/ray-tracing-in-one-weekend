@@ -26,14 +26,14 @@ pub trait Material {
 
 pub struct MaterialHandle(pub usize);
 
-pub struct Materials(Vec<Box<dyn Material>>);
+pub struct Materials(Vec<Box<dyn Material + Send + Sync>>);
 
 impl Materials {
     pub fn new() -> Materials {
         Materials(Vec::new())
     }
 
-    pub fn add_material<M: Material + 'static>(&mut self, material: M) -> MaterialHandle {
+    pub fn add_material<M: Material + 'static + Send + Sync>(&mut self, material: M) -> MaterialHandle {
         self.0.push(Box::new(material));
         MaterialHandle(self.0.len() -1)
     }

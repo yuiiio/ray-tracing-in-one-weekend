@@ -1,6 +1,8 @@
 use rand::prelude::*;
 use image::{RgbaImage, Rgba};
 use std::time::SystemTime;
+use std::thread;
+use std::sync::{Arc, Mutex};
 
 mod vec3;
 mod ray;
@@ -41,9 +43,8 @@ fn main() {
     let now = SystemTime::now();
     const NX: usize = 200;
     const NY: usize = 100;
-    let mut imgbuf = vec![vec![[0, 0, 0, 255]; NY]; NX];
+    let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
     const NS: usize = 100; //anti-aliasing sample-per-pixel
-    let mut rng = rand::thread_rng();
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
     let mat1 = material_list.add_material(Lambertian::new([0.3, 0.3, 0.8]));
@@ -59,26 +60,41 @@ fn main() {
 
     let cam = Camera::new([-2.0, 2.0, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 90.0, (NX/NY) as f64);
 
+    let cam = Arc::new(cam);
+    let obj_list = Arc::new(obj_list);
+    let material_list = Arc::new(material_list);
+    let mut handles = vec![];
     for j in 0..NY {
         for i in 0..NX {
-            let mut col = [0.0 as f64; 3];
-            for _s in 0..NS {
-                let rand_x: f64 = rng.gen();
-                let rand_y: f64 = rng.gen();
-                let u: f64 = (i as f64 + rand_x )/ NX as f64; 
-                let v: f64 = (j as f64 + rand_y )/ NY as f64; 
-                let r = cam.get_ray(u, v);
-                col = vec3_add(color(&r, &obj_list, 0, &material_list), col);
-            }
-            col = vec3_div_b(col, NS as f64);
-            col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];
-            let ir: u8 = (255.99 * col[0]) as u8;
-            let ig: u8 = (255.99 * col[1]) as u8;
-            let ib: u8 = (255.99 * col[2]) as u8;
-            imgbuf[i][j][0] = ir;
-            imgbuf[i][j][1] = ig;
-            imgbuf[i][j][2] = ib;
+            let imgbuf_clone = Arc::clone(&imgbuf);
+            let cam = Arc::clone(&cam);
+            let obj_list = Arc::clone(&obj_list);
+            let material_list = Arc::clone(&material_list);
+            let handle = thread::spawn(move || {
+                let mut col = [0.0 as f64; 3];
+                let mut rng = rand::thread_rng();
+                for _s in 0..NS {
+                    let rand_x: f64 = rng.gen();
+                    let rand_y: f64 = rng.gen();
+                    let u: f64 = (i as f64 + rand_x) / NX as f64;
+                    let v: f64 = (j as f64 + rand_y) / NY as f64;
+                    let r = cam.get_ray(u, v);
+                    col = vec3_add(color(&r, &obj_list, 0, &material_list), col);
+                }
+                col = vec3_div_b(col, NS as f64);
+                col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];
+                let ir: u8 = (255.99 * col[0]) as u8;
+                let ig: u8 = (255.99 * col[1]) as u8;
+                let ib: u8 = (255.99 * col[2]) as u8;
+                let mut imgbuf = imgbuf_clone.lock().unwrap();
+                imgbuf[i][j] = [ir, ig, ib, 255];
+            });
+            handles.push(handle);
         }
+    }
+
+    for handle in handles {
+        handle.join().unwrap();
     }
 
     println!("Time elapsed: {}",now.elapsed().unwrap().as_secs_f64());
@@ -86,6 +102,7 @@ fn main() {
     let mut img = RgbaImage::new(NX as u32, NY as u32);
     for x in 0..NX {
         for y in 0..NY {
+            let imgbuf = imgbuf.lock().unwrap();
             img.put_pixel(x as u32, y as u32, Rgba(imgbuf[x][NY-(y+1)]));
         }
     }

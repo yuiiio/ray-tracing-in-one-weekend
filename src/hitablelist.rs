@@ -1,22 +1,22 @@
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
 
-pub struct HitableList(Vec<Box<dyn Hitable>>);
+pub struct HitableList(Vec<Box<dyn Hitable + Send + Sync>>);
 
 impl HitableList {
     pub fn new() -> Self {
         HitableList(Vec::new())
     }
 
-    pub fn push<H: Hitable + 'static>(&mut self, hitable: H) {
+    pub fn push<H: Hitable + 'static + Send + Sync>(&mut self, hitable: H) {
         self.0.push(Box::new(hitable))
     }
 }
 
 impl ::std::ops::Deref for HitableList {
-    type Target = Vec<Box<dyn Hitable>>;
+    type Target = Vec<Box<dyn Hitable + Send + Sync>>;
 
-    fn deref(&self) -> &Vec<Box<dyn Hitable>> {
+    fn deref(&self) -> &Vec<Box<dyn Hitable+ Send + Sync>> {
         &self.0
     }
 }
