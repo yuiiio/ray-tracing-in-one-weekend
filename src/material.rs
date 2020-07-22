@@ -3,6 +3,7 @@ use rand::prelude::*;
 use crate::ray::{Ray};
 use crate::vec3::{Vector3, vec3_mul_b, vec3_dot, vec3_add, vec3_unit_vector_f64, vec3_sub, vec3_squared_length};
 use crate::hitable::{HitRecord};
+use crate::texture::{Texture};
 use std::f64;
 
 pub struct MatRecord {
@@ -43,15 +44,15 @@ impl Materials {
     }
 }
 
-pub struct Metal {
-    albedo: Vector3<f64>,
+pub struct Metal<T: Texture> {
     fuzz: f64,
+    texture: T,
 }
 
-impl Metal {
-    pub fn new(albedo: Vector3<f64>, f: f64) -> Metal {
+impl<T: Texture> Metal<T> {
+    pub fn new(f: f64, texture: T) -> Metal<T> {
         let fuzz = if f < 1.0 { f } else { 1.0 };
-        Metal{ albedo, fuzz }
+        Metal{fuzz , texture}
     }
 }
 
@@ -59,11 +60,11 @@ fn reflect(v: Vector3<f64>, n: Vector3<f64>) -> Vector3<f64> {
     vec3_add(vec3_mul_b(vec3_mul_b(n, vec3_dot(vec3_mul_b(v, -1.0), n)), 2.0) , v)
 }
 
-impl Material for Metal {
+impl<T: Texture> Material for Metal<T> {
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let reflected = reflect(vec3_unit_vector_f64(r_in.direction()), hit_record.get_normal());
         let scatterd = Ray::new(hit_record.get_p(), vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz)));
-        let attenuation = self.albedo;
+        let attenuation = self.texture.get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         if vec3_dot(scatterd.direction(), hit_record.get_normal()) > 0.0 {
             Some(MatRecord{ scatterd, attenuation }) 
         } else {

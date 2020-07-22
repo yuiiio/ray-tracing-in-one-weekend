@@ -29,13 +29,13 @@ impl Hitable for Sphere {
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord::new(temp, point, nnormal, MaterialHandle(self.mat_ptr.0)));
+                return Some(HitRecord::new(temp, 0.0, 0.0, point, nnormal, MaterialHandle(self.mat_ptr.0)));
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord::new(temp, point, nnormal, MaterialHandle(self.mat_ptr.0)));
+                return Some(HitRecord::new(temp, 0.0, 0.0, point, nnormal, MaterialHandle(self.mat_ptr.0)));
             }
         }
         rec
