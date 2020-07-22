@@ -1,6 +1,7 @@
 use crate::ray::{Ray};
-use crate::vec3::{Vector3, vec3_add, vec3_mul_b, vec3_sub, cross, vec3_unit_vector_f64};
+use crate::vec3::{Vector3, vec3_add, vec3_mul_b, vec3_sub, cross, vec3_unit_vector_f64, vec3_dot};
 use std::f64;
+use rand::prelude::*;
 
 pub struct Camera {
     origin: Vector3<f64>,
@@ -32,5 +33,39 @@ impl Camera {
         Ray::new(self.origin,
             vec3_sub(vec3_add(vec3_add(self.lower_left_corner, vec3_mul_b(self.horizontal, s)), vec3_mul_b(self.vertical, t)), self.origin)
         )
+    }
+}
+
+fn random_in_unit_disk() -> Vector3<f64> {
+    let mut rng = rand::thread_rng();
+    let mut p = [0.0, 0.0, 0.0];
+    loop {
+        let random_x: f64 = rng.gen();
+        let random_y: f64 = rng.gen();
+        p = [
+            (random_x * 2.0) - 1.0,
+            (random_y * 2.0) - 1.0,
+            0.0,
+            ];
+        if vec3_dot(p, p) < 1.0 {
+            break;
+        }
+    }
+    return p;
+}
+
+mod test {
+    use super::*;
+
+    #[test]
+    fn random_in_disk() {
+        let pos = random_in_unit_disk();
+        println!("{:?}", pos);
+        let result = if vec3_dot(pos, pos) < 1.0 {
+            1
+        } else {
+            0
+        };
+        assert_eq!(1, result);
     }
 }
