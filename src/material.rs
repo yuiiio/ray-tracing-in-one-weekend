@@ -73,13 +73,13 @@ impl<T: Texture> Material for Metal<T> {
     }
 }
 
-pub struct Lambertian {
-    albedo: Vector3<f64>,
+pub struct Lambertian<T: Texture> {
+    texture: T,
 }
 
-impl Lambertian {
-    pub fn new(albedo: Vector3<f64>) -> Lambertian {
-        Lambertian{ albedo }
+impl<T: Texture> Lambertian<T> {
+    pub fn new(texture: T) -> Lambertian<T> {
+        Lambertian{ texture }
     }
 }
 
@@ -96,11 +96,11 @@ fn random_in_unit_sphere() -> Vector3<f64> {
     }
 }
 
-impl Material for Lambertian {
+impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let temp = vec3_add(vec3_add(hit_record.get_p(), hit_record.get_normal()), random_in_unit_sphere());
         let scatterd = Ray::new(hit_record.get_p(), vec3_sub(temp, hit_record.get_p()));
-        let attenuation = self.albedo;
+        let attenuation = self.texture.get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         Some(MatRecord{ scatterd, attenuation }) 
     }
 }
