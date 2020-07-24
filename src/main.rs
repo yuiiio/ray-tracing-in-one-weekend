@@ -13,7 +13,7 @@ mod camera;
 mod material;
 mod texture;
 
-use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul};
+use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_sub};
 use ray::{Ray};
 use hitable::{Hitable};
 use hitablelist::{HitableList};
@@ -23,12 +23,15 @@ use std::f64;
 use material::{Metal, Lambertian, Materials, Dielectric};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
 
-fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) -> Vector3<f64> {
+fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
-                    return vec3_mul(mat_rec.get_attenuation() , color(mat_rec.get_scatterd(), &world, depth + 1, material_list))
+                    return vec3_sub(
+                        vec3_mul(mat_rec.get_attenuation(),
+                        color(mat_rec.get_scatterd(), &world, depth + 1, material_list, mat_rec.get_absorabance())),
+                        vec3_mul_b(last_absorabance, rec.get_t()))
                 }
             },
             None => {
@@ -85,7 +88,7 @@ fn main() {
                     let u: f64 = (i as f64 + rand_x) / NX as f64;
                     let v: f64 = (j as f64 + rand_y) / NY as f64;
                     let r = cam.get_ray(u, v);
-                    col = vec3_add(color(&r, &obj_list, 0, &material_list), col);
+                    col = vec3_add(color(&r, &obj_list, 0, &material_list, [0.0, 0.0, 0.0]), col);
                 }
                 col = vec3_div_b(col, NS as f64);
                 col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];

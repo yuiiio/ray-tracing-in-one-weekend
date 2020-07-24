@@ -9,6 +9,7 @@ use std::f64;
 pub struct MatRecord {
     scatterd: Ray,
     attenuation: Vector3<f64>,
+    absorabance: Vector3<f64>,
 }
 
 impl MatRecord {
@@ -18,6 +19,10 @@ impl MatRecord {
 
     pub fn get_attenuation(&self) -> Vector3<f64> {
         self.attenuation
+    }
+
+    pub fn get_absorabance(&self) -> Vector3<f64> {
+        self.absorabance
     }
 }
 
@@ -65,8 +70,9 @@ impl<T: Texture> Material for Metal<T> {
         let reflected = reflect(vec3_unit_vector_f64(r_in.direction()), hit_record.get_normal());
         let scatterd = Ray::new(hit_record.get_p(), vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz)));
         let attenuation = self.texture.get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
+        let absorabance = [0.0, 0.0, 0.0];
         if vec3_dot(scatterd.direction(), hit_record.get_normal()) > 0.0 {
-            Some(MatRecord{ scatterd, attenuation }) 
+            Some(MatRecord{ scatterd, attenuation, absorabance}) 
         } else {
             None
         }
@@ -101,7 +107,8 @@ impl<T: Texture> Material for Lambertian<T> {
         let temp = vec3_add(vec3_add(hit_record.get_p(), hit_record.get_normal()), random_in_unit_sphere());
         let scatterd = Ray::new(hit_record.get_p(), vec3_sub(temp, hit_record.get_p()));
         let attenuation = self.texture.get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
-        Some(MatRecord{ scatterd, attenuation }) 
+        let absorabance = [0.0, 0.0, 0.0];
+        Some(MatRecord{ scatterd, attenuation, absorabance}) 
     }
 }
 
@@ -141,7 +148,9 @@ impl Material for Dielectric {
         let scatterd :Ray;
         let reflect_prob :f64;
         let cosine :f64;
+        let mut outside_to_inside: bool = false;
         if vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal()) > 0.0 {
+            outside_to_inside = true;
             outward_normal = hit_record.get_normal();
             ni_over_nt = 1.0 / self.ref_idx;
             cosine = 1.0 * vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal());
@@ -163,12 +172,20 @@ impl Material for Dielectric {
 
         let mut rng = rand::thread_rng();
         let rand :f64 = rng.gen();
+        let mut refracted_root: bool = false;
         if rand < reflect_prob {
-                scatterd = Ray::new(hit_record.get_p(), reflect(_r_in.direction(), outward_normal));
+            scatterd = Ray::new(hit_record.get_p(), reflect(_r_in.direction(), outward_normal));
         } else {
-                scatterd = Ray::new(hit_record.get_p(), refracted.unwrap());
+            refracted_root = true;
+            scatterd = Ray::new(hit_record.get_p(), refracted.unwrap());
         }
 
-        Some(MatRecord{ scatterd, attenuation })
+        let mut absorabance = [0.0, 0.0, 0.0];
+
+        if outside_to_inside && refracted_root {
+            absorabance = [0.3, 0.9, 0.6];
+        }
+
+        Some(MatRecord{ scatterd, attenuation, absorabance})
     }
 }
