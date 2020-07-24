@@ -28,6 +28,9 @@ impl MatRecord {
 
 pub trait Material {
     fn scatter(&self, r: &Ray, hit_record: &HitRecord) -> Option<MatRecord>;
+    fn emitted(&self, _r: &Ray, _hit_record: &HitRecord) -> Vector3<f64> {
+        [0.0, 0.0, 0.0]
+    }
 }
 
 pub struct MaterialHandle(pub usize);
@@ -187,5 +190,25 @@ impl Material for Dielectric {
         }
 
         Some(MatRecord{ scatterd, attenuation, absorabance})
+    }
+}
+
+pub struct DiffuseLight<T: Texture> {
+   texture: T,
+}
+
+impl<T: Texture> DiffuseLight<T> {
+    pub fn new(texture: T) -> DiffuseLight<T> {
+        DiffuseLight{ texture }
+    }
+}
+
+impl<T: Texture> Material for DiffuseLight<T> {
+    fn scatter(&self, _r: &Ray, _hit_record: &HitRecord) -> Option<MatRecord> {
+        None
+    }
+
+    fn emitted(&self, _r: &Ray, hit_record: &HitRecord) -> Vector3<f64> {
+        self.texture.get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p())
     }
 }
