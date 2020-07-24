@@ -1,3 +1,4 @@
+use image::{RgbaImage};
 use crate::vec3::Vector3;
 
 pub trait Texture {
@@ -15,7 +16,7 @@ impl ColorTexture {
 }
 
 impl Texture for ColorTexture {
-    fn get_value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
+    fn get_value(&self, _u: f64, _v: f64, _p: &Vector3<f64>) -> Vector3<f64> {
         return self.m_color
     }
 }
@@ -40,5 +41,24 @@ impl<T: Texture> Texture for CheckerTexture<T> {
         } else {
             self.m_odd.get_value(u, v, p)
         }
+    }
+}
+
+pub struct ImageTexture {
+    teximage: RgbaImage
+}
+
+impl ImageTexture {
+    pub fn new(teximage: RgbaImage) -> ImageTexture {
+        ImageTexture { teximage }
+    }
+}
+
+impl Texture for ImageTexture {
+    fn get_value(&self, u: f64, v: f64, _p: &Vector3<f64>) -> Vector3<f64> {
+        let x = self.teximage.width() as f64 * u;
+        let y = self.teximage.height() as f64 * (1.0 - v);
+        let pixel = self.teximage.get_pixel(x as u32, y as u32);
+        [pixel[0] as f64 / 255.99, pixel[1] as f64 / 255.99, pixel[2] as f64 / 255.99]
     }
 }

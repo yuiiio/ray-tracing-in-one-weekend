@@ -1,7 +1,7 @@
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
 use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_div_b};
-use std::f64;
+use std::f64::consts::PI;
 use crate::material::{MaterialHandle};
 
 pub struct Sphere {
@@ -14,6 +14,12 @@ impl Sphere {
     pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Sphere {
         Sphere {center, radius, mat_ptr}
     }
+}
+
+fn get_sphere_uv(point: Vector3<f64>) -> (f64, f64) {
+    let u: f64 = 1.0 - (point[2].atan2(point[0]) + PI) / (2.0 * PI);// atan(z/x)
+    let v: f64 = (point[1].asin() + (PI / 2.0)) / PI;
+    (u, v)
 }
 
 impl Hitable for Sphere {
@@ -29,13 +35,15 @@ impl Hitable for Sphere {
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord::new(temp, 0.0, 0.0, point, nnormal, MaterialHandle(self.mat_ptr.0)));
+                let (u, v) = get_sphere_uv(nnormal);
+                return Some(HitRecord::new(temp, u, v, point, nnormal, MaterialHandle(self.mat_ptr.0)));
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
-                return Some(HitRecord::new(temp, 0.0, 0.0, point, nnormal, MaterialHandle(self.mat_ptr.0)));
+                let (u, v) = get_sphere_uv(nnormal);
+                return Some(HitRecord::new(temp, u, v, point, nnormal, MaterialHandle(self.mat_ptr.0)));
             }
         }
         rec

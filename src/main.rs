@@ -1,5 +1,5 @@
 use rand::prelude::*;
-use image::{RgbaImage, Rgba};
+use image::{RgbaImage, Rgba, open};
 use std::time::SystemTime;
 use std::thread;
 use std::sync::{Arc, Mutex};
@@ -21,7 +21,7 @@ use sphere::{Sphere};
 use camera::{Camera};
 use std::f64;
 use material::{Metal, Lambertian, Materials, Dielectric};
-use texture::{ColorTexture, CheckerTexture};
+use texture::{ColorTexture, CheckerTexture, ImageTexture};
 
 fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials) -> Vector3<f64> {
     if depth < 50 {
@@ -49,7 +49,8 @@ fn main() {
     const NS: usize = 100; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
-    let mat1 = material_list.add_material(Lambertian::new(ColorTexture::new([0.3, 0.3, 0.8])));
+    let mat1 = material_list.add_material(Lambertian::new(ImageTexture::new(open("./texture.jpg").unwrap().into_rgba())));
+    //ColorTexture::new([0.3, 0.3, 0.8])));
     let mat2 = material_list.add_material(Lambertian::new(CheckerTexture::new(
         ColorTexture::new([0.8, 0.8, 0.8]),
         ColorTexture::new([1.0, 1.0, 1.0]),
