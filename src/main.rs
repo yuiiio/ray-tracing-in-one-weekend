@@ -20,24 +20,40 @@ use hitablelist::{HitableList};
 use sphere::{Sphere};
 use camera::{Camera};
 use std::f64;
-use material::{Metal, Lambertian, Materials, Dielectric};
+use material::{Metal, Lambertian, Materials, Dielectric, DiffuseLight};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
+
+fn clamp(num: f64, min: f64, max: f64) -> f64 {
+    if num < min {
+        return min;
+    }
+    if max < num {
+        return max;
+    }
+    num
+}
 
 fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
+                let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
-                    return vec3_sub(
+                    let absorabance = vec3_mul_b(last_absorabance, rec.get_t());
+                    let absorabance = [ clamp(absorabance[0], 0.0, 1.0),
+                                        clamp(absorabance[1], 0.0, 1.0),
+                                        clamp(absorabance[2], 0.0, 1.0), ];
+                    return vec3_add( emitted, vec3_mul(
                         vec3_mul(mat_rec.get_attenuation(),
                         color(mat_rec.get_scatterd(), &world, depth + 1, material_list, mat_rec.get_absorabance())),
-                        vec3_mul_b(last_absorabance, rec.get_t()))
+                        vec3_sub([1.0, 1.0, 1.0], absorabance)))
                 }
+                return emitted
             },
             None => {
                 let unit_direction = vec3_unit_vector_f64(r.direction());
                 let t  = 0.5*(unit_direction[1] + 1.0);
-                return vec3_add(vec3_mul_b([1.0, 1.0, 1.0], 1.0 - t), vec3_mul_b([0.5, 0.7, 1.0], t))
+                return vec3_add(vec3_mul_b([0.1, 0.1, 0.1], 1.0 - t), vec3_mul_b([0.05, 0.07, 0.1], t))
             },
         }
     }
@@ -59,15 +75,15 @@ fn main() {
         ColorTexture::new([1.0, 1.0, 1.0]),
         10.0)));
     let mat3 = material_list.add_material(Metal::new(0.3, ColorTexture::new([0.2, 0.6, 0.8])));
-    let mat4 = material_list.add_material(Dielectric::new(2.0));
-    //let mat5 = material_list.add_material(Dielectric::new(1.5));
+    let mat4 = material_list.add_material(Dielectric::new(2.0, [0.3, 0.9, 0.6]));
+    let mat5 = material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
     obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
     obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
     obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
-    //obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], -0.45, mat5));
+    obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], -0.2, mat5));
 
-    let cam = Camera::new([-2.0, 2.0, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 60.0, (NX/NY) as f64);
+    let cam = Camera::new([-2.0, 0.5, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 60.0, (NX/NY) as f64);
 
     let cam = Arc::new(cam);
     let obj_list = Arc::new(obj_list);

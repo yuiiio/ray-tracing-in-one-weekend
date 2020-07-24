@@ -117,11 +117,22 @@ impl<T: Texture> Material for Lambertian<T> {
 
 pub struct Dielectric {
     ref_idx: f64,
+    absorabance: Vector3<f64>,
+}
+
+fn clamp(num: f64, min: f64, max: f64) -> f64 {
+    if num < min {
+        return min;
+    }
+    if max < num {
+        return max;
+    }
+    num
 }
 
 impl Dielectric {
-    pub fn new(ref_idx: f64) -> Dielectric {
-        Dielectric{ ref_idx }
+    pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Dielectric {
+        Dielectric{ ref_idx, absorabance }
     }
 }
 
@@ -186,7 +197,7 @@ impl Material for Dielectric {
         let mut absorabance = [0.0, 0.0, 0.0];
 
         if outside_to_inside && refracted_root {
-            absorabance = [0.3, 0.9, 0.6];
+            absorabance = self.absorabance;
         }
 
         Some(MatRecord{ scatterd, attenuation, absorabance})
