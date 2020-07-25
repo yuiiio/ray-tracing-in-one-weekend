@@ -13,7 +13,7 @@ mod camera;
 mod material;
 mod texture;
 
-use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_sub};
+use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
 use ray::{Ray};
 use hitable::{Hitable};
 use hitablelist::{HitableList};
@@ -40,13 +40,14 @@ fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials, la
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
                     let absorabance = vec3_mul_b(last_absorabance, rec.get_t());
+                    let absorabance = vec3_div([1.0, 1.0, 1.0], absorabance);
                     let absorabance = [ clamp(absorabance[0], 0.0, 1.0),
                                         clamp(absorabance[1], 0.0, 1.0),
                                         clamp(absorabance[2], 0.0, 1.0), ];
                     return vec3_add( emitted, vec3_mul(
                         vec3_mul(mat_rec.get_attenuation(),
                         color(mat_rec.get_scatterd(), &world, depth + 1, material_list, mat_rec.get_absorabance())),
-                        vec3_sub([1.0, 1.0, 1.0], absorabance)))
+                        absorabance))
                 }
                 return emitted
             },
@@ -75,7 +76,7 @@ fn main() {
         ColorTexture::new([1.0, 1.0, 1.0]),
         10.0)));
     let mat3 = material_list.add_material(Metal::new(0.3, ColorTexture::new([0.2, 0.6, 0.8])));
-    let mat4 = material_list.add_material(Dielectric::new(2.0, [0.3, 0.9, 0.6]));
+    let mat4 = material_list.add_material(Dielectric::new(2.0, [1.0, 3.0, 2.0]));
     let mat5 = material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
     obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
     obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
