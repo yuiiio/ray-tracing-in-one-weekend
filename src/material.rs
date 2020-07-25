@@ -120,16 +120,6 @@ pub struct Dielectric {
     absorabance: Vector3<f64>,
 }
 
-fn clamp(num: f64, min: f64, max: f64) -> f64 {
-    if num < min {
-        return min;
-    }
-    if max < num {
-        return max;
-    }
-    num
-}
-
 impl Dielectric {
     pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Dielectric {
         Dielectric{ ref_idx, absorabance }
@@ -173,6 +163,7 @@ impl Material for Dielectric {
             ni_over_nt = self.ref_idx / 1.0;
             cosine = self.ref_idx * vec3_dot(_r_in.direction(), hit_record.get_normal());
         }
+        let mut inside_to_inside: bool = false;
         let refracted = match refract(_r_in.direction(), outward_normal, ni_over_nt) {
             Some(refracted) => {
                 reflect_prob = schlick(cosine, self.ref_idx);
@@ -180,6 +171,7 @@ impl Material for Dielectric {
             },
             None => {
                 reflect_prob = 1.0;
+                inside_to_inside = true;
                 None
             },
         };
@@ -196,7 +188,7 @@ impl Material for Dielectric {
 
         let mut absorabance = [0.0, 0.0, 0.0];
 
-        if outside_to_inside && refracted_root {
+        if (outside_to_inside && refracted_root) || inside_to_inside {
             absorabance = self.absorabance;
         }
 
