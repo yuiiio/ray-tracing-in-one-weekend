@@ -14,6 +14,7 @@ mod material;
 mod texture;
 mod aabb;
 mod utils;
+mod bvh_node;
 
 use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
 use ray::{Ray};
