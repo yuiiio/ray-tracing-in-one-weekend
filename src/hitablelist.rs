@@ -1,6 +1,7 @@
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
 use crate::aabb::{aabb};
+use crate::utils::{min, max};
 
 pub struct HitableList(Vec<Box<dyn Hitable + Send + Sync>>);
 
@@ -64,20 +65,4 @@ fn surrounding_box(box0: aabb, box1: aabb) -> aabb {
                 max(box0.max()[1], box1.max()[1]),
                 max(box0.max()[2], box1.max()[2])];
     aabb::new(min, max)
-}
-
-fn max(a: f64, b: f64) -> f64 {
-    if a < b {
-        b
-    } else {
-        a
-    }
-}
-
-fn min(a: f64, b: f64) -> f64 {
-    if a > b {
-        b
-    } else {
-        a
-    }
 }

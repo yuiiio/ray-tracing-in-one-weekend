@@ -1,5 +1,6 @@
 use crate::vec3::{Vector3};
 use crate::ray::{Ray};
+use crate::utils::{min, max};
 use std::mem::swap;
 
 pub struct aabb {
@@ -39,22 +40,6 @@ impl aabb {
             }
         }
         return true
-    }
-}
-
-fn max(a: f64, b: f64) -> f64 {
-    if a < b {
-        b
-    } else {
-        a
-    }
-}
-
-fn min(a: f64, b: f64) -> f64 {
-    if a > b {
-        b
-    } else {
-        a
     }
 }
 

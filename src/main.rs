@@ -13,6 +13,7 @@ mod camera;
 mod material;
 mod texture;
 mod aabb;
+mod utils;
 
 use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
 use ray::{Ray};
@@ -23,16 +24,7 @@ use camera::{Camera};
 use std::f64;
 use material::{Metal, Lambertian, Materials, Dielectric, DiffuseLight};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
-
-fn clamp(num: f64, min: f64, max: f64) -> f64 {
-    if num < min {
-        return min;
-    }
-    if max < num {
-        return max;
-    }
-    num
-}
+use utils::{clamp};
 
 fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
