@@ -1,5 +1,6 @@
 use crate::vec3::{Vector3};
 use crate::ray::{Ray};
+use std::mem::swap;
 
 pub struct aabb {
     min: Vector3<f64>,
@@ -15,10 +16,13 @@ impl aabb {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
-            let t0 = min( (self.min[i] - r.origin()[i]) / r.direction()[i],
-                            (self.max[i] - r.origin()[i]) / r.direction()[i] );
-            let t1 = max( (self.min[i] - r.origin()[i]) / r.direction()[i],
-                            (self.max[i] - r.origin()[i]) / r.direction()[i] );
+            let invD = 1.0 / r.direction()[i];
+            let mut t0 = (self.min[i] - r.origin()[i]) / invD;
+            let mut t1 = (self.max[i] - r.origin()[i]) / invD;
+
+            if (invD < 0.0) {
+                swap(&mut t0, &mut t1);
+            }
         
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
