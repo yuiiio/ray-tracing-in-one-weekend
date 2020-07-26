@@ -12,6 +12,14 @@ impl aabb {
         aabb { min, max }
     }
 
+    pub fn min(&self) -> Vector3<f64> {
+        self.min
+    }
+
+    pub fn max(&self) -> Vector3<f64> {
+        self.max
+    }
+
     fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> bool {
         let mut tmin = t_min;
         let mut tmax = t_max;

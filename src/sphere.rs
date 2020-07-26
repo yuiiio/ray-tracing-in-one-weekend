@@ -1,8 +1,9 @@
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
-use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_div_b};
+use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_div_b, vec3_add_b, vec3_sub_b};
 use std::f64::consts::PI;
 use crate::material::{MaterialHandle};
+use crate::aabb::{aabb};
 
 pub struct Sphere {
     center: Vector3<f64>,
@@ -47,5 +48,10 @@ impl Hitable for Sphere {
             }
         }
         rec
+    }
+
+    fn bounding_box(&self, t0: f64, t1: f64) -> Option<aabb> {
+        Some(aabb::new( vec3_sub_b( self.center, self.radius ),
+                        vec3_add_b( self.center, self.radius ) ))
     }
 } 
