@@ -12,6 +12,7 @@ mod sphere;
 mod camera;
 mod material;
 mod texture;
+mod aabb;
 
 use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
 use ray::{Ray};
@@ -70,7 +71,6 @@ fn main() {
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
     let mat1 = material_list.add_material(Lambertian::new(ImageTexture::new(open("./texture.jpg").unwrap().into_rgba())));
-    //ColorTexture::new([0.3, 0.3, 0.8])));
     let mat2 = material_list.add_material(Lambertian::new(CheckerTexture::new(
         ColorTexture::new([0.8, 0.8, 0.8]),
         ColorTexture::new([1.0, 1.0, 1.0]),
