@@ -85,6 +85,12 @@ mod test {
             None => false,
          };
         assert_eq!(false, result);
+        let r = Ray::new([3.0, 3.0, 3.0], [-1.0, -1.0, -1.0]);
+        let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
+            Some(_hitrec) => true,
+            None => false,
+         };
+        assert_eq!(true, result);
     }
 }
 

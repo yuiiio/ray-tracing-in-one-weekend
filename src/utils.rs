@@ -24,30 +24,35 @@ pub fn min(a: f64, b: f64) -> f64 {
     }
 }
 
-pub fn qsort<T: Copy>(vec: &mut Vec<T>, compare: fn(&T, &T) -> bool) -> Vec<T> {
-    if vec.len() <= 1 {
-        return vec.to_vec()
+pub fn qsort<T: Clone>(vec: &mut Vec<T>, compare: fn(&T, &T) -> bool) {
+    let start = 0;
+    let end = vec.len() - 1;
+    qsort_partition(vec, start, end as isize, compare);
+}
+
+fn qsort_partition<T: Clone>(vec: &mut Vec<T>, start: isize, end: isize, compare: fn(&T, &T) -> bool) {
+    if start < end && end - start >= 1 {
+        let pivot = partition(vec, start as isize, end as isize, compare);
+        qsort_partition(vec, start, pivot - 1, compare);
+        qsort_partition(vec, pivot + 1, end, compare);
     }
-    let x = vec.len() / 2;// chose random
-    let pipot = vec[x];
-    let mut a:Vec<T> = Vec::new();
-    let mut b:Vec<T> = Vec::new();
-    for i in x+1..vec.len() {
-        if compare(&vec[i], &pipot) {
-            vec.remove(i);
-            a.push(vec[i]);
+
+}
+
+fn partition<T: Clone>(vec: &mut Vec<T>, l: isize, h: isize, compare: fn(&T, &T) -> bool) -> isize {
+    let pivot = vec[h as usize].clone();
+    let mut i = l - 1;
+
+    for j in l..h {
+        if compare(&vec[j as usize], &pivot) {
+            i = i + 1;
+            let temp = vec[i as usize].clone(); vec[i as usize] = vec[j as usize].clone(); vec[j as usize] = temp; 
         }
     }
-    for i in 0..x-1 {
-        if compare(&pipot, &vec[i]) {
-            vec.remove(i);
-            b.push(vec[i]);
-        }
-    }
-    let mut a_sorted = qsort(&mut a, compare);
-    let mut b_sorted = qsort(&mut b, compare);
-    a_sorted.append(&mut b_sorted);
-    a_sorted
+
+    let temp = vec[(i + 1) as usize].clone(); vec[(i + 1) as usize] = vec[h as usize].clone(); vec[h as usize] = temp; 
+
+    i + 1
 }
 
 mod test {
@@ -57,15 +62,13 @@ mod test {
     fn qsort_test() {
         let mut vec = vec![4, 5, 2, 6, 1, 8, 3, 5];
         fn compare (a: &i32, b: &i32) -> bool { 
-            if a <= b {
+            if a < b {
                 return true;
             } else {
                 return false;
             }
         };
-
-        let sorted = qsort(&mut vec, compare);
-        println!("{:?}", sorted);
+        qsort(&mut vec, compare);
         assert_eq!(vec, [1, 2, 3, 4, 5, 5, 6, 8]);
     }
 }
