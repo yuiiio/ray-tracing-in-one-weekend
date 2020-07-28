@@ -2,6 +2,7 @@ use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
 use crate::aabb::{Aabb, surrounding_box};
 
+#[derive(Clone)]
 pub struct HitableList(Vec<Box<dyn Hitable + Send + Sync>>);
 
 impl HitableList {

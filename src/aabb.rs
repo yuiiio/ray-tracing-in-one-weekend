@@ -5,7 +5,7 @@ use crate::hitable::{Hitable, HitRecord};
 use crate::material::{MaterialHandle};
 use std::mem::swap;
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub struct Aabb {
     min: Vector3<f64>,
     max: Vector3<f64>,
@@ -54,7 +54,7 @@ impl Hitable for Aabb {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some( *self )
+        Some( self.clone() )
     }
 }
 

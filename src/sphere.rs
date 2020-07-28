@@ -5,6 +5,7 @@ use std::f64::consts::PI;
 use crate::material::{MaterialHandle};
 use crate::aabb::{Aabb};
 
+#[derive(Clone)]
 pub struct Sphere {
     center: Vector3<f64>,
     radius: f64,

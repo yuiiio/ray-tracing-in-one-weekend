@@ -5,6 +5,7 @@ use crate::hitable::{Hitable, HitRecord};
 use crate::ray::{Ray};
 use crate::hitablelist::{HitableList};
 
+#[derive(Clone)]
 pub struct BvhNode {
     bvh_node_box: Aabb,
     left: Box<dyn Hitable + Send + Sync>,
@@ -27,7 +28,7 @@ impl BvhNode {
         let list_size = hitable_list.len();
         match list_size {
             1 => {
-                left_obj = hitable_list[0];
+                left_obj = hitable_list[0].clone();
                 //right_obj = hitable_list[0];
                 },
             2 => {
@@ -74,6 +75,6 @@ impl Hitable for BvhNode {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some(self.bvh_node_box)
+        Some(self.bvh_node_box.clone())
     }
 }
