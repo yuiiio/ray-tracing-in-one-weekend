@@ -29,11 +29,11 @@ impl BvhNode {
         match list_size {
             1 => {
                 left_obj = hitable_list[0].clone();
-                //right_obj = hitable_list[0];
+                right_obj = hitable_list[0].clone();
                 },
             2 => {
-                //left_obj = hitable_list[0];
-                //right_obj = hitable_list[1];
+                left_obj = hitable_list[0].clone();
+                right_obj = hitable_list[1].clone();
             },
             _ => {
                 let mut a = HitableList::from_vec(hitable_list.split_off(list_size / 2));
@@ -44,6 +44,7 @@ impl BvhNode {
         }
         let left_box = left_obj.bounding_box().expect("no bounding box in bvh_node constructor");
         let right_box = right_obj.bounding_box().expect("no bounding box in bvh_node constructor");
+        println!("create BvhNode");
         BvhNode { bvh_node_box: surrounding_box(left_box, right_box),
             left: left_obj,
             right: right_obj
@@ -54,7 +55,7 @@ impl BvhNode {
 impl Hitable for BvhNode {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self.bvh_node_box.hit(r, t_min, t_max) {
-            Some(_hit_rec) =>
+            Some(_hit_rec) => {
                 match self.left.hit(r, t_min, t_max) {
                     Some(left_rec) => match self.right.hit(r, t_min, t_max) {
                         Some(right_rec) => if left_rec.get_t() < right_rec.get_t() {
@@ -68,7 +69,8 @@ impl Hitable for BvhNode {
                         Some(right_rec) => return Some(right_rec),
                         None => return None,
                     }
-                },
+                }
+            },
             None =>
                 return None,
         }

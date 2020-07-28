@@ -26,8 +26,9 @@ use std::f64;
 use material::{Metal, Lambertian, Materials, Dielectric, DiffuseLight};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
 use utils::{clamp};
+use bvh_node::{BvhNode};
 
-fn color(r: &Ray, world: &HitableList, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
+fn color(r: &Ray, world: &BvhNode, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
@@ -76,6 +77,8 @@ fn main() {
     obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
     obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], -0.2, mat5));
+
+    let obj_list = BvhNode::new(&mut obj_list);
 
     let cam = Camera::new([-2.0, 0.5, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 60.0, (NX/NY) as f64);
 
