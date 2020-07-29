@@ -28,7 +28,7 @@ use texture::{ColorTexture, CheckerTexture, ImageTexture};
 use utils::{clamp};
 use bvh_node::{BvhNode};
 
-fn color(r: &Ray, world: &BvhNode, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
+fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
@@ -41,7 +41,7 @@ fn color(r: &Ray, world: &BvhNode, depth: u32, material_list: &Materials, last_a
                                         clamp(absorabance[2], 0.0, 1.0), ];
                     return vec3_add( emitted, vec3_mul(
                         vec3_mul(mat_rec.get_attenuation(),
-                        color(mat_rec.get_scatterd(), &world, depth + 1, material_list, mat_rec.get_absorabance())),
+                        color(mat_rec.get_scatterd(), world, depth + 1, material_list, mat_rec.get_absorabance())),
                         absorabance))
                 }
                 return emitted
@@ -49,7 +49,7 @@ fn color(r: &Ray, world: &BvhNode, depth: u32, material_list: &Materials, last_a
             None => {
                 let unit_direction = vec3_unit_vector_f64(r.direction());
                 let t  = 0.5*(unit_direction[1] + 1.0);
-                return vec3_add(vec3_mul_b([0.1, 0.1, 0.1], 1.0 - t), vec3_mul_b([0.05, 0.07, 0.1], t))
+                return vec3_add(vec3_mul_b([1.0, 1.0, 1.0], 1.0 - t), vec3_mul_b([0.5, 0.7, 1.0], t))
             },
         }
     }
@@ -74,9 +74,9 @@ fn main() {
     let mat5 = material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
     obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
     obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
-    obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
+    //obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
-    obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], -0.2, mat5));
+    //obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], -0.2, mat5));
 
     let obj_list = BvhNode::new(&mut obj_list);
 

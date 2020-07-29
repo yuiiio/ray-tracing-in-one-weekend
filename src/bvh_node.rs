@@ -54,27 +54,29 @@ impl BvhNode {
             1 => qsort(hitable_list, box_y_compare),
             _ => qsort(hitable_list, box_z_compare),
         }
-        let mut left_obj: Box<dyn Hitable + Send + Sync> = Box::new(Aabb::new([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]));
-        let mut right_obj: Box<dyn Hitable + Send + Sync> = Box::new(Aabb::new([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]));
         let list_size = hitable_list.len();
-        match list_size {
+        let (left_obj, right_obj): (Box<dyn Hitable + Send + Sync>, Box<dyn Hitable + Send + Sync>) = match list_size {
             1 => {
-                left_obj = hitable_list[0].clone();
-                right_obj = hitable_list[0].clone();
+                let left_obj = hitable_list[0].clone();
+                let right_obj = hitable_list[0].clone();
+                (left_obj, right_obj)
                 },
             2 => {
-                left_obj = hitable_list[0].clone();
-                right_obj = hitable_list[1].clone();
+                let left_obj = hitable_list[0].clone();
+                let right_obj = hitable_list[1].clone();
+                (left_obj, right_obj)
             },
             _ => {
                 let mut a = HitableList::from_vec(hitable_list.split_off(list_size / 2));
                 let mut b = hitable_list;
-                left_obj = Box::new(BvhNode::new(&mut a));
-                right_obj = Box::new(BvhNode::new(&mut b));
+                let left_obj = Box::new(BvhNode::new(&mut a));
+                let right_obj = Box::new(BvhNode::new(&mut b));
+                (left_obj, right_obj)
             },
-        }
+        };
         let left_box = left_obj.bounding_box().expect("no bounding box in bvh_node constructor");
         let right_box = right_obj.bounding_box().expect("no bounding box in bvh_node constructor");
+        println!("create bvh_node");
         BvhNode { bvh_node_box: surrounding_box(left_box, right_box),
             left: left_obj,
             right: right_obj
