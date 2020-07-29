@@ -49,7 +49,7 @@ fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materi
             None => {
                 let unit_direction = vec3_unit_vector_f64(r.direction());
                 let t  = 0.5*(unit_direction[1] + 1.0);
-                return vec3_add(vec3_mul_b([1.0, 1.0, 1.0], 1.0 - t), vec3_mul_b([0.5, 0.7, 1.0], t))
+                return vec3_add(vec3_mul_b([0.1, 0.1, 0.1], 1.0 - t), vec3_mul_b([0.05, 0.07, 0.1], t))
             },
         }
     }
@@ -74,9 +74,9 @@ fn main() {
     let mat5 = material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
     obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
     obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
-    //obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
+    obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
     obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
-    //obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], -0.2, mat5));
+    obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], 0.2, mat5));
 
     let obj_list = BvhNode::new(&mut obj_list);
 

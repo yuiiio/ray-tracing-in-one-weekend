@@ -76,7 +76,6 @@ impl BvhNode {
         };
         let left_box = left_obj.bounding_box().expect("no bounding box in bvh_node constructor");
         let right_box = right_obj.bounding_box().expect("no bounding box in bvh_node constructor");
-        println!("create bvh_node");
         BvhNode { bvh_node_box: surrounding_box(left_box, right_box),
             left: left_obj,
             right: right_obj
