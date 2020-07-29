@@ -31,8 +31,8 @@ impl Hitable for Aabb {
         let mut tmax = t_max;
         for i in 0..3 {
             let inv_d = 1.0 / r.direction()[i];
-            let mut t0 = (self.min[i] - r.origin()[i]) / inv_d;
-            let mut t1 = (self.max[i] - r.origin()[i]) / inv_d;
+            let mut t0 = (self.min[i] - r.origin()[i]) * inv_d;
+            let mut t1 = (self.max[i] - r.origin()[i]) * inv_d;
 
             if (inv_d < 0.0) {
                 swap(&mut t0, &mut t1);
