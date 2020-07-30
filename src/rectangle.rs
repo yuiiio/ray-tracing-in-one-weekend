@@ -4,6 +4,7 @@ use crate::ray::{Ray};
 use crate::vec3::{Vector3, vec3_mul_b};
 use crate::material::{MaterialHandle};
 use crate::aabb::{Aabb};
+use crate::hitablelist::{HitableList};
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -82,5 +83,39 @@ impl Hitable for FlipNormals {
 
     fn bounding_box(&self) -> Option<Aabb> {
         self.shape.bounding_box()
+    }
+}
+
+#[derive(Clone)]
+pub struct Boxel {
+    pmin: Vector3<f64>,
+    pmax: Vector3<f64>,
+    list: HitableList,
+}
+
+impl Boxel {
+    pub fn new(p0: Vector3<f64>, p1: Vector3<f64>, mat_ptr: MaterialHandle) -> Self {
+        let pmin = p0;
+        let pmax = p1;
+        let mut list = HitableList::new();
+        list.push(Rect::new(p0[0], p1[0], p0[1], p1[1], p1[2], AxisType::kXY, mat_ptr));
+        list.push(FlipNormals::new(Rect::new(p0[0], p1[0], p0[1], p1[1], p0[2], AxisType::kXY, mat_ptr)));
+
+        list.push(Rect::new(p0[0], p1[0], p0[2], p1[2], p1[1], AxisType::kXZ, mat_ptr));
+        list.push(FlipNormals::new(Rect::new(p0[0], p1[0], p0[2], p1[2], p0[1], AxisType::kXZ, mat_ptr)));
+
+        list.push(Rect::new(p0[1], p1[1], p0[2], p1[2], p1[0], AxisType::kYZ, mat_ptr));
+        list.push(FlipNormals::new(Rect::new(p0[1], p1[1], p0[2], p1[2], p0[0], AxisType::kYZ, mat_ptr)));
+        Boxel { pmin, pmax, list }
+    }
+}
+
+impl Hitable for Boxel {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        self.list.hit(r, t_min, t_max)
+    }
+
+    fn bounding_box(&self) -> Option<Aabb> {
+        Some(Aabb::new(self.pmin, self.pmax))
     }
 }

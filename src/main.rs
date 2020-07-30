@@ -28,7 +28,7 @@ use material::{Metal, Lambertian, Materials, Dielectric, DiffuseLight};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
 use utils::{clamp};
 use bvh_node::{BvhNode};
-use rectangle::{Rect, AxisType, FlipNormals};
+use rectangle::{Rect, AxisType, FlipNormals, Boxel};
 
 fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
@@ -63,10 +63,12 @@ fn main() {
     const NS: usize = 500; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
+
     let red = material_list.add_material(Lambertian::new(ColorTexture::new([0.65, 0.05, 0.05])));
     let white = material_list.add_material(Lambertian::new(ColorTexture::new([0.73, 0.73, 0.73])));
     let green = material_list.add_material(Lambertian::new(ColorTexture::new([0.12, 0.45, 0.15])));
     let light = material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
+
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kYZ, green)));
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kYZ, red));
     obj_list.push(Rect::new(213.0, 343.0 , 227.0, 332.0, 554.0, AxisType::kXZ, light));
@@ -74,6 +76,8 @@ fn main() {
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kXZ, white));
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXY, white)));
 
+    obj_list.push(Boxel::new([130.0, 0.0, 65.0], [295.0, 165.0, 230.0], white));
+    obj_list.push(Boxel::new([265.0, 0.0, 295.0], [430.0, 330.0, 460.0], white));
 
     let obj_list = BvhNode::new(&mut obj_list);
 
