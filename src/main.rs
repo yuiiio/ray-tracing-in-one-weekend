@@ -28,7 +28,7 @@ use material::{Metal, Lambertian, Materials, Dielectric, DiffuseLight};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
 use utils::{clamp};
 use bvh_node::{BvhNode};
-use rectangle::{Rect, AxisType};
+use rectangle::{Rect, AxisType, FlipNormals};
 
 fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
@@ -49,9 +49,6 @@ fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materi
                 return emitted
             },
             None => {
-                let unit_direction = vec3_unit_vector_f64(r.direction());
-                let t  = 0.5*(unit_direction[1] + 1.0);
-                return vec3_add(vec3_mul_b([0.1, 0.1, 0.1], 1.0 - t), vec3_mul_b([0.05, 0.07, 0.1], t))
             },
         }
     }
@@ -60,22 +57,27 @@ fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materi
 
 fn main() {
     let now = SystemTime::now();
-    const NX: usize = 800;
+    const NX: usize = 400;
     const NY: usize = 400;
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
     const NS: usize = 500; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
-    let mat1 = material_list.add_material(Lambertian::new(ColorTexture::new([0.5, 0.5, 0.5])));
-    let mat2 = material_list.add_material(Lambertian::new(ColorTexture::new([0.8, 0.8, 0.8])));
-    let mat3 = material_list.add_material(DiffuseLight::new(ColorTexture::new([4.0, 4.0, 4.0])));
-    obj_list.push(Sphere::new([0.0 , 2.0 , 0.0], 2.0, mat1));
-    obj_list.push(Sphere::new([0.0, -1000.0, 0.0], 1000.0, mat2));
-    obj_list.push(Rect::new(3.0, 5.0 , 1.0, 3.0, -2.0, AxisType::kXY,mat3));
+    let red = material_list.add_material(Lambertian::new(ColorTexture::new([0.65, 0.05, 0.05])));
+    let white = material_list.add_material(Lambertian::new(ColorTexture::new([0.73, 0.73, 0.73])));
+    let green = material_list.add_material(Lambertian::new(ColorTexture::new([0.12, 0.45, 0.15])));
+    let light = material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
+    obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kYZ, green)));
+    obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kYZ, red));
+    obj_list.push(Rect::new(213.0, 343.0 , 227.0, 332.0, 554.0, AxisType::kXZ, light));
+    obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXZ, white)));
+    obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kXZ, white));
+    obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXY, white)));
+
 
     let obj_list = BvhNode::new(&mut obj_list);
 
-    let cam = Camera::new([13.0, 2.0, 3.0], [0.0, 1.0, 0.0], [0.0, 1.0, 0.0], 30.0, (NX/NY) as f64);
+    let cam = Camera::new([278.0, 278.0, -800.0], [278.0, 278.0, 0.0], [0.0, 1.0, 0.0], 40.0, (NX/NY) as f64);
 
     let cam = Arc::new(cam);
     let obj_list = Arc::new(obj_list);

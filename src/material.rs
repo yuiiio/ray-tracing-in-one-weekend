@@ -33,7 +33,7 @@ pub trait Material {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Copy)]
 pub struct MaterialHandle(pub usize);
 
 pub struct Materials(Vec<Box<dyn Material + Send + Sync>>);

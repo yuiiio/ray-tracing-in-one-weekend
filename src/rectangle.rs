@@ -1,8 +1,7 @@
 
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
-use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_div_b, vec3_add_b, vec3_sub_b};
-use std::f64::consts::PI;
+use crate::vec3::{Vector3, vec3_mul_b};
 use crate::material::{MaterialHandle};
 use crate::aabb::{Aabb};
 
@@ -32,7 +31,6 @@ impl Rect {
 
 impl Hitable for Rect {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-
         let (xi, yi, zi, nnormal): (usize, usize, usize, Vector3<f64>) = match self.axis {
             AxisType::kXY => (0, 1, 2, [0.0, 0.0, 1.0]),
             AxisType::kXZ => (0, 2, 1, [0.0, 1.0, 0.0]),
@@ -55,6 +53,34 @@ impl Hitable for Rect {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some(Aabb::new([self.x0, self.y0, self.k-0.0001], [self.x1, self.y0, self.k+0.0001]))
+        match self.axis {
+            AxisType::kXY => Some(Aabb::new([self.x0, self.y0, self.k-0.0001], [self.x1, self.y1, self.k+0.0001])),
+            AxisType::kXZ => Some(Aabb::new([self.x0, self.k-0.0001, self.y0], [self.x1, self.k+0.0001, self.y1])),
+            AxisType::kYZ => Some(Aabb::new([self.k-0.0001, self.x0, self.y0], [self.k+0.0001, self.x1, self.y1])),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct FlipNormals {
+    shape: Rect,
+}
+
+impl FlipNormals {
+    pub fn new(shape: Rect) -> Self {
+        FlipNormals{ shape }
+    }
+}
+
+impl Hitable for FlipNormals {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        match self.shape.hit(r, t_min, t_max) {
+            Some(hit) => Some(HitRecord::new(hit.get_t(), hit.get_u(), hit.get_v(), hit.get_p(), vec3_mul_b(hit.get_normal(), -1.0), hit.get_mat_ptr())),
+            None => None,
+        }
+    }
+
+    fn bounding_box(&self) -> Option<Aabb> {
+        self.shape.bounding_box()
     }
 }
