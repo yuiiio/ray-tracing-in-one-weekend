@@ -6,7 +6,7 @@ pub struct Ray {
 }
 
 impl Ray {
-    pub fn new(a: Vector3<f64>, b: Vector3<f64>) -> Ray {
+    pub fn new(a: Vector3<f64>, b: Vector3<f64>) -> Self {
         Ray{a, b}
     }
 

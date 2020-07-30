@@ -13,7 +13,7 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn new(t: f64, u: f64, v: f64, p: Vector3<f64>, normal: Vector3<f64>, mat_ptr: MaterialHandle) -> HitRecord {
+    pub fn new(t: f64, u: f64, v: f64, p: Vector3<f64>, normal: Vector3<f64>, mat_ptr: MaterialHandle) -> Self {
         HitRecord {t, u, v, p, normal, mat_ptr}
     }
 

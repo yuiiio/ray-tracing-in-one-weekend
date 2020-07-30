@@ -28,7 +28,7 @@ pub struct CheckerTexture<T: Texture> {
 }
 
 impl<T: Texture> CheckerTexture<T> {
-    pub fn new(m_odd: T, m_even: T, m_freq: f64) -> CheckerTexture<T> {
+    pub fn new(m_odd: T, m_even: T, m_freq: f64) -> Self {
         CheckerTexture { m_odd, m_even, m_freq }
     }
 }
@@ -49,7 +49,7 @@ pub struct ImageTexture {
 }
 
 impl ImageTexture {
-    pub fn new(teximage: RgbaImage) -> ImageTexture {
+    pub fn new(teximage: RgbaImage) -> Self {
         ImageTexture { teximage }
     }
 }

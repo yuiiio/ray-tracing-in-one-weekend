@@ -13,7 +13,7 @@ pub struct Sphere {
 }
 
 impl Sphere {
-    pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Sphere {
+    pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Self {
         Sphere {center, radius, mat_ptr}
     }
 }

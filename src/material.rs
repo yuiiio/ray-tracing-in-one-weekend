@@ -39,7 +39,7 @@ pub struct MaterialHandle(pub usize);
 pub struct Materials(Vec<Box<dyn Material + Send + Sync>>);
 
 impl Materials {
-    pub fn new() -> Materials {
+    pub fn new() -> Self {
         Materials(Vec::new())
     }
 
@@ -59,7 +59,7 @@ pub struct Metal<T: Texture> {
 }
 
 impl<T: Texture> Metal<T> {
-    pub fn new(f: f64, texture: T) -> Metal<T> {
+    pub fn new(f: f64, texture: T) -> Self {
         let fuzz = if f < 1.0 { f } else { 1.0 };
         Metal{fuzz , texture}
     }
@@ -88,7 +88,7 @@ pub struct Lambertian<T: Texture> {
 }
 
 impl<T: Texture> Lambertian<T> {
-    pub fn new(texture: T) -> Lambertian<T> {
+    pub fn new(texture: T) -> Self {
         Lambertian{ texture }
     }
 }
@@ -122,7 +122,7 @@ pub struct Dielectric {
 }
 
 impl Dielectric {
-    pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Dielectric {
+    pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Self {
         Dielectric{ ref_idx, absorabance }
     }
 }
@@ -202,7 +202,7 @@ pub struct DiffuseLight<T: Texture> {
 }
 
 impl<T: Texture> DiffuseLight<T> {
-    pub fn new(texture: T) -> DiffuseLight<T> {
+    pub fn new(texture: T) -> Self {
         DiffuseLight{ texture }
     }
 }

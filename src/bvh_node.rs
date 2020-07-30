@@ -44,7 +44,7 @@ fn box_z_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
 }
 
 impl BvhNode {
-    pub fn new(hitable_list: &mut HitableList) -> BvhNode {
+    pub fn new(hitable_list: &mut HitableList) -> Self {
         let mut rng = rand::thread_rng();
         let x: f64 = rng.gen();
         let x: f64 = x * 3.0;

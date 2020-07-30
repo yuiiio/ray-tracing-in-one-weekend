@@ -12,7 +12,7 @@ pub struct Aabb {
 }
 
 impl Aabb {
-    pub fn new(min: Vector3<f64>, max: Vector3<f64>) -> Aabb {
+    pub fn new(min: Vector3<f64>, max: Vector3<f64>) -> Self {
         Aabb { min, max }
     }
 

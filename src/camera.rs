@@ -11,7 +11,7 @@ pub struct Camera {
 }
 
 impl Camera {
-    pub fn new(lookfrom: Vector3<f64>, lookat: Vector3<f64>, vup: Vector3<f64>, vfov :f64, aspect :f64) -> Camera {
+    pub fn new(lookfrom: Vector3<f64>, lookat: Vector3<f64>, vup: Vector3<f64>, vfov :f64, aspect :f64) -> Self {
         let theta = vfov * ((2.0 * f64::consts::PI) / 360.0);
         let half_height = (theta / 2.0).tan() * 1.0;
         let half_width = half_height * aspect;

@@ -15,6 +15,7 @@ mod texture;
 mod aabb;
 mod utils;
 mod bvh_node;
+mod rectangle;
 
 use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
 use ray::{Ray};
@@ -27,6 +28,7 @@ use material::{Metal, Lambertian, Materials, Dielectric, DiffuseLight};
 use texture::{ColorTexture, CheckerTexture, ImageTexture};
 use utils::{clamp};
 use bvh_node::{BvhNode};
+use rectangle::{Rect, AxisType};
 
 fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
@@ -59,28 +61,21 @@ fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materi
 fn main() {
     let now = SystemTime::now();
     const NX: usize = 800;
-    const NY: usize = 800;
+    const NY: usize = 400;
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
-    const NS: usize = 100; //anti-aliasing sample-per-pixel
+    const NS: usize = 500; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut material_list = Materials::new();
-    let mat1 = material_list.add_material(Lambertian::new(ImageTexture::new(open("./texture.jpg").unwrap().into_rgba())));
-    let mat2 = material_list.add_material(Lambertian::new(CheckerTexture::new(
-        ColorTexture::new([0.8, 0.8, 0.8]),
-        ColorTexture::new([1.0, 1.0, 1.0]),
-        10.0)));
-    let mat3 = material_list.add_material(Metal::new(0.3, ColorTexture::new([0.2, 0.6, 0.8])));
-    let mat4 = material_list.add_material(Dielectric::new(2.0, [1.0, 3.0, 2.0]));
-    let mat5 = material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
-    obj_list.push(Sphere::new([0.0 , 0.0 , -1.0], 0.5, mat1));
-    obj_list.push(Sphere::new([0.0, -100.5, -1.0], 100.0, mat2));
-    obj_list.push(Sphere::new([1.0 , 0.0 , -1.0], 0.5, mat3));
-    obj_list.push(Sphere::new([-1.0 , 0.0 , -1.0], 0.5, mat4));
-    obj_list.push(Sphere::new([-0.5 , 0.3 , -1.5], 0.2, mat5));
+    let mat1 = material_list.add_material(Lambertian::new(ColorTexture::new([0.5, 0.5, 0.5])));
+    let mat2 = material_list.add_material(Lambertian::new(ColorTexture::new([0.8, 0.8, 0.8])));
+    let mat3 = material_list.add_material(DiffuseLight::new(ColorTexture::new([4.0, 4.0, 4.0])));
+    obj_list.push(Sphere::new([0.0 , 2.0 , 0.0], 2.0, mat1));
+    obj_list.push(Sphere::new([0.0, -1000.0, 0.0], 1000.0, mat2));
+    obj_list.push(Rect::new(3.0, 5.0 , 1.0, 3.0, -2.0, AxisType::kXY,mat3));
 
     let obj_list = BvhNode::new(&mut obj_list);
 
-    let cam = Camera::new([-2.0, 0.5, 1.0], [0.0, 0.0, -1.0], [0.0, 1.0, 0.0], 60.0, (NX/NY) as f64);
+    let cam = Camera::new([13.0, 2.0, 3.0], [0.0, 1.0, 0.0], [0.0, 1.0, 0.0], 30.0, (NX/NY) as f64);
 
     let cam = Arc::new(cam);
     let obj_list = Arc::new(obj_list);
@@ -105,6 +100,7 @@ fn main() {
                 }
                 col = vec3_div_b(col, NS as f64);
                 col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];
+                col = [clamp(col[0], 0.0, 1.0), clamp(col[1], 0.0, 1.0), clamp(col[2], 0.0, 1.0)];
                 let ir: u8 = (255.99 * col[0]) as u8;
                 let ig: u8 = (255.99 * col[1]) as u8;
                 let ib: u8 = (255.99 * col[2]) as u8;
