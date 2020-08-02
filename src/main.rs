@@ -19,7 +19,7 @@ mod rectangle;
 mod translate;
 mod quotation;
 
-use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
+use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_mul, vec3_div};
 use ray::{Ray};
 use hitable::{Hitable};
 use hitablelist::{HitableList};
@@ -72,6 +72,7 @@ fn main() {
     let green = material_list.add_material(Lambertian::new(ColorTexture::new([0.12, 0.45, 0.15])));
     let light = material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(open("./texture.png").unwrap().into_rgba())));
+    let glass = material_list.add_material(Dielectric::new(2.0, [0.01, 0.01, 0.0]));
 
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kYZ, green)));
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kYZ, red));
@@ -90,6 +91,8 @@ fn main() {
                         Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], white)
                     ), [0.0, 1.0, 0.0], 15.0)
                 ), [265.0, 0.0, 295.0]));
+
+    obj_list.push(Sphere::new([455.0, 100.0, 100.0], 100.0, glass));
 
     let obj_list = BvhNode::new(&mut obj_list);
 
@@ -116,7 +119,8 @@ fn main() {
                     let r = cam.get_ray(u, v);
                     col = vec3_add(color(&r, &obj_list, 0, &material_list, [0.0, 0.0, 0.0]), col);
                 }
-                col = vec3_div_b(col, NS as f64);
+                let c = 1.0 / NS as f64;
+                col = vec3_mul_b(col, c);
                 col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];
                 col = [clamp(col[0], 0.0, 1.0), clamp(col[1], 0.0, 1.0), clamp(col[2], 0.0, 1.0)];
                 let ir: u8 = (255.99 * col[0]) as u8;

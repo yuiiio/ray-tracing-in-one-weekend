@@ -1,6 +1,6 @@
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::{Ray};
-use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_div_b, vec3_add_b, vec3_sub_b};
+use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_mul_b, vec3_add_b, vec3_sub_b};
 use std::f64::consts::PI;
 use crate::material::{MaterialHandle};
 use crate::aabb::{Aabb};
@@ -36,14 +36,16 @@ impl Hitable for Sphere {
             let temp = (-b - descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
-                let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
+                let c = 1.0 / self.radius;
+                let nnormal = vec3_mul_b(vec3_sub(point, self.center), c);
                 let (u, v) = get_sphere_uv(nnormal);
                 return Some(HitRecord::new(temp, u, v, point, nnormal, MaterialHandle(self.mat_ptr.0)));
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if  temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
-                let nnormal = vec3_div_b(vec3_sub(point, self.center), self.radius);
+                let c = 1.0 / self.radius;
+                let nnormal = vec3_mul_b(vec3_sub(point, self.center), c);
                 let (u, v) = get_sphere_uv(nnormal);
                 return Some(HitRecord::new(temp, u, v, point, nnormal, MaterialHandle(self.mat_ptr.0)));
             }

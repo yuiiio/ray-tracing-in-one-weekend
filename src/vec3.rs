@@ -82,17 +82,6 @@ where T: Copy + Mul<T, Output = T>
 }
 
 #[inline(always)]
-pub fn vec3_div_b<T>(a: Vector3<T>, b: T) -> Vector3<T>
-where T: Copy + Div<T, Output = T>
-{
-    [
-        a[0] / b,
-        a[1] / b,
-        a[2] / b,
-    ]
-}
-
-#[inline(always)]
 pub fn vec3_dot<T>(a: Vector3<T>, b: Vector3<T>) -> T
 where T: Copy + Add<T, Output = T> + Mul<T, Output = T>
 {
@@ -116,7 +105,8 @@ where T: Copy + Add<T, Output = T> + Mul<T, Output = T>
 pub fn vec3_unit_vector_f64(a: Vector3<f64>) -> Vector3<f64>
 {
     let b: f64 = vec3_length_f64(a);
-    vec3_div_b(a, b)
+    let c = 1.0 / b;
+    vec3_mul_b(a, c)
 }
 
 #[inline(always)]
