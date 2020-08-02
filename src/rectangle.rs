@@ -47,8 +47,8 @@ impl Hitable for Rect {
         if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
             return None
         }
-        let u = x - self.x0 / (self.x1 - self.x0);
-        let v = y - self.y0 / (self.y1 - self.y0);
+        let u = (x - self.x0) / (self.x1 - self.x0);
+        let v = (y - self.y0) / (self.y1 - self.y0);
         let p = r.point_at_parameter(t);
         Some(HitRecord::new(t, u, v, p, nnormal, MaterialHandle(self.mat_ptr.0)))
     }

@@ -71,13 +71,14 @@ fn main() {
     let white = material_list.add_material(Lambertian::new(ColorTexture::new([0.73, 0.73, 0.73])));
     let green = material_list.add_material(Lambertian::new(ColorTexture::new([0.12, 0.45, 0.15])));
     let light = material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
+    let magick = material_list.add_material(Lambertian::new(ImageTexture::new(open("./texture.png").unwrap().into_rgba())));
 
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kYZ, green)));
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kYZ, red));
     obj_list.push(Rect::new(213.0, 343.0 , 227.0, 332.0, 554.0, AxisType::kXZ, light));
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXZ, white)));
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kXZ, white));
-    obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXY, white)));
+    obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXY, magick)));
 
     obj_list.push(Translate::new(Box::new(
                     Rotate::new(Box::new(
