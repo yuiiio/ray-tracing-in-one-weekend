@@ -17,6 +17,7 @@ mod utils;
 mod bvh_node;
 mod rectangle;
 mod translate;
+mod quotation;
 
 use vec3::{Vector3, vec3_unit_vector_f64, vec3_mul_b, vec3_add, vec3_div_b, vec3_mul, vec3_div};
 use ray::{Ray};
@@ -30,6 +31,7 @@ use texture::{ColorTexture, CheckerTexture, ImageTexture};
 use utils::{clamp};
 use bvh_node::{BvhNode};
 use rectangle::{Rect, AxisType, FlipNormals, Boxel};
+use translate::{Translate, Rotate};
 
 fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materials, last_absorabance: Vector3<f64>) -> Vector3<f64> {
     if depth < 50 {
@@ -77,8 +79,16 @@ fn main() {
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kXZ, white));
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kXY, white)));
 
-    obj_list.push(Boxel::new([130.0, 0.0, 65.0], [295.0, 165.0, 230.0], white));
-    obj_list.push(Boxel::new([265.0, 0.0, 295.0], [430.0, 330.0, 460.0], white));
+    obj_list.push(Translate::new(Box::new(
+                    Rotate::new(Box::new(
+                        Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], white)
+                    ), [0.0, 1.0, 0.0], -18.0)
+                ), [130.0, 0.0, 65.0]));
+    obj_list.push(Translate::new(Box::new(
+                    Rotate::new(Box::new(
+                        Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], white)
+                    ), [0.0, 1.0, 0.0], 15.0)
+                ), [265.0, 0.0, 295.0]));
 
     let obj_list = BvhNode::new(&mut obj_list);
 
