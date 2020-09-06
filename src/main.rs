@@ -39,7 +39,7 @@ fn color<T: Hitable>(r: &Ray, world: &Arc<T>, depth: u32, material_list: &Materi
             Some(rec) => {
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
-                    let absorabance = vec3_mul_b(last_absorabance, rec.get_t());
+                    let absorabance = vec3_mul_b(last_absorabance, rec.get_t() * rec.get_t());
                     let absorabance = vec3_div([1.0, 1.0, 1.0], absorabance);
                     let absorabance = [ clamp(absorabance[0], 0.0, 1.0),
                                         clamp(absorabance[1], 0.0, 1.0),
@@ -73,6 +73,7 @@ fn main() {
     let light = material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(open("./texture.png").unwrap().into_rgba())));
     let glass = material_list.add_material(Dielectric::new(2.0, [0.01, 0.01, 0.0]));
+    let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.8, 0.85, 0.88])));
 
     obj_list.push(FlipNormals::new(Rect::new(0.0, 555.0 , 0.0, 555.0, 555.0, AxisType::kYZ, green)));
     obj_list.push(Rect::new(0.0, 555.0 , 0.0, 555.0, 0.0, AxisType::kYZ, red));
@@ -88,7 +89,7 @@ fn main() {
                 ), [130.0, 0.0, 65.0]));
     obj_list.push(Translate::new(Box::new(
                     Rotate::new(Box::new(
-                        Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], white)
+                        Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal)
                     ), [0.0, 1.0, 0.0], 15.0)
                 ), [265.0, 0.0, 295.0]));
 
