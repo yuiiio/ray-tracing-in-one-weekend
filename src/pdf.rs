@@ -29,7 +29,13 @@ impl Pdf for CosinePdf {
     }
     fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
         let u = hit_record.get_normal(); //Already normalized?
-        let v = vec3_unit_vector_f64(cross(u, [1.0, 0.0, 0.0]));
+        let a: Vector3<f64>;
+        if u[0].abs() > 0.9 {
+            a = [0.0, 1.0, 0.0];
+        } else {
+            a = [1.0, 0.0, 0.0];
+        }
+        let v = vec3_unit_vector_f64(cross(u, a));
         let w = cross(v, u);
 
         let rcd = random_cosine_direction();
