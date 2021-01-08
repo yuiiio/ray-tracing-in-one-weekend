@@ -10,6 +10,7 @@ mod camera;
 mod hitable;
 mod hitablelist;
 mod material;
+mod pdf;
 mod quotation;
 mod ray;
 mod rectangle;
@@ -23,7 +24,7 @@ use bvh_node::BvhNode;
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
-use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal};
+use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -45,6 +46,11 @@ fn color<T: Hitable>(
             Some(rec) => {
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
+                    let scatterd = mat_rec.get_scatterd();
+                    let next_ray: &Ray;
+                    match scatterd {
+                        Scatterd::Ray(ray) => next_ray = ray,
+                    };
                     let absorabance = vec3_mul_b(last_absorabance, rec.get_t() * rec.get_t());
                     let absorabance = vec3_div([1.0, 1.0, 1.0], absorabance);
                     let absorabance = [
@@ -58,7 +64,7 @@ fn color<T: Hitable>(
                             vec3_mul(
                                 mat_rec.get_attenuation(),
                                 color(
-                                    mat_rec.get_scatterd(),
+                                    next_ray,
                                     world,
                                     depth + 1,
                                     material_list,

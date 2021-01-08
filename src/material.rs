@@ -1,7 +1,7 @@
 use rand::prelude::*;
-use std::f64::consts::PI;
 
 use crate::hitable::HitRecord;
+use crate::pdf::{CosinePdf, Pdf};
 use crate::ray::Ray;
 use crate::texture::Texture;
 use crate::vec3::{
@@ -9,14 +9,18 @@ use crate::vec3::{
 };
 use std::f64;
 
+pub enum Scatterd {
+    Ray(Ray),
+}
+
 pub struct MatRecord {
-    scatterd: Ray,
+    scatterd: Scatterd,
     attenuation: Vector3<f64>,
     absorabance: Vector3<f64>,
 }
 
 impl MatRecord {
-    pub fn get_scatterd(&self) -> &Ray {
+    pub fn get_scatterd(&self) -> &Scatterd {
         &self.scatterd
     }
 
@@ -94,7 +98,7 @@ impl<T: Texture> Material for Metal<T> {
         let absorabance = [0.0, 0.0, 0.0];
         if vec3_dot(scatterd.direction(), hit_record.get_normal()) > 0.0 {
             Some(MatRecord {
-                scatterd,
+                scatterd: Scatterd::Ray(scatterd),
                 attenuation,
                 absorabance,
             })
@@ -127,19 +131,6 @@ fn random_in_unit_sphere() -> Vector3<f64> {
     }
 }
 
-fn random_cosine_direction() -> Vector3<f64> {
-    let mut rng = rand::thread_rng();
-    let r1: f64 = rng.gen();
-    let r2: f64 = rng.gen();
-
-    let a = 2.0 * PI * r1;
-    let b = r2.sqrt();
-    let x: f64 = a.cos() * b;
-    let y: f64 = a.sin() * b;
-    let z: f64 = (1.0 - r2).sqrt();
-    [x, y, z]
-}
-
 impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let temp = vec3_add(
@@ -152,7 +143,7 @@ impl<T: Texture> Material for Lambertian<T> {
                 .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         let absorabance = [0.0, 0.0, 0.0];
         Some(MatRecord {
-            scatterd,
+            scatterd: Scatterd::Ray(scatterd),
             attenuation,
             absorabance,
         })
@@ -246,7 +237,7 @@ impl Material for Dielectric {
         }
 
         Some(MatRecord {
-            scatterd,
+            scatterd: Scatterd::Ray(scatterd),
             attenuation,
             absorabance,
         })
