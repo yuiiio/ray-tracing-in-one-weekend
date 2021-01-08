@@ -25,6 +25,7 @@ use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
+use pdf::{CosinePdf, Pdf};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -46,11 +47,6 @@ fn color<T: Hitable>(
             Some(rec) => {
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
-                    let scatterd = mat_rec.get_scatterd();
-                    let next_ray: &Ray;
-                    match scatterd {
-                        Scatterd::Ray(ray) => next_ray = ray,
-                    };
                     let absorabance = vec3_mul_b(last_absorabance, rec.get_t() * rec.get_t());
                     let absorabance = vec3_div([1.0, 1.0, 1.0], absorabance);
                     let absorabance = [
@@ -58,22 +54,59 @@ fn color<T: Hitable>(
                         clamp(absorabance[1], 0.0, 1.0),
                         clamp(absorabance[2], 0.0, 1.0),
                     ];
-                    return vec3_add(
-                        emitted,
-                        vec3_mul(
-                            vec3_mul(
-                                mat_rec.get_attenuation(),
-                                color(
-                                    next_ray,
-                                    world,
-                                    depth + 1,
-                                    material_list,
-                                    mat_rec.get_absorabance(),
+                    let scatterd = mat_rec.get_scatterd();
+                    match scatterd {
+                        Scatterd::Ray(next_ray) => {
+                            return vec3_add(
+                                emitted,
+                                vec3_mul(
+                                    vec3_mul(
+                                        mat_rec.get_attenuation(),
+                                        color(
+                                            next_ray,
+                                            world,
+                                            depth + 1,
+                                            material_list,
+                                            mat_rec.get_absorabance(),
+                                        ),
+                                    ),
+                                    absorabance,
                                 ),
-                            ),
-                            absorabance,
-                        ),
-                    );
+                            );
+                        }
+                        Scatterd::Pdf(pdf) => {
+                            let next_ray = &Ray::new(rec.get_p(), pdf.generate(&rec));
+                            let pdf_value = pdf.value(&rec, &next_ray.direction());
+                            if pdf_value > 0.0 {
+                                let spdf_value = material_list
+                                    .get(rec.get_mat_ptr())
+                                    .scattering_pdf(&next_ray, &rec);
+                                let albedo = vec3_mul_b(mat_rec.get_attenuation(), spdf_value);
+                                let nor_pdf_value = 1.0 / pdf_value;
+                                return vec3_add(
+                                    emitted,
+                                    vec3_mul_b(
+                                        vec3_mul(
+                                            vec3_mul(
+                                                albedo,
+                                                color(
+                                                    next_ray,
+                                                    world,
+                                                    depth + 1,
+                                                    material_list,
+                                                    mat_rec.get_absorabance(),
+                                                ),
+                                            ),
+                                            absorabance,
+                                        ),
+                                        nor_pdf_value,
+                                    ),
+                                );
+                            } else {
+                                return emitted;
+                            }
+                        }
+                    };
                 }
                 return emitted;
             }

@@ -1,4 +1,5 @@
 use rand::prelude::*;
+use std::f64::consts::PI;
 
 use crate::hitable::HitRecord;
 use crate::pdf::{CosinePdf, Pdf};
@@ -11,6 +12,7 @@ use std::f64;
 
 pub enum Scatterd {
     Ray(Ray),
+    Pdf(Box<dyn Pdf>),
 }
 
 pub struct MatRecord {
@@ -37,6 +39,9 @@ pub trait Material {
     fn scatter(&self, r: &Ray, hit_record: &HitRecord) -> Option<MatRecord>;
     fn emitted(&self, _r: &Ray, _hit_record: &HitRecord) -> Vector3<f64> {
         [0.0, 0.0, 0.0]
+    }
+    fn scattering_pdf(&self, _r: &Ray, _hit_record: &HitRecord) -> f64 {
+        return 0.0;
     }
 }
 
@@ -133,20 +138,26 @@ fn random_in_unit_sphere() -> Vector3<f64> {
 
 impl<T: Texture> Material for Lambertian<T> {
     fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
-        let temp = vec3_add(
-            vec3_add(hit_record.get_p(), hit_record.get_normal()),
-            random_in_unit_sphere(),
-        );
-        let scatterd = Ray::new(hit_record.get_p(), vec3_sub(temp, hit_record.get_p()));
         let attenuation =
             self.texture
                 .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         let absorabance = [0.0, 0.0, 0.0];
+        let pdf = CosinePdf {};
         Some(MatRecord {
-            scatterd: Scatterd::Ray(scatterd),
+            scatterd: Scatterd::Pdf(Box::new(pdf)),
             attenuation,
             absorabance,
         })
+    }
+    fn scattering_pdf(&self, _r: &Ray, _hit_record: &HitRecord) -> f64 {
+        let n = _hit_record.get_normal(); //Already normalized?
+        let direction = vec3_unit_vector_f64(_r.direction());
+        let cosine = vec3_dot(n, direction);
+        if cosine > 0.0 {
+            return cosine / PI;
+        } else {
+            return 0.0;
+        };
     }
 }
 

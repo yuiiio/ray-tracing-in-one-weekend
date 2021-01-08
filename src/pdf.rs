@@ -10,19 +10,24 @@ use crate::vec3::{
 use std::f64;
 
 pub trait Pdf {
-    fn value(hit_record: &HitRecord, direction: &Vector3<f64>) -> f64;
-    fn generate(hit_record: &HitRecord) -> Vector3<f64>;
+    fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64;
+    fn generate(&self, hit_record: &HitRecord) -> Vector3<f64>;
 }
 
 pub struct CosinePdf {}
 
 impl Pdf for CosinePdf {
-    fn value(hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
+    fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
         let n = hit_record.get_normal(); //Already normalized?
         let direction = vec3_unit_vector_f64(*direction);
-        return vec3_dot(n, direction) / PI;
+        let cosine = vec3_dot(n, direction);
+        if cosine > 0.0 {
+            return cosine / PI;
+        } else {
+            return 0.0;
+        };
     }
-    fn generate(hit_record: &HitRecord) -> Vector3<f64> {
+    fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
         let u = hit_record.get_normal(); //Already normalized?
         let v = vec3_unit_vector_f64(cross(u, [1.0, 0.0, 0.0]));
         let w = cross(v, u);
