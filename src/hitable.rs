@@ -52,7 +52,7 @@ pub trait HitableClone {
 }
 
 impl<T> HitableClone for T
-where 
+where
     T: 'static + Hitable + Send + Sync + Clone,
 {
     fn clone_box(&self) -> Box<dyn Hitable + Send + Sync> {

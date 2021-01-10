@@ -33,7 +33,10 @@ use std::f64;
 use texture::{CheckerTexture, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
 use utils::clamp;
-use vec3::{vec3_add, vec3_div, vec3_mul, vec3_mul_b, vec3_unit_vector_f64, Vector3};
+use vec3::{
+    vec3_add, vec3_div, vec3_dot, vec3_mul, vec3_mul_b, vec3_squared_length, vec3_sub,
+    vec3_unit_vector_f64, Vector3,
+};
 
 fn color<T: Hitable>(
     r: &Ray,
@@ -75,8 +78,35 @@ fn color<T: Hitable>(
                             );
                         }
                         Scatterd::Pdf(pdf) => {
+                            // direct ray to light sampling test
+                            let mut rng = rand::thread_rng();
+                            let rng_x: f64 = rng.gen();
+                            let rng_y: f64 = rng.gen();
+                            let on_light = [
+                                213.0 + rng_x * (343.0 - 213.0),
+                                554.0,
+                                227.0 + rng_y * (332.0 - 227.0),
+                            ];
+                            let to_light = vec3_sub(on_light, rec.get_p());
+                            let distance_squad = vec3_squared_length(to_light);
+                            let to_light = vec3_unit_vector_f64(to_light);
+                            if vec3_dot(rec.get_normal(), to_light) < 0.0 {
+                                return emitted;
+                            }
+
+                            let light_area = (343.0 - 213.0) * (332.0 - 227.0);
+                            let light_cosine = to_light[1]; // to_light is already normalized so get y value
+                            if light_cosine < 0.00001 {
+                                return emitted;
+                            }
+
+                            let pdf_value = distance_squad / (light_cosine * light_area);
+                            let next_ray = &Ray::new(rec.get_p(), to_light);
+
+                            /*
                             let next_ray = &Ray::new(rec.get_p(), pdf.generate(&rec));
                             let pdf_value = pdf.value(&rec, &next_ray.direction());
+                            */
                             if pdf_value > 0.0 {
                                 let spdf_value = material_list
                                     .get(rec.get_mat_ptr())
@@ -146,7 +176,7 @@ fn main() {
         green,
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kYZ, red));
-    obj_list.push(Rect::new(
+    obj_list.push(FlipNormals::new(Rect::new(
         213.0,
         343.0,
         227.0,
@@ -154,7 +184,7 @@ fn main() {
         554.0,
         AxisType::kXZ,
         light,
-    ));
+    )));
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,

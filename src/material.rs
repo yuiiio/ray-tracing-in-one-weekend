@@ -270,8 +270,15 @@ impl<T: Texture> Material for DiffuseLight<T> {
         None
     }
 
-    fn emitted(&self, _r: &Ray, hit_record: &HitRecord) -> Vector3<f64> {
-        self.texture
-            .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p())
+    fn emitted(&self, r: &Ray, hit_record: &HitRecord) -> Vector3<f64> {
+        if vec3_dot(hit_record.get_normal(), r.direction()) < 0.0 {
+            return self.texture.get_value(
+                hit_record.get_u(),
+                hit_record.get_v(),
+                &hit_record.get_p(),
+            );
+        } else {
+            return [0.0, 0.0, 0.0];
+        }
     }
 }
