@@ -25,7 +25,7 @@ use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, MaterialHandle, Materials, Metal, Scatterd};
-use pdf::{CosinePdf, HitablePdf, Pdf};
+use pdf::{CosinePdf, HitablePdf, MixturePdf, Pdf};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -78,7 +78,6 @@ fn color<T: Hitable>(
                             );
                         }
                         Scatterd::Pdf(pdf) => {
-                            // direct ray to light sampling test
                             let p = Rect::new(
                                 213.0,
                                 343.0,
@@ -91,15 +90,14 @@ fn color<T: Hitable>(
 
                             let hitable_cosine_pdf = HitablePdf { hitable: p };
 
-                            let next_ray =
-                                &Ray::new(rec.get_p(), hitable_cosine_pdf.generate(&rec));
+                            let mix_pdf = MixturePdf {
+                                pdf0: hitable_cosine_pdf,
+                                pdf1: pdf,
+                            }; // mix pdf light and hitable
 
-                            let pdf_value = hitable_cosine_pdf.value(&rec, &next_ray.direction());
+                            let next_ray = &Ray::new(rec.get_p(), mix_pdf.generate(&rec));
+                            let pdf_value = mix_pdf.value(&rec, &next_ray.direction());
 
-                            /*
-                            let next_ray = &Ray::new(rec.get_p(), pdf.generate(&rec));
-                            let pdf_value = pdf.value(&rec, &next_ray.direction());
-                            */
                             if pdf_value > 0.0 {
                                 let spdf_value = material_list
                                     .get(rec.get_mat_ptr())

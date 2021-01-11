@@ -72,3 +72,25 @@ impl<T: Hitable> Pdf for HitablePdf<T> {
         return normalized;
     }
 }
+
+pub struct MixturePdf<'a, T: Pdf> {
+    pub pdf0: T,
+    pub pdf1: &'a Box<dyn Pdf>,
+}
+
+impl<'a, T: Pdf> Pdf for MixturePdf<'a, T> {
+    fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
+        let pdf0_value = self.pdf0.value(hit_record, direction);
+        let pdf1_value = self.pdf1.value(hit_record, direction);
+        return 0.5 * pdf0_value + 0.5 * pdf1_value;
+    }
+    fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
+        let mut rng = rand::thread_rng();
+        let r: f64 = rng.gen();
+        if r < 0.5 {
+            return self.pdf0.generate(hit_record);
+        } else {
+            return self.pdf1.generate(hit_record);
+        }
+    }
+}
