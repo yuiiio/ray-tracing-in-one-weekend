@@ -1,7 +1,7 @@
-use crate::ray::{Ray};
-use crate::vec3::{Vector3};
-use crate::material::{MaterialHandle};
-use crate::aabb::{Aabb};
+use crate::aabb::Aabb;
+use crate::material::MaterialHandle;
+use crate::ray::Ray;
+use crate::vec3::Vector3;
 
 pub struct HitRecord {
     t: f64,
@@ -13,8 +13,22 @@ pub struct HitRecord {
 }
 
 impl HitRecord {
-    pub fn new(t: f64, u: f64, v: f64, p: Vector3<f64>, normal: Vector3<f64>, mat_ptr: MaterialHandle) -> Self {
-        HitRecord {t, u, v, p, normal, mat_ptr}
+    pub fn new(
+        t: f64,
+        u: f64,
+        v: f64,
+        p: Vector3<f64>,
+        normal: Vector3<f64>,
+        mat_ptr: MaterialHandle,
+    ) -> Self {
+        HitRecord {
+            t,
+            u,
+            v,
+            p,
+            normal,
+            mat_ptr,
+        }
     }
 
     pub fn get_mat_ptr(&self) -> MaterialHandle {
@@ -45,6 +59,12 @@ impl HitRecord {
 pub trait Hitable: HitableClone {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     fn bounding_box(&self) -> Option<Aabb>;
+    fn pdf_value(&self, _o: Vector3<f64>, _v: Vector3<f64>) -> f64 {
+        return 0.0;
+    }
+    fn random(&self, _o: Vector3<f64>) -> Vector3<f64> {
+        return [1.0, 0.0, 0.0];
+    }
 }
 
 pub trait HitableClone {

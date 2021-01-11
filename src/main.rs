@@ -24,8 +24,8 @@ use bvh_node::BvhNode;
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
-use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
-use pdf::{CosinePdf, Pdf};
+use material::{Dielectric, DiffuseLight, Lambertian, MaterialHandle, Materials, Metal, Scatterd};
+use pdf::{CosinePdf, HitablePdf, Pdf};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -79,29 +79,22 @@ fn color<T: Hitable>(
                         }
                         Scatterd::Pdf(pdf) => {
                             // direct ray to light sampling test
-                            let mut rng = rand::thread_rng();
-                            let rng_x: f64 = rng.gen();
-                            let rng_y: f64 = rng.gen();
-                            let on_light = [
-                                213.0 + rng_x * (343.0 - 213.0),
+                            let p = Rect::new(
+                                213.0,
+                                343.0,
+                                227.0,
+                                332.0,
                                 554.0,
-                                227.0 + rng_y * (332.0 - 227.0),
-                            ];
-                            let to_light = vec3_sub(on_light, rec.get_p());
-                            let distance_squad = vec3_squared_length(to_light);
-                            let to_light = vec3_unit_vector_f64(to_light);
-                            if vec3_dot(rec.get_normal(), to_light) < 0.0 {
-                                return emitted;
-                            }
+                                AxisType::kXZ,
+                                MaterialHandle(0), // not use
+                            );
 
-                            let light_area = (343.0 - 213.0) * (332.0 - 227.0);
-                            let light_cosine = to_light[1]; // to_light is already normalized so get y value
-                            if light_cosine < 0.00001 {
-                                return emitted;
-                            }
+                            let hitable_cosine_pdf = HitablePdf { hitable: p };
 
-                            let pdf_value = distance_squad / (light_cosine * light_area);
-                            let next_ray = &Ray::new(rec.get_p(), to_light);
+                            let next_ray =
+                                &Ray::new(rec.get_p(), hitable_cosine_pdf.generate(&rec));
+
+                            let pdf_value = hitable_cosine_pdf.value(&rec, &next_ray.direction());
 
                             /*
                             let next_ray = &Ray::new(rec.get_p(), pdf.generate(&rec));

@@ -1,7 +1,7 @@
 use rand::prelude::*;
 use std::f64::consts::PI;
 
-use crate::hitable::HitRecord;
+use crate::hitable::{HitRecord, Hitable};
 use crate::ray::Ray;
 use crate::vec3::{
     cross, vec3_add, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_unit_vector_f64,
@@ -57,4 +57,18 @@ fn random_cosine_direction() -> Vector3<f64> {
     let y: f64 = a.sin() * b;
     let z: f64 = (1.0 - r2).sqrt();
     [x, y, z]
+}
+
+pub struct HitablePdf<T: Hitable> {
+    pub hitable: T,
+}
+
+impl<T: Hitable> Pdf for HitablePdf<T> {
+    fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
+        return self.hitable.pdf_value(hit_record.get_p(), *direction);
+    }
+    fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
+        let normalized = vec3_unit_vector_f64(self.hitable.random(hit_record.get_p()));
+        return normalized;
+    }
 }
