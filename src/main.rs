@@ -38,9 +38,10 @@ use vec3::{
     vec3_unit_vector_f64, Vector3,
 };
 
-fn color<T: Hitable>(
+fn color<T: Hitable, M: Hitable>(
     r: &Ray,
     world: &Arc<T>,
+    light_list: &Arc<M>,
     depth: u32,
     material_list: &Materials,
     last_absorabance: Vector3<f64>,
@@ -68,6 +69,7 @@ fn color<T: Hitable>(
                                         color(
                                             next_ray,
                                             world,
+                                            light_list,
                                             depth + 1,
                                             material_list,
                                             mat_rec.get_absorabance(),
@@ -78,20 +80,12 @@ fn color<T: Hitable>(
                             );
                         }
                         Scatterd::Pdf(pdf) => {
-                            let p = Rect::new(
-                                213.0,
-                                343.0,
-                                227.0,
-                                332.0,
-                                554.0,
-                                AxisType::kXZ,
-                                MaterialHandle(0), // not use
-                            );
-
-                            let hitable_cosine_pdf = HitablePdf { hitable: p };
+                            let hitable_pdf = HitablePdf {
+                                hitable: light_list,
+                            };
 
                             let mix_pdf = MixturePdf {
-                                pdf0: hitable_cosine_pdf,
+                                pdf0: hitable_pdf,
                                 pdf1: pdf,
                             }; // mix pdf light and hitable
 
@@ -113,6 +107,7 @@ fn color<T: Hitable>(
                                                 color(
                                                     next_ray,
                                                     world,
+                                                    light_list,
                                                     depth + 1,
                                                     material_list,
                                                     mat_rec.get_absorabance(),
@@ -144,6 +139,7 @@ fn main() {
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
     const NS: usize = 500; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
+    let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
 
     let red = material_list.add_material(Lambertian::new(ColorTexture::new([0.65, 0.05, 0.05])));
@@ -217,6 +213,16 @@ fn main() {
 
     let obj_list = BvhNode::new(&mut obj_list);
 
+    light_list.push(FlipNormals::new(Rect::new(
+        213.0,
+        343.0,
+        227.0,
+        332.0,
+        554.0,
+        AxisType::kXZ,
+        light,
+    )));
+
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
         [278.0, 278.0, 0.0],
@@ -227,12 +233,14 @@ fn main() {
 
     let cam = Arc::new(cam);
     let obj_list = Arc::new(obj_list);
+    let light_list = Arc::new(light_list);
     let material_list = Arc::new(material_list);
     let mut handles = vec![];
     for j in 0..NY {
         let imgbuf_clone = Arc::clone(&imgbuf);
         let cam = Arc::clone(&cam);
         let obj_list = Arc::clone(&obj_list);
+        let light_list = Arc::clone(&light_list);
         let material_list = Arc::clone(&material_list);
         let handle = thread::spawn(move || {
             for i in 0..NX {
@@ -245,7 +253,14 @@ fn main() {
                     let v: f64 = (j as f64 + rand_y) / NY as f64;
                     let r = cam.get_ray(u, v);
                     col = vec3_add(
-                        color(&r, &obj_list, 0, &material_list, [0.0, 0.0, 0.0]),
+                        color(
+                            &r,
+                            &obj_list,
+                            &light_list,
+                            0,
+                            &material_list,
+                            [0.0, 0.0, 0.0],
+                        ),
                         col,
                     );
                 }

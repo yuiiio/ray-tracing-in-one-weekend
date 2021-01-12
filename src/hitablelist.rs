@@ -85,7 +85,7 @@ impl Hitable for HitableList {
         let rand: f64 = rng.gen();
 
         let mut index: f64 = n as f64 * rand;
-        if index > 0.0 && index >= n as f64 {
+        if n > 0 && index >= n as f64 {
             index = index - 1.0;
         }
         self.0[index as usize].random(o)

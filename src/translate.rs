@@ -41,6 +41,15 @@ impl Hitable for Translate {
             None => None,
         }
     }
+
+    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+        let o = vec3_sub(o, self.offset);
+        self.obj.pdf_value(o, v)
+    }
+    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
+        let o = vec3_sub(o, self.offset);
+        vec3_add(self.obj.random(o), self.offset)
+    }
 }
 
 #[derive(Clone)]
@@ -110,5 +119,15 @@ impl Hitable for Rotate {
 
     fn bounding_box(&self) -> Option<Aabb> {
         Some(self.aabb.clone())
+    }
+
+    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+        let o = self.revq.rotate(o);
+        let v = self.revq.rotate(v);
+        self.obj.pdf_value(o, v)
+    }
+    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
+        let o = self.revq.rotate(o);
+        self.quat.rotate(self.random(o))
     }
 }

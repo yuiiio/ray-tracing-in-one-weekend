@@ -1,5 +1,6 @@
 use rand::prelude::*;
 use std::f64::consts::PI;
+use std::sync::Arc;
 
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::Ray;
@@ -59,11 +60,11 @@ fn random_cosine_direction() -> Vector3<f64> {
     [x, y, z]
 }
 
-pub struct HitablePdf<T: Hitable> {
-    pub hitable: T,
+pub struct HitablePdf<'a, T: Hitable> {
+    pub hitable: &'a Arc<T>,
 }
 
-impl<T: Hitable> Pdf for HitablePdf<T> {
+impl<'a, T: Hitable> Pdf for HitablePdf<'a, T> {
     fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
         return self.hitable.pdf_value(hit_record.get_p(), *direction);
     }
