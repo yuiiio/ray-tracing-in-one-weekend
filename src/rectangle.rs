@@ -95,37 +95,40 @@ impl Hitable for Rect {
     }
 
     fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
-        match self.axis {
-            AxisType::kXZ => match self.hit(&Ray::new(o, v), 0.00001, 10000.0) {
-                Some(rec) => {
-                    let area = (self.x1 - self.x0) * (self.y1 - self.y0);
-                    let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
-                    let cosine = vec3_dot(v, rec.get_normal()) / vec3_length_f64(v);
-                    return distance_squared / (cosine * area);
-                }
-                None => return 0.0,
-            },
-            _ => return 0.0,
+        match self.hit(&Ray::new(o, v), 0.00001, 10000.0) {
+            Some(rec) => {
+                let area = (self.x1 - self.x0) * (self.y1 - self.y0);
+                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
+                let cosine = vec3_dot(v, rec.get_normal()) / vec3_length_f64(v);
+                return distance_squared / (cosine * area);
+            }
+            None => return 0.0,
         }
     }
 
     fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
-        match self.axis {
-            AxisType::kXZ => {
-                let mut rng = rand::thread_rng();
-                let rng_x: f64 = rng.gen();
-                let rng_y: f64 = rng.gen();
-                let random_point = [
-                    self.x0 + rng_x * (self.x1 - self.x0),
-                    self.k,
-                    self.y0 + rng_y * (self.y1 - self.y0),
-                ];
-                let v = vec3_sub(random_point, o);
-                return v;
-            }
+        let mut rng = rand::thread_rng();
+        let rng_x: f64 = rng.gen();
+        let rng_y: f64 = rng.gen();
+        let random_point = match self.axis {
+            AxisType::kXY => [
+                self.x0 + rng_x * (self.x1 - self.x0),
+                self.y0 + rng_y * (self.y1 - self.y0),
+                self.k,
+            ],
+            AxisType::kXZ => [
+                self.x0 + rng_x * (self.x1 - self.x0),
+                self.k,
+                self.y0 + rng_y * (self.y1 - self.y0),
+            ],
+            AxisType::kYZ => [
+                self.k,
+                self.x0 + rng_x * (self.x1 - self.x0),
+                self.y0 + rng_y * (self.y1 - self.y0),
+            ],
+        };
 
-            _ => return [1.0, 0.0, 0.0],
-        }
+        return vec3_sub(random_point, o);
     }
 }
 
@@ -157,6 +160,14 @@ impl Hitable for FlipNormals {
 
     fn bounding_box(&self) -> Option<Aabb> {
         self.shape.bounding_box()
+    }
+
+    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+        self.shape.pdf_value(o, v)
+    }
+
+    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
+        self.shape.random(o)
     }
 }
 
@@ -239,5 +250,13 @@ impl Hitable for Boxel {
 
     fn bounding_box(&self) -> Option<Aabb> {
         Some(Aabb::new(self.pmin, self.pmax))
+    }
+
+    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+        self.list.pdf_value(o, v)
+    }
+
+    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
+        self.list.random(o)
     }
 }

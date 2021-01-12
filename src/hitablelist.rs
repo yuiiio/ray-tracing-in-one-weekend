@@ -1,6 +1,9 @@
+use rand::prelude::*;
+
+use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
-use crate::ray::{Ray};
-use crate::aabb::{Aabb, surrounding_box};
+use crate::ray::Ray;
+use crate::vec3::Vector3;
 
 #[derive(Clone)]
 pub struct HitableList(Vec<Box<dyn Hitable + Send + Sync>>);
@@ -45,10 +48,10 @@ impl Hitable for HitableList {
         }
         rec
     }
-    
+
     fn bounding_box(&self) -> Option<Aabb> {
         if self.0.len() < 1 {
-            return None
+            return None;
         }
         let mut temp_box: Aabb;
         match self.0[0].bounding_box() {
@@ -61,8 +64,30 @@ impl Hitable for HitableList {
                     Some(aabb) => aabb,
                     None => return None,
                 },
-                temp_box);
+                temp_box,
+            );
         }
         Some(temp_box)
+    }
+
+    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+        let weight: f64 = 1.0 / self.0.len() as f64;
+        let mut sum: f64 = 0.0;
+        for i in self.iter() {
+            sum += i.pdf_value(o, v) * weight;
+        }
+        sum
+    }
+
+    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
+        let n = self.0.len();
+        let mut rng = rand::thread_rng();
+        let rand: f64 = rng.gen();
+
+        let mut index: f64 = n as f64 * rand;
+        if index > 0.0 && index >= n as f64 {
+            index = index - 1.0;
+        }
+        self.0[index as usize].random(o)
     }
 }
