@@ -106,11 +106,11 @@ impl Hitable for Rect {
         }
     }
 
-    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
+    fn random(&self) -> Vector3<f64> {
         let mut rng = rand::thread_rng();
         let rng_x: f64 = rng.gen();
         let rng_y: f64 = rng.gen();
-        let random_point = match self.axis {
+        match self.axis {
             AxisType::kXY => [
                 self.x0 + rng_x * (self.x1 - self.x0),
                 self.y0 + rng_y * (self.y1 - self.y0),
@@ -126,9 +126,7 @@ impl Hitable for Rect {
                 self.x0 + rng_x * (self.x1 - self.x0),
                 self.y0 + rng_y * (self.y1 - self.y0),
             ],
-        };
-
-        return vec3_sub(random_point, o);
+        }
     }
 }
 
@@ -162,12 +160,12 @@ impl Hitable for FlipNormals {
         self.shape.bounding_box()
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
-        self.shape.pdf_value(o, v)
+    fn pdf_value(&self, o: Vector3<f64>, p: Vector3<f64>) -> f64 {
+        self.shape.pdf_value(o, p)
     }
 
-    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
-        self.shape.random(o)
+    fn random(&self) -> Vector3<f64> {
+        self.shape.random()
     }
 }
 
@@ -252,11 +250,11 @@ impl Hitable for Boxel {
         Some(Aabb::new(self.pmin, self.pmax))
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
-        self.list.pdf_value(o, v)
+    fn pdf_value(&self, o: Vector3<f64>, p: Vector3<f64>) -> f64 {
+        self.list.pdf_value(o, p)
     }
 
-    fn random(&self, o: Vector3<f64>) -> Vector3<f64> {
-        self.list.random(o)
+    fn random(&self) -> Vector3<f64> {
+        self.list.random()
     }
 }

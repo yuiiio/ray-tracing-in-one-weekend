@@ -84,10 +84,13 @@ fn color<T: Hitable, M: Hitable>(
                                 hitable: light_list,
                             };
 
+                            /*
                             let mix_pdf = MixturePdf {
                                 pdf0: hitable_pdf,
                                 pdf1: pdf,
                             }; // mix pdf light and hitable
+                            */
+                            let mix_pdf = hitable_pdf;
 
                             let next_ray = &Ray::new(rec.get_p(), mix_pdf.generate(&rec));
                             let pdf_value = mix_pdf.value(&rec, &next_ray.direction());
@@ -163,7 +166,7 @@ fn main() {
         green,
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kYZ, red));
-    obj_list.push(FlipNormals::new(Rect::new(
+    let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
         227.0,
@@ -171,7 +174,8 @@ fn main() {
         554.0,
         AxisType::kXZ,
         light,
-    )));
+    ));
+    obj_list.push(light_rect.clone());
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -213,15 +217,7 @@ fn main() {
 
     let obj_list = BvhNode::new(&mut obj_list);
 
-    light_list.push(FlipNormals::new(Rect::new(
-        213.0,
-        343.0,
-        227.0,
-        332.0,
-        554.0,
-        AxisType::kXZ,
-        light,
-    )));
+    light_list.push(light_rect);
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
