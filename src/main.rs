@@ -84,14 +84,10 @@ fn color<T: Hitable, M: Hitable>(
                                 hitable: light_list,
                             };
 
-                            /*
                             let mix_pdf = MixturePdf {
                                 pdf0: hitable_pdf,
                                 pdf1: pdf,
                             }; // mix pdf light and hitable
-                            */
-
-                            let mix_pdf = hitable_pdf;
 
                             let next_ray = &Ray::new(rec.get_p(), mix_pdf.generate(&rec));
                             let pdf_value = mix_pdf.value(&rec, &next_ray.direction());
@@ -141,7 +137,7 @@ fn main() {
     const NX: usize = 400;
     const NY: usize = 400;
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
-    const NS: usize = 50; //anti-aliasing sample-per-pixel
+    const NS: usize = 500; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
@@ -213,7 +209,7 @@ fn main() {
             [0.0, 1.0, 0.0],
             15.0,
         )),
-        [265.0, 0.0, 295.0],
+        [265.0, 0.01, 295.0],
     );
     obj_list.push(metal_box.clone());
 
