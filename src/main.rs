@@ -90,6 +90,7 @@ fn color<T: Hitable, M: Hitable>(
                                 pdf1: pdf,
                             }; // mix pdf light and hitable
                             */
+
                             let mix_pdf = hitable_pdf;
 
                             let next_ray = &Ray::new(rec.get_p(), mix_pdf.generate(&rec));
@@ -140,7 +141,7 @@ fn main() {
     const NX: usize = 400;
     const NY: usize = 400;
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
-    const NS: usize = 500; //anti-aliasing sample-per-pixel
+    const NS: usize = 50; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
@@ -166,6 +167,7 @@ fn main() {
         green,
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kYZ, red));
+
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -176,6 +178,7 @@ fn main() {
         light,
     ));
     obj_list.push(light_rect.clone());
+
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -204,20 +207,22 @@ fn main() {
         )),
         [130.0, 0.0, 65.0],
     ));
-    obj_list.push(Translate::new(
+    let metal_box = Translate::new(
         Box::new(Rotate::new(
             Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal)),
             [0.0, 1.0, 0.0],
             15.0,
         )),
         [265.0, 0.0, 295.0],
-    ));
+    );
+    obj_list.push(metal_box.clone());
 
     obj_list.push(Sphere::new([455.0, 100.0, 100.0], 100.0, glass));
 
     let obj_list = BvhNode::new(&mut obj_list);
 
     light_list.push(light_rect);
+    light_list.push(metal_box);
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
