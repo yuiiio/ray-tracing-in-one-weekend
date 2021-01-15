@@ -1,9 +1,14 @@
-use crate::hitable::{HitRecord, Hitable};
-use crate::ray::{Ray};
-use crate::vec3::{Vector3, vec3_sub, vec3_dot, vec3_mul_b, vec3_add_b, vec3_sub_b};
+use rand::prelude::*;
 use std::f64::consts::PI;
-use crate::material::{MaterialHandle};
-use crate::aabb::{Aabb};
+
+use crate::aabb::Aabb;
+use crate::hitable::{HitRecord, Hitable};
+use crate::material::MaterialHandle;
+use crate::onb::Onb;
+use crate::ray::Ray;
+use crate::vec3::{
+    vec3_add_b, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_sub_b, Vector3,
+};
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -14,12 +19,16 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Self {
-        Sphere {center, radius, mat_ptr}
+        Sphere {
+            center,
+            radius,
+            mat_ptr,
+        }
     }
 }
 
 fn get_sphere_uv(point: Vector3<f64>) -> (f64, f64) {
-    let u: f64 = 1.0 - (point[2].atan2(point[0]) + PI) / (2.0 * PI);// atan(z/x)
+    let u: f64 = 1.0 - (point[2].atan2(point[0]) + PI) / (2.0 * PI); // atan(z/x)
     let v: f64 = (point[1].asin() + (PI / 2.0)) / PI;
     (u, v)
 }
@@ -34,27 +43,74 @@ impl Hitable for Sphere {
         let descriminant = b * b - 4.0 * a * c;
         if descriminant >= 0.0 {
             let temp = (-b - descriminant.sqrt()) / (2.0 * a);
-            if  temp < t_max && temp > t_min {
+            if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let c = 1.0 / self.radius;
                 let nnormal = vec3_mul_b(vec3_sub(point, self.center), c);
                 let (u, v) = get_sphere_uv(nnormal);
-                return Some(HitRecord::new(temp, u, v, point, nnormal, MaterialHandle(self.mat_ptr.0)));
+                return Some(HitRecord::new(
+                    temp,
+                    u,
+                    v,
+                    point,
+                    nnormal,
+                    MaterialHandle(self.mat_ptr.0),
+                ));
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
-            if  temp < t_max && temp > t_min {
+            if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let c = 1.0 / self.radius;
                 let nnormal = vec3_mul_b(vec3_sub(point, self.center), c);
                 let (u, v) = get_sphere_uv(nnormal);
-                return Some(HitRecord::new(temp, u, v, point, nnormal, MaterialHandle(self.mat_ptr.0)));
+                return Some(HitRecord::new(
+                    temp,
+                    u,
+                    v,
+                    point,
+                    nnormal,
+                    MaterialHandle(self.mat_ptr.0),
+                ));
             }
         }
         rec
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some(Aabb::new( vec3_sub_b( self.center, self.radius ),
-                        vec3_add_b( self.center, self.radius ) ))
+        Some(Aabb::new(
+            vec3_sub_b(self.center, self.radius),
+            vec3_add_b(self.center, self.radius),
+        ))
     }
-} 
+
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+        match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
+            Some(_rec) => {
+                let distabce_squared: f64 = vec3_squared_length(vec3_sub(self.center, *o));
+                let cos_theta_max: f64 = (1.0 - (self.radius.powi(2) / distabce_squared)).sqrt();
+                return 2.0 * PI * (1.0 - cos_theta_max);
+            }
+            None => return 0.0,
+        }
+    }
+    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
+        let direction = vec3_sub(self.center, *o);
+        let uvw = Onb::build_from_w(&direction);
+
+        let distabce_squared = vec3_squared_length(direction);
+        uvw.local(&random_to_sphere(self.radius, distabce_squared))
+    }
+}
+
+fn random_to_sphere(radius: f64, distabce_squared: f64) -> Vector3<f64> {
+    let mut rng = rand::thread_rng();
+    let r1: f64 = rng.gen();
+    let r2: f64 = rng.gen();
+    let cos_theta_max = (1.0 - (radius.powi(2) / distabce_squared)).sqrt();
+    let z = 1.0 - r2 * (1.0 - cos_theta_max);
+    let a = 2.0 * PI * r1;
+    let b = (1.0 - z.powi(2)).sqrt();
+    let x = a.cos() * b;
+    let y = a.sin() * b;
+    [x, y, z]
+}

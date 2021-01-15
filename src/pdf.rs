@@ -3,6 +3,7 @@ use std::f64::consts::PI;
 use std::sync::Arc;
 
 use crate::hitable::{HitRecord, Hitable};
+use crate::onb::Onb;
 use crate::ray::Ray;
 use crate::vec3::{
     cross, vec3_add, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_unit_vector_f64,
@@ -20,7 +21,7 @@ pub struct CosinePdf {}
 impl Pdf for CosinePdf {
     fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
         let n = hit_record.get_normal(); //Already normalized?
-        let direction = vec3_unit_vector_f64(*direction);
+        let direction = vec3_unit_vector_f64(*direction); //just normalized
         let cosine = vec3_dot(n, direction);
         if cosine > 0.0 {
             return cosine / PI;
@@ -29,22 +30,11 @@ impl Pdf for CosinePdf {
         };
     }
     fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
-        let u = hit_record.get_normal(); //Already normalized?
-        let a: Vector3<f64>;
-        if u[0].abs() > 0.9 {
-            a = [0.0, 1.0, 0.0];
-        } else {
-            a = [1.0, 0.0, 0.0];
-        }
-        let v = vec3_unit_vector_f64(cross(u, a));
-        let w = cross(v, u);
+        let uvw = Onb::build_from_w(&hit_record.get_normal());
 
         let rcd = random_cosine_direction();
 
-        vec3_add(
-            vec3_mul_b(v, rcd[0]),
-            vec3_add(vec3_mul_b(w, rcd[1]), vec3_mul_b(u, rcd[2])),
-        )
+        uvw.local(&rcd)
     }
 }
 

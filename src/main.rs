@@ -10,6 +10,7 @@ mod camera;
 mod hitable;
 mod hitablelist;
 mod material;
+mod onb;
 mod pdf;
 mod quotation;
 mod ray;
