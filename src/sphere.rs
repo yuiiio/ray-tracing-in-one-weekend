@@ -88,7 +88,7 @@ impl Hitable for Sphere {
             Some(_rec) => {
                 let distabce_squared: f64 = vec3_squared_length(vec3_sub(self.center, *o));
                 let cos_theta_max: f64 = (1.0 - (self.radius.powi(2) / distabce_squared)).sqrt();
-                return 2.0 * PI * (1.0 - cos_theta_max);
+                return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
             }
             None => return 0.0,
         }
