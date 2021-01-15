@@ -70,7 +70,7 @@ impl Hitable for HitableList {
         Some(temp_box)
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         let weight: f64 = 1.0 / self.0.len() as f64;
         let mut sum: f64 = 0.0;
         for i in self.iter() {

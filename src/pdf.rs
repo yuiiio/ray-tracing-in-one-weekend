@@ -67,7 +67,7 @@ pub struct HitablePdf<'a, T: Hitable> {
 
 impl<'a, T: Hitable> Pdf for HitablePdf<'a, T> {
     fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
-        return self.hitable.pdf_value(hit_record.get_p(), *direction);
+        return self.hitable.pdf_value(&hit_record.get_p(), direction);
     }
     fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
         self.hitable.random(&hit_record.get_p())

@@ -42,9 +42,9 @@ impl Hitable for Translate {
         }
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
-        let o = vec3_sub(o, self.offset);
-        self.obj.pdf_value(o, v) // this use self->obj's pdf_value func
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+        let on = vec3_sub(*o, self.offset);
+        self.obj.pdf_value(&on, v) // this use self->obj's pdf_value func
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let on = vec3_sub(*o, self.offset);
@@ -121,12 +121,12 @@ impl Hitable for Rotate {
         Some(self.aabb.clone())
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
-        let ro = self.revq.rotate(o);
-        let p = vec3_add(o, v);
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+        let ro = self.revq.rotate(*o);
+        let p = vec3_add(*o, *v);
         let rp = self.revq.rotate(p);
         let rv = vec3_sub(rp, ro);
-        self.obj.pdf_value(ro, rv)
+        self.obj.pdf_value(&ro, &rv)
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let ro = self.revq.rotate(*o);

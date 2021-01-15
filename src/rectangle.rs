@@ -94,12 +94,12 @@ impl Hitable for Rect {
         }
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
-        match self.hit(&Ray::new(o, v), 0.00001, 10000.0) {
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+        match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(rec) => {
                 let area = (self.x1 - self.x0) * (self.y1 - self.y0);
-                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
-                let cosine = vec3_dot(v, rec.get_normal()).abs() / vec3_length_f64(v);
+                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(*v);
+                let cosine = vec3_dot(*v, rec.get_normal()).abs() / vec3_length_f64(*v);
                 return distance_squared / (cosine * area);
             }
             None => return 0.0,
@@ -161,7 +161,7 @@ impl Hitable for FlipNormals {
         self.shape.bounding_box()
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         self.shape.pdf_value(o, v)
     }
 
@@ -251,7 +251,7 @@ impl Hitable for Boxel {
         Some(Aabb::new(self.pmin, self.pmax))
     }
 
-    fn pdf_value(&self, o: Vector3<f64>, v: Vector3<f64>) -> f64 {
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         self.list.pdf_value(o, v)
     }
 
