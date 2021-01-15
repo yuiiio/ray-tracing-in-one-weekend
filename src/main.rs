@@ -214,12 +214,14 @@ fn main() {
     );
     obj_list.push(metal_box.clone());
 
-    obj_list.push(Sphere::new([455.0, 100.0, 100.0], 100.0, glass));
+    let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
+    obj_list.push(glass_sphere.clone());
 
     let obj_list = BvhNode::new(&mut obj_list);
 
     light_list.push(light_rect);
     light_list.push(metal_box);
+    light_list.push(glass_sphere);
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
