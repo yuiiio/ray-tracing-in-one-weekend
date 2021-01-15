@@ -46,8 +46,9 @@ impl Hitable for Translate {
         let o = vec3_sub(o, self.offset);
         self.obj.pdf_value(o, v) // this use self->obj's pdf_value func
     }
-    fn random(&self) -> Vector3<f64> {
-        vec3_add(self.obj.random(), self.offset)
+    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
+        let on = vec3_sub(*o, self.offset);
+        self.obj.random(&on)
     }
 }
 
@@ -127,7 +128,11 @@ impl Hitable for Rotate {
         let rv = vec3_sub(rp, ro);
         self.obj.pdf_value(ro, rv)
     }
-    fn random(&self) -> Vector3<f64> {
-        self.quat.rotate(self.obj.random())
+    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
+        let ro = self.revq.rotate(*o);
+        let rv = self.obj.random(&ro);
+        let rp = vec3_add(ro, rv);
+        let p = self.quat.rotate(rp);
+        vec3_sub(p, *o)
     }
 }

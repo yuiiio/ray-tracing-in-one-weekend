@@ -62,7 +62,7 @@ pub trait Hitable: HitableClone {
     fn pdf_value(&self, _o: Vector3<f64>, _v: Vector3<f64>) -> f64 {
         return 0.0;
     }
-    fn random(&self) -> Vector3<f64> {
+    fn random(&self, _o: &Vector3<f64>) -> Vector3<f64> {
         return [1.0, 0.0, 0.0];
     }
 }

@@ -79,7 +79,7 @@ impl Hitable for HitableList {
         sum
     }
 
-    fn random(&self) -> Vector3<f64> {
+    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let n = self.0.len();
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
@@ -88,6 +88,6 @@ impl Hitable for HitableList {
         if n > 0 && index >= n as f64 {
             index = index - 1.0;
         }
-        self.0[index as usize].random()
+        self.0[index as usize].random(o)
     }
 }

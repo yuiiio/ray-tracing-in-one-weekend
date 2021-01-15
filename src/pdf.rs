@@ -70,8 +70,7 @@ impl<'a, T: Hitable> Pdf for HitablePdf<'a, T> {
         return self.hitable.pdf_value(hit_record.get_p(), *direction);
     }
     fn generate(&self, hit_record: &HitRecord) -> Vector3<f64> {
-        let random_point = self.hitable.random();
-        vec3_unit_vector_f64(vec3_sub(random_point, hit_record.get_p()))
+        self.hitable.random(&hit_record.get_p())
     }
 }
 
