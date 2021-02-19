@@ -220,9 +220,9 @@ fn main() {
     obj_list.push(glass_sphere.clone());
 
     let triangle = Triangle::new(
-        [200.0, 200.0, 200.0],
-        [200.0, 400.0, 200.0],
-        [400.0, 200.0, 200.0],
+        [300.0, 300.0, 200.0],
+        [300.0, 500.0, 300.0],
+        [500.0, 300.0, 200.0],
         white,
     );
     obj_list.push(triangle.clone());

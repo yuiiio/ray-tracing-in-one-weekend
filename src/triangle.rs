@@ -51,10 +51,21 @@ impl Hitable for Triangle {
         let m = cross(d, r);
 
         let u = nor_lal * vec3_dot(self.e2, m);
-        let v = nor_lal * -1.0 * vec3_dot(self.e1, m);
+        if u < 0.0 || u > 1.0 {
+            return None;
+        }
 
-        if u >= 0.0 && v >= 0.0 && u + v <= 1.0 {
-            let t = nor_lal * vec3_dot(r, self.n);
+        let v = nor_lal * -1.0 * vec3_dot(self.e1, m);
+        if v < 0.0 || v > 1.0 {
+            return None;
+        }
+
+        if u + v > 1.0 {
+            return None;
+        }
+
+        let t = nor_lal * vec3_dot(r, self.n);
+        if t > t_min && t < t_max {
             let normal = self.n;
             let p: Vector3<f64> = ray.point_at_parameter(t);
             let uu = u;
