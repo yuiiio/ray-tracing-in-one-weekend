@@ -227,7 +227,7 @@ fn main() {
     );
     obj_list.push(triangle.clone());
 
-    let obj_list = BvhNode::new(&mut obj_list);
+    //let obj_list = BvhNode::new(&mut obj_list);
 
     light_list.push(light_rect);
     light_list.push(metal_box);

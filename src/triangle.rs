@@ -46,8 +46,13 @@ impl Triangle {
 impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let d = ray.direction();
+        let lal = -1.0 * vec3_dot(d, self.n);
+        if lal == 0.0 {
+            return None;
+        }
+        let nor_lal: f64 = 1.0 / lal;
+
         let r = vec3_sub(ray.origin(), self.v0);
-        let nor_lal: f64 = 1.0 / vec3_dot(d, self.n);
         let m = cross(d, r);
 
         let u = nor_lal * vec3_dot(self.e2, m);
@@ -65,15 +70,14 @@ impl Hitable for Triangle {
         }
 
         let t = nor_lal * vec3_dot(r, self.n);
-        if t > t_min && t < t_max {
-            let normal = self.n;
-            let p: Vector3<f64> = ray.point_at_parameter(t);
-            let uu = u;
-            let vv = v;
-            return Some(HitRecord::new(t, uu, vv, p, normal, self.mat_ptr));
-        } else {
+        if t < t_min || t > t_max {
             return None;
         }
+        let normal = self.n;
+        let p: Vector3<f64> = ray.point_at_parameter(t);
+        let uu = u;
+        let vv = v;
+        return Some(HitRecord::new(t, uu, vv, p, normal, self.mat_ptr));
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
