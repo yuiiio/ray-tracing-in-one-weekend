@@ -11,7 +11,7 @@ use crate::vec3::{
 };
 
 #[derive(Clone)]
-pub struct Tri {
+pub struct Triangle {
     v0: Vector3<f64>,
     v1: Vector3<f64>,
     v2: Vector3<f64>,
@@ -21,7 +21,7 @@ pub struct Tri {
     n: Vector3<f64>,
 }
 
-impl Tri {
+impl Triangle {
     pub fn new(
         v0: Vector3<f64>,
         v1: Vector3<f64>,
@@ -31,7 +31,7 @@ impl Tri {
         let e1 = vec3_sub(v1, v0);
         let e2 = vec3_sub(v2, v0);
         let n = cross(e2, e1);
-        Tri {
+        Triangle {
             v0,
             v1,
             v2,
@@ -43,7 +43,7 @@ impl Tri {
     }
 }
 
-impl Hitable for Tri {
+impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let d = ray.direction();
         let r = vec3_sub(ray.origin(), self.v0);

@@ -34,6 +34,7 @@ use sphere::Sphere;
 use std::f64;
 use texture::{CheckerTexture, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
+use triangle::Triangle;
 use utils::clamp;
 use vec3::{
     vec3_add, vec3_div, vec3_dot, vec3_mul, vec3_mul_b, vec3_squared_length, vec3_sub,
@@ -139,7 +140,7 @@ fn main() {
     const NX: usize = 800;
     const NY: usize = 800;
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
-    const NS: usize = 1; //anti-aliasing sample-per-pixel
+    const NS: usize = 20; //anti-aliasing sample-per-pixel
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
@@ -218,28 +219,15 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let mut balls = HitableList::new();
-    let mut rng = rand::thread_rng();
-    for _i in 0..1000 {
-        let rand_x: f64 = rng.gen();
-        let rand_y: f64 = rng.gen();
-        let rand_z: f64 = rng.gen();
-        balls.push(Sphere::new(
-            [
-                200.0 + rand_x * 100.0,
-                200.0 + rand_y * 100.0,
-                200.0 + rand_z * 100.0,
-            ],
-            10.0,
-            white,
-        ));
-    }
+    let triangle = Triangle::new(
+        [200.0, 200.0, 200.0],
+        [200.0, 400.0, 200.0],
+        [400.0, 200.0, 200.0],
+        white,
+    );
+    obj_list.push(triangle.clone());
 
-    let balls = BvhNode::new(&mut balls);
-
-    obj_list.push(balls);
-
-    //let obj_list = BvhNode::new(&mut obj_list);
+    let obj_list = BvhNode::new(&mut obj_list);
 
     light_list.push(light_rect);
     light_list.push(metal_box);
