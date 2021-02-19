@@ -221,9 +221,9 @@ fn main() {
 
     let triangle = Triangle::new(
         [300.0, 300.0, 200.0],
-        [300.0, 500.0, 300.0],
+        [300.0, 500.0, 600.0],
         [500.0, 300.0, 200.0],
-        white,
+        red,
     );
     obj_list.push(triangle.clone());
 
