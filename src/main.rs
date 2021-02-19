@@ -18,6 +18,7 @@ mod rectangle;
 mod sphere;
 mod texture;
 mod translate;
+mod triangle;
 mod utils;
 mod vec3;
 
