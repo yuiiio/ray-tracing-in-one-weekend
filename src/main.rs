@@ -1,5 +1,6 @@
 use image::{open, Rgba, RgbaImage};
 use rand::prelude::*;
+use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
@@ -10,6 +11,7 @@ mod camera;
 mod hitable;
 mod hitablelist;
 mod material;
+mod obj;
 mod onb;
 mod pdf;
 mod quotation;
@@ -27,6 +29,7 @@ use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, MaterialHandle, Materials, Metal, Scatterd};
+use obj::obj_loader;
 use pdf::{CosinePdf, HitablePdf, MixturePdf, Pdf};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
@@ -129,7 +132,15 @@ fn color<T: Hitable, M: Hitable>(
                 }
                 return emitted;
             }
-            None => {}
+            None => {
+                let v = vec3_unit_vector_f64(r.direction());
+                let a = (v[1] + 1.0 * 0.5);
+                let ret = vec3_add(
+                    vec3_mul_b([0.0, 0.0, 0.0], (1.0 - a)),
+                    vec3_mul_b([1.0, 1.0, 1.0], a),
+                );
+                return ret;
+            }
         }
     }
     [0.0, 0.0, 0.0]
@@ -219,13 +230,30 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let triangle = Triangle::new(
-        [300.0, 300.0, 200.0],
-        [300.0, 500.0, 600.0],
-        [500.0, 300.0, 200.0],
-        red,
+    /*
+    let mut bunny = obj_loader(&mut File::open("./bunny.obj").unwrap());
+
+    let bunny = BvhNode::new(&mut bunny);
+    obj_list.push(bunny.clone());
+    */
+
+    let mut obj_box = Translate::new(
+        Box::new(Rotate::new(
+            Box::new(obj_loader(&mut File::open("./box.obj").unwrap())),
+            /*
+            Box::new(Triangle::new(
+                [0.0, 0.0, 0.0],
+                [0.0, 200.0, 100.0],
+                [200.0, 0.0, 0.0],
+                red,
+            )),*/
+            [1.0, 1.0, 0.0],
+            45.0,
+        )),
+        [200.0, 200.0, 200.0],
     );
-    obj_list.push(triangle.clone());
+
+    obj_list.push(obj_box);
 
     let obj_list = BvhNode::new(&mut obj_list);
 

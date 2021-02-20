@@ -7,7 +7,8 @@ use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::utils::{max, min};
 use crate::vec3::{
-    cross, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub, Vector3,
+    cross, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub,
+    vec3_unit_vector_f64, Vector3,
 };
 
 #[derive(Clone)]
@@ -73,7 +74,8 @@ impl Hitable for Triangle {
         if t < t_min || t > t_max {
             return None;
         }
-        let normal = self.n;
+
+        let normal = vec3_unit_vector_f64(self.n);
         let p: Vector3<f64> = ray.point_at_parameter(t);
         let uu = u;
         let vv = v;
