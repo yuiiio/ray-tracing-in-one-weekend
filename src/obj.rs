@@ -73,16 +73,16 @@ pub fn obj_loader(file: &mut File) -> HitableList {
         let i0: usize = first.get(0).unwrap().parse().unwrap();
 
         let second: Vec<&str> = attr.get(1).unwrap().split("//").collect();
-        let i1: usize = second.get(1).unwrap().parse().unwrap();
+        let i1: usize = second.get(0).unwrap().parse().unwrap();
 
         let third: Vec<&str> = attr.get(2).unwrap().split("//").collect();
-        let i2: usize = third.get(2).unwrap().parse().unwrap();
+        let i2: usize = third.get(0).unwrap().parse().unwrap();
 
         let v0 = vertex[i0 - 1];
         let v1 = vertex[i1 - 1];
         let v2 = vertex[i2 - 1];
 
-        let triangle = Triangle::new(v0, v1, v2, MaterialHandle(0)); //0:red, 1:white
+        let triangle = Triangle::new(v0, v2, v1, MaterialHandle(5)); //0:red, 1:white
         hitablelist.push(triangle);
     }
 

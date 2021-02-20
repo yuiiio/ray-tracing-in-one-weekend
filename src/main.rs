@@ -57,7 +57,7 @@ fn color<T: Hitable, M: Hitable>(
             Some(rec) => {
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
-                    let absorabance = vec3_mul_b(last_absorabance, rec.get_t() * rec.get_t());
+                    let absorabance = vec3_mul_b(last_absorabance, rec.get_t());
                     let absorabance = vec3_div([1.0, 1.0, 1.0], absorabance);
                     let absorabance = [
                         clamp(absorabance[0], 0.0, 1.0),
@@ -133,13 +133,15 @@ fn color<T: Hitable, M: Hitable>(
                 return emitted;
             }
             None => {
+                /*
                 let v = vec3_unit_vector_f64(r.direction());
-                let a = (v[1] + 1.0 * 0.5);
+                let a = (v[1] + 1.0) * 0.5;
                 let ret = vec3_add(
-                    vec3_mul_b([0.0, 0.0, 0.0], (1.0 - a)),
-                    vec3_mul_b([1.0, 1.0, 1.0], a),
+                    vec3_mul_b([1.0, 1.0, 1.0], 1.0 - a),
+                    vec3_mul_b([0.5, 0.7, 1.0], a),
                 );
                 return ret;
+                */
             }
         }
     }
@@ -164,7 +166,7 @@ fn main() {
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba(),
     )));
-    let glass = material_list.add_material(Dielectric::new(2.0, [0.01, 0.01, 0.0]));
+    let glass = material_list.add_material(Dielectric::new(2.0, [0.1, 0.1, 0.0]));
     let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.8, 0.85, 0.88])));
 
     obj_list.push(FlipNormals::new(Rect::new(
@@ -230,12 +232,12 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let mut bunny = obj_loader(&mut File::open("./box.obj").unwrap());
+    let mut bunny = obj_loader(&mut File::open("./bunny2.obj").unwrap());
 
     let bunny = BvhNode::new(&mut bunny);
 
     let bunny = Translate::new(
-        Box::new(Rotate::new(Box::new(bunny), [0.0, 1.0, 1.0], -120.0)),
+        Box::new(Rotate::new(Box::new(bunny), [0.0, 1.0, 0.0], 180.0)),
         [200.0, 200.0, 200.0],
     );
 
