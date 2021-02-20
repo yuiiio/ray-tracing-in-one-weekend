@@ -25,19 +25,28 @@ pub fn obj_loader(file: &mut File) -> HitableList {
 
         let xattr: Vec<&str> = attr.get(0).unwrap().split("e-").collect();
         let x: f64 = xattr.get(0).unwrap().parse().unwrap();
-        let xe: f64 = xattr.get(1).unwrap().parse().unwrap();
+        let xe: f64 = match xattr.get(1) {
+            Some(s) => s.parse().unwrap(),
+            None => 0.0,
+        };
         let minus_xe = -1.0 * xe;
         let xi = x * minus_xe.exp();
 
         let yattr: Vec<&str> = attr.get(1).unwrap().split("e-").collect();
         let y: f64 = yattr.get(0).unwrap().parse().unwrap();
-        let ye: f64 = yattr.get(1).unwrap().parse().unwrap();
+        let ye: f64 = match yattr.get(1) {
+            Some(s) => s.parse().unwrap(),
+            None => 0.0,
+        };
         let minus_ye = -1.0 * ye;
         let yi = y * minus_ye.exp();
 
         let zattr: Vec<&str> = attr.get(2).unwrap().split("e-").collect();
         let z: f64 = zattr.get(0).unwrap().parse().unwrap();
-        let ze: f64 = zattr.get(1).unwrap().parse().unwrap();
+        let ze: f64 = match zattr.get(1) {
+            Some(s) => s.parse().unwrap(),
+            None => 0.0,
+        };
         let minus_ze = -1.0 * ze;
         let zi = z * minus_ze.exp();
 
@@ -60,9 +69,14 @@ pub fn obj_loader(file: &mut File) -> HitableList {
     for s in face_line {
         let attr: Vec<&str> = s.split(" ").skip(1).collect(); //remove "f" at front
 
-        let i0: usize = attr.get(0).unwrap().parse().unwrap();
-        let i1: usize = attr.get(1).unwrap().parse().unwrap();
-        let i2: usize = attr.get(2).unwrap().parse().unwrap();
+        let first: Vec<&str> = attr.get(0).unwrap().split("//").collect();
+        let i0: usize = first.get(0).unwrap().parse().unwrap();
+
+        let second: Vec<&str> = attr.get(1).unwrap().split("//").collect();
+        let i1: usize = second.get(1).unwrap().parse().unwrap();
+
+        let third: Vec<&str> = attr.get(2).unwrap().split("//").collect();
+        let i2: usize = third.get(2).unwrap().parse().unwrap();
 
         let v0 = vertex[i0 - 1];
         let v1 = vertex[i1 - 1];

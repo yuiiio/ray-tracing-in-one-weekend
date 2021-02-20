@@ -230,30 +230,16 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    /*
-    let mut bunny = obj_loader(&mut File::open("./bunny.obj").unwrap());
+    let mut bunny = obj_loader(&mut File::open("./box.obj").unwrap());
 
     let bunny = BvhNode::new(&mut bunny);
-    obj_list.push(bunny.clone());
-    */
 
-    let mut obj_box = Translate::new(
-        Box::new(Rotate::new(
-            Box::new(obj_loader(&mut File::open("./box.obj").unwrap())),
-            /*
-            Box::new(Triangle::new(
-                [0.0, 0.0, 0.0],
-                [0.0, 200.0, 100.0],
-                [200.0, 0.0, 0.0],
-                red,
-            )),*/
-            [1.0, 1.0, 0.0],
-            45.0,
-        )),
+    let bunny = Translate::new(
+        Box::new(Rotate::new(Box::new(bunny), [0.0, 1.0, 1.0], -120.0)),
         [200.0, 200.0, 200.0],
     );
 
-    obj_list.push(obj_box);
+    obj_list.push(bunny);
 
     let obj_list = BvhNode::new(&mut obj_list);
 
