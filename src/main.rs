@@ -38,7 +38,7 @@ use std::f64;
 use texture::{CheckerTexture, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
 use triangle::Triangle;
-use utils::clamp;
+use utils::{clamp, max, min};
 use vec3::{
     vec3_add, vec3_div, vec3_dot, vec3_mul, vec3_mul_b, vec3_squared_length, vec3_sub,
     vec3_unit_vector_f64, Vector3,
@@ -57,13 +57,18 @@ fn color<T: Hitable, M: Hitable>(
             Some(rec) => {
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
-                    let absorabance = vec3_mul_b(last_absorabance, rec.get_t());
-                    let absorabance = vec3_div([1.0, 1.0, 1.0], absorabance);
-                    let absorabance = [
-                        clamp(absorabance[0], 0.0, 1.0),
-                        clamp(absorabance[1], 0.0, 1.0),
-                        clamp(absorabance[2], 0.0, 1.0),
-                    ];
+                    let distance: f64 = rec.get_t();
+                    let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
+                    if last_absorabance[0] != 0.0 {
+                        absorabance[0] = min(1.0 / (last_absorabance[0] * distance), 1.0);
+                    }
+                    if last_absorabance[1] != 0.0 {
+                        absorabance[1] = min(1.0 / (last_absorabance[1] * distance), 1.0);
+                    }
+                    if last_absorabance[2] != 0.0 {
+                        absorabance[2] = min(1.0 / (last_absorabance[2] * distance), 1.0);
+                    }
+
                     let scatterd = mat_rec.get_scatterd();
                     match scatterd {
                         Scatterd::Ray(next_ray) => {
@@ -166,7 +171,7 @@ fn main() {
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba(),
     )));
-    let glass = material_list.add_material(Dielectric::new(2.0, [0.1, 0.1, 0.0]));
+    let glass = material_list.add_material(Dielectric::new(1.5, [0.03, 0.02, 0.0]));
     let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.8, 0.85, 0.88])));
 
     obj_list.push(FlipNormals::new(Rect::new(
@@ -242,6 +247,22 @@ fn main() {
     );
 
     obj_list.push(bunny);
+
+    /*
+    let glass_box = obj_loader(&mut File::open("./box.obj").unwrap());
+
+    let glass_box = Translate::new(
+        Box::new(Rotate::new(
+            Box::new(glass_box),
+            //Box::new(Boxel::new([0.0, 0.0, 0.0], [100.0, 100.0, 100.0], glass)),
+            [1.0, 1.0, 0.0],
+            45.0,
+        )),
+        [200.0, 300.0, 100.0],
+    );
+
+    obj_list.push(glass_box);
+    */
 
     let obj_list = BvhNode::new(&mut obj_list);
 
