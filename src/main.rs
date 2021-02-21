@@ -270,6 +270,8 @@ fn main() {
     light_list.push(metal_box);
     light_list.push(glass_sphere);
 
+    let light_list = BvhNode::new(&mut light_list);
+
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
         [278.0, 278.0, 0.0],

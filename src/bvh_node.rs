@@ -1,10 +1,11 @@
 use rand::prelude::*;
 
-use crate::aabb::{Aabb, surrounding_box};
-use crate::hitable::{Hitable, HitRecord};
-use crate::ray::{Ray};
-use crate::hitablelist::{HitableList};
-use crate::utils::{qsort};
+use crate::aabb::{surrounding_box, Aabb};
+use crate::hitable::{HitRecord, Hitable};
+use crate::hitablelist::HitableList;
+use crate::ray::Ray;
+use crate::utils::qsort;
+use crate::vec3::Vector3;
 
 #[derive(Clone)]
 pub struct BvhNode {
@@ -55,30 +56,38 @@ impl BvhNode {
             _ => qsort(hitable_list, box_z_compare),
         }
         let list_size = hitable_list.len();
-        let (left_obj, right_obj): (Box<dyn Hitable + Send + Sync>, Box<dyn Hitable + Send + Sync>) = match list_size {
+        let (left_obj, right_obj): (
+            Box<dyn Hitable + Send + Sync>,
+            Box<dyn Hitable + Send + Sync>,
+        ) = match list_size {
             1 => {
                 let left_obj = hitable_list[0].clone();
                 let right_obj = hitable_list[0].clone();
                 (left_obj, right_obj)
-                },
+            }
             2 => {
                 let left_obj = hitable_list[0].clone();
                 let right_obj = hitable_list[1].clone();
                 (left_obj, right_obj)
-            },
+            }
             _ => {
                 let mut a = HitableList::from_vec(hitable_list.split_off(list_size / 2));
                 let mut b = hitable_list;
                 let left_obj = Box::new(BvhNode::new(&mut a));
                 let right_obj = Box::new(BvhNode::new(&mut b));
                 (left_obj, right_obj)
-            },
+            }
         };
-        let left_box = left_obj.bounding_box().expect("no bounding box in bvh_node constructor");
-        let right_box = right_obj.bounding_box().expect("no bounding box in bvh_node constructor");
-        BvhNode { bvh_node_box: surrounding_box(left_box, right_box),
+        let left_box = left_obj
+            .bounding_box()
+            .expect("no bounding box in bvh_node constructor");
+        let right_box = right_obj
+            .bounding_box()
+            .expect("no bounding box in bvh_node constructor");
+        BvhNode {
+            bvh_node_box: surrounding_box(left_box, right_box),
             left: left_obj,
-            right: right_obj
+            right: right_obj,
         }
     }
 }
@@ -86,27 +95,21 @@ impl BvhNode {
 impl Hitable for BvhNode {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self.bvh_node_box.hit(r, t_min, t_max) {
-            Some(_hit_rec) => {
-                match self.left.hit(r, t_min, t_max) {
-                    Some(left_rec) => {
-                        match self.right.hit(r, t_min, t_max) {
-                            Some(right_rec) => {
-                                if left_rec.get_t() < right_rec.get_t() {
-                                    return Some(left_rec)
-                                } else {
-                                    return Some(right_rec)
-                                }
-                            },
-                            None => return Some(left_rec),
+            Some(_hit_rec) => match self.left.hit(r, t_min, t_max) {
+                Some(left_rec) => match self.right.hit(r, t_min, t_max) {
+                    Some(right_rec) => {
+                        if left_rec.get_t() < right_rec.get_t() {
+                            return Some(left_rec);
+                        } else {
+                            return Some(right_rec);
                         }
-                    },
-                    None => {
-                        match self.right.hit(r, t_min, t_max) {
-                            Some(right_rec) => return Some(right_rec),
-                            None => return None,
-                        }
-                    },
-                }
+                    }
+                    None => return Some(left_rec),
+                },
+                None => match self.right.hit(r, t_min, t_max) {
+                    Some(right_rec) => return Some(right_rec),
+                    None => return None,
+                },
             },
             None => return None,
         }
@@ -114,5 +117,20 @@ impl Hitable for BvhNode {
 
     fn bounding_box(&self) -> Option<Aabb> {
         Some(self.bvh_node_box.clone())
+    }
+
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+        return (self.left.pdf_value(o, v) + self.right.pdf_value(o, v)) / 2.0; // now bvh was fill both left and right so / 2.0
+    }
+
+    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
+        let mut rng = rand::thread_rng();
+        let rand: f64 = rng.gen();
+
+        if rand > 0.5 {
+            return self.left.random(o);
+        } else {
+            return self.right.random(o);
+        }
     }
 }
