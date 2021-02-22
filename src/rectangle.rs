@@ -23,6 +23,7 @@ pub struct Rect {
     k: f64,
     axis: AxisType,
     mat_ptr: MaterialHandle,
+    area: f64,
 }
 
 impl Rect {
@@ -35,6 +36,7 @@ impl Rect {
         axis: AxisType,
         mat_ptr: MaterialHandle,
     ) -> Self {
+        let area: f64 = (x1 - x0) * (y1 - y0);
         Rect {
             x0,
             x1,
@@ -43,6 +45,7 @@ impl Rect {
             k,
             axis,
             mat_ptr,
+            area,
         }
     }
 }
@@ -97,10 +100,9 @@ impl Hitable for Rect {
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(rec) => {
-                let area = (self.x1 - self.x0) * (self.y1 - self.y0);
                 let distance_squared = rec.get_t().powi(2) * vec3_squared_length(*v);
                 let cosine = vec3_dot(*v, rec.get_normal()).abs() / vec3_length_f64(*v);
-                return distance_squared / (cosine * area);
+                return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
         }

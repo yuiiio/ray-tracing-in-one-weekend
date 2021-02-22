@@ -246,7 +246,7 @@ fn main() {
         [200.0, 200.0, 200.0],
     );
 
-    obj_list.push(bunny);
+    obj_list.push(bunny.clone());
 
     /*
     let glass_box = obj_loader(&mut File::open("./box.obj").unwrap());
@@ -261,7 +261,7 @@ fn main() {
         [200.0, 300.0, 100.0],
     );
 
-    obj_list.push(glass_box);
+    obj_list.push(glass_box.clone());
     */
 
     let obj_list = BvhNode::new(&mut obj_list);
@@ -269,8 +269,10 @@ fn main() {
     light_list.push(light_rect);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
+    //light_list.push(bunny);
+    //light_list.push(glass_box);
 
-    let light_list = BvhNode::new(&mut light_list);
+    //let light_list = BvhNode::new(&mut light_list);
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],

@@ -7,7 +7,7 @@ use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::utils::{max, min};
 use crate::vec3::{
-    cross, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub,
+    cross, vec3_add, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub,
     vec3_unit_vector_f64, Vector3,
 };
 
@@ -20,6 +20,7 @@ pub struct Triangle {
     e1: Vector3<f64>,
     e2: Vector3<f64>,
     n: Vector3<f64>,
+    area: f64,
 }
 
 impl Triangle {
@@ -32,6 +33,7 @@ impl Triangle {
         let e1 = vec3_sub(v1, v0);
         let e2 = vec3_sub(v2, v0);
         let n = cross(e2, e1);
+        let area: f64 = vec3_length_f64(n) / 2.0;
         Triangle {
             v0,
             v1,
@@ -40,6 +42,7 @@ impl Triangle {
             e1,
             e2,
             n,
+            area,
         }
     }
 }
@@ -94,5 +97,46 @@ impl Hitable for Triangle {
             max(max(self.v0[2], self.v1[2]), self.v2[2]),
         ];
         return Some(Aabb::new(min, max));
+    }
+
+    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+        match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
+            Some(rec) => {
+                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(*v);
+                let cosine = vec3_dot(*v, rec.get_normal()).abs() / vec3_length_f64(*v);
+                return distance_squared / (cosine * self.area);
+            }
+            None => return 0.0,
+        }
+    }
+
+    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
+        let mut rng = rand::thread_rng();
+        let rng_i: f64 = rng.gen();
+        let rng_j: f64 = rng.gen();
+
+        let rng_i = rng_i;
+        let rng_j = rng_j;
+
+        let max: f64;
+        let min: f64;
+        if rng_i < rng_j {
+            max = rng_j;
+            min = rng_i;
+        } else {
+            max = rng_i;
+            min = rng_j;
+        }
+
+        let u = min;
+        let v = 1.0 - max;
+        let w = max - min;
+
+        let random_point = vec3_add(
+            vec3_add(vec3_mul_b(self.v0, u), vec3_mul_b(self.v1, v)),
+            vec3_mul_b(self.v2, w),
+        );
+
+        vec3_sub(random_point, *o)
     }
 }
