@@ -82,7 +82,7 @@ pub fn obj_loader(file: &mut File) -> HitableList {
         let v1 = vertex[i1 - 1];
         let v2 = vertex[i2 - 1];
 
-        let triangle = Triangle::new(v0, v2, v1, MaterialHandle(5)); //0:red, 1:white
+        let triangle = Triangle::new(v0, v2, v1, MaterialHandle(1)); //0:red, 1:white
         hitablelist.push(triangle);
     }
 

@@ -138,7 +138,6 @@ fn color<T: Hitable, M: Hitable>(
                 return emitted;
             }
             None => {
-                /*
                 let v = vec3_unit_vector_f64(r.direction());
                 let a = (v[1] + 1.0) * 0.5;
                 let ret = vec3_add(
@@ -146,7 +145,6 @@ fn color<T: Hitable, M: Hitable>(
                     vec3_mul_b([0.5, 0.7, 1.0], a),
                 );
                 return ret;
-                */
             }
         }
     }
