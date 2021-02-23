@@ -30,13 +30,17 @@ pub fn qsort<T: Clone>(vec: &mut Vec<T>, compare: fn(&T, &T) -> bool) {
     qsort_partition(vec, start, end as isize, compare);
 }
 
-fn qsort_partition<T: Clone>(vec: &mut Vec<T>, start: isize, end: isize, compare: fn(&T, &T) -> bool) {
+fn qsort_partition<T: Clone>(
+    vec: &mut Vec<T>,
+    start: isize,
+    end: isize,
+    compare: fn(&T, &T) -> bool,
+) {
     if start < end && end - start >= 1 {
         let pivot = partition(vec, start as isize, end as isize, compare);
         qsort_partition(vec, start, pivot - 1, compare);
         qsort_partition(vec, pivot + 1, end, compare);
     }
-
 }
 
 fn partition<T: Clone>(vec: &mut Vec<T>, l: isize, h: isize, compare: fn(&T, &T) -> bool) -> isize {
@@ -46,11 +50,15 @@ fn partition<T: Clone>(vec: &mut Vec<T>, l: isize, h: isize, compare: fn(&T, &T)
     for j in l..h {
         if compare(&vec[j as usize], &pivot) {
             i = i + 1;
-            let temp = vec[i as usize].clone(); vec[i as usize] = vec[j as usize].clone(); vec[j as usize] = temp; 
+            let temp = vec[i as usize].clone();
+            vec[i as usize] = vec[j as usize].clone();
+            vec[j as usize] = temp;
         }
     }
 
-    let temp = vec[(i + 1) as usize].clone(); vec[(i + 1) as usize] = vec[h as usize].clone(); vec[h as usize] = temp; 
+    let temp = vec[(i + 1) as usize].clone();
+    vec[(i + 1) as usize] = vec[h as usize].clone();
+    vec[h as usize] = temp;
 
     i + 1
 }
@@ -61,7 +69,7 @@ mod test {
     #[test]
     fn qsort_test() {
         let mut vec = vec![4, 5, 2, 6, 1, 8, 3, 5];
-        fn compare (a: &i32, b: &i32) -> bool { 
+        fn compare(a: &i32, b: &i32) -> bool {
             if a < b {
                 return true;
             } else {
