@@ -4,7 +4,6 @@ use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
 use crate::hitablelist::HitableList;
 use crate::ray::Ray;
-use crate::utils::qsort;
 use crate::vec3::Vector3;
 
 #[derive(Clone)]
@@ -43,52 +42,109 @@ fn box_z_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
         return false;
     }
 }
+pub fn dqsort(
+    vec: &mut Vec<usize>,
+    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
+    hitable_list: &HitableList,
+) {
+    let start = 0;
+    let end = vec.len() - 1;
+    dqsort_partition(vec, start, end as isize, compare, hitable_list);
+}
+
+fn dqsort_partition(
+    vec: &mut Vec<usize>,
+    start: isize,
+    end: isize,
+    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
+    hitable_list: &HitableList,
+) {
+    if start < end && end - start >= 1 {
+        let pivot = dpartition(vec, start as isize, end as isize, compare, hitable_list);
+        dqsort_partition(vec, start, pivot - 1, compare, hitable_list);
+        dqsort_partition(vec, pivot + 1, end, compare, hitable_list);
+    }
+}
+
+fn dpartition(
+    vec: &mut Vec<usize>,
+    l: isize,
+    h: isize,
+    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
+    hitable_list: &HitableList,
+) -> isize {
+    let pivot = vec[h as usize];
+    let mut i = l - 1;
+
+    for j in l..h {
+        if compare(&hitable_list[vec[j as usize]], &hitable_list[pivot]) {
+            i = i + 1;
+            let temp = vec[i as usize];
+            vec[i as usize] = vec[j as usize];
+            vec[j as usize] = temp;
+        }
+    }
+
+    let temp = vec[(i + 1) as usize];
+    vec[(i + 1) as usize] = vec[h as usize];
+    vec[h as usize] = temp;
+
+    i + 1
+}
+
+fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
+    let mut rng = rand::thread_rng();
+    let x: f64 = rng.gen();
+    let x: f64 = x * 3.0;
+    let axis: usize = x as usize;
+    match axis {
+        0 => dqsort(handle, box_x_compare, hitable_list),
+        1 => dqsort(handle, box_y_compare, hitable_list),
+        _ => dqsort(handle, box_z_compare, hitable_list),
+    }
+    let handle_size = handle.len();
+    let (left_obj, right_obj): (
+        Box<dyn Hitable + Send + Sync>,
+        Box<dyn Hitable + Send + Sync>,
+    ) = match handle_size {
+        1 => {
+            let left_obj = hitable_list[handle[0]].clone();
+            let right_obj = hitable_list[handle[0]].clone();
+            (left_obj, right_obj)
+        }
+        2 => {
+            let left_obj = hitable_list[handle[0]].clone();
+            let right_obj = hitable_list[handle[1]].clone();
+            (left_obj, right_obj)
+        }
+        _ => {
+            let mut a = handle.split_off(handle_size / 2);
+            let mut b = handle;
+            let left_obj = Box::new(build_bvh(hitable_list, &mut a));
+            let right_obj = Box::new(build_bvh(hitable_list, &mut b));
+            (left_obj, right_obj)
+        }
+    };
+    let left_box = left_obj
+        .bounding_box()
+        .expect("no bounding box in bvh_node constructor");
+    let right_box = right_obj
+        .bounding_box()
+        .expect("no bounding box in bvh_node constructor");
+    BvhNode {
+        bvh_node_box: surrounding_box(left_box, right_box),
+        left: left_obj,
+        right: right_obj,
+    }
+}
 
 impl BvhNode {
-    pub fn new(hitable_list: &mut HitableList) -> Self {
-        let mut rng = rand::thread_rng();
-        let x: f64 = rng.gen();
-        let x: f64 = x * 3.0;
-        let axis: usize = x as usize;
-        match axis {
-            0 => qsort(hitable_list, box_x_compare),
-            1 => qsort(hitable_list, box_y_compare),
-            _ => qsort(hitable_list, box_z_compare),
+    pub fn new(hitable_list: &HitableList) -> Self {
+        let mut handle = Vec::new();
+        for i in 0..hitable_list.len() {
+            handle.push(i);
         }
-        let list_size = hitable_list.len();
-        let (left_obj, right_obj): (
-            Box<dyn Hitable + Send + Sync>,
-            Box<dyn Hitable + Send + Sync>,
-        ) = match list_size {
-            1 => {
-                let left_obj = hitable_list[0].clone();
-                let right_obj = hitable_list[0].clone();
-                (left_obj, right_obj)
-            }
-            2 => {
-                let left_obj = hitable_list[0].clone();
-                let right_obj = hitable_list[1].clone();
-                (left_obj, right_obj)
-            }
-            _ => {
-                let mut a = HitableList::from_vec(hitable_list.split_off(list_size / 2));
-                let mut b = hitable_list;
-                let left_obj = Box::new(BvhNode::new(&mut a));
-                let right_obj = Box::new(BvhNode::new(&mut b));
-                (left_obj, right_obj)
-            }
-        };
-        let left_box = left_obj
-            .bounding_box()
-            .expect("no bounding box in bvh_node constructor");
-        let right_box = right_obj
-            .bounding_box()
-            .expect("no bounding box in bvh_node constructor");
-        BvhNode {
-            bvh_node_box: surrounding_box(left_box, right_box),
-            left: left_obj,
-            right: right_obj,
-        }
+        build_bvh(hitable_list, &mut handle)
     }
 }
 

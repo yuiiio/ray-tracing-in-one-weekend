@@ -235,10 +235,10 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let mut bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
+    let bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
 
     let now1 = SystemTime::now();
-    let bunny = BvhNode::new(&mut bunny);
+    let bunny = BvhNode::new(&bunny);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -268,7 +268,7 @@ fn main() {
     */
 
     let now2 = SystemTime::now();
-    let obj_list = BvhNode::new(&mut obj_list);
+    let obj_list = BvhNode::new(&obj_list);
     println!(
         "BVH-2 Build Time elapsed: {}",
         now2.elapsed().unwrap().as_secs_f64()
