@@ -4,12 +4,7 @@ use std::sync::Arc;
 
 use crate::hitable::{HitRecord, Hitable};
 use crate::onb::Onb;
-use crate::ray::Ray;
-use crate::vec3::{
-    cross, vec3_add, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_unit_vector_f64,
-    Vector3,
-};
-use std::f64;
+use crate::vec3::{vec3_dot, vec3_unit_vector_f64, Vector3};
 
 pub trait Pdf {
     fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64;

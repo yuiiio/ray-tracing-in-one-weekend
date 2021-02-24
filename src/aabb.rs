@@ -37,7 +37,7 @@ impl Hitable for Aabb {
             if (inv_d < 0.0) {
                 swap(&mut t0, &mut t1);
             }
-        
+
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
             if tmax < tmin {

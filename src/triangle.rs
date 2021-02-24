@@ -2,7 +2,6 @@ use rand::prelude::*;
 
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
-use crate::hitablelist::HitableList;
 use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::utils::{max, min};

@@ -28,9 +28,9 @@ use bvh_node::BvhNode;
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
-use material::{Dielectric, DiffuseLight, Lambertian, MaterialHandle, Materials, Metal, Scatterd};
+use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
 use obj::obj_loader;
-use pdf::{CosinePdf, HitablePdf, MixturePdf, Pdf};
+use pdf::{HitablePdf, MixturePdf, Pdf};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -167,7 +167,7 @@ fn main() {
     let light =
         material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(
-        open("./texture.png").unwrap().into_rgba(),
+        open("./texture.png").unwrap().into_rgba8(),
     )));
     let glass = material_list.add_material(Dielectric::new(1.5, [0.03, 0.02, 0.0]));
     let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.8, 0.85, 0.88])));
@@ -235,7 +235,7 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
+    let bunny = obj_loader(&mut File::open("./bunny.obj").unwrap());
 
     let now1 = SystemTime::now();
     let bunny = BvhNode::new(&bunny);

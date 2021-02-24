@@ -1,7 +1,4 @@
-use crate::vec3::{
-    cross, vec3_add, vec3_div, vec3_dot, vec3_mul, vec3_mul_b, vec3_squared_length, vec3_sub,
-    vec3_unit_vector_f64, Vector3,
-};
+use crate::vec3::{cross, vec3_add, vec3_mul_b, vec3_unit_vector_f64, Vector3};
 
 pub struct Onb {
     u: Vector3<f64>,
