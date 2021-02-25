@@ -157,7 +157,7 @@ fn main() {
     const NY: usize = 800;
     let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
     const NS: usize = 20; //anti-aliasing sample-per-pixel
-    const NT: usize = 16; // use thread
+    const NT: usize = 64; // use thread
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
@@ -236,7 +236,7 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let bunny = obj_loader(&mut File::open("./bunny.obj").unwrap());
+    let bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
 
     let now1 = SystemTime::now();
     let bunny = BvhNode::new(&bunny);
