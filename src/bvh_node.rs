@@ -1,6 +1,4 @@
 use rand::prelude::*;
-use std::sync::{mpsc, Arc};
-use std::thread;
 
 use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
@@ -94,18 +92,17 @@ fn dpartition(
     i + 1
 }
 
-fn build_bvh(hitable_list: &Arc<HitableList>, handle: &Vec<usize>) -> BvhNode {
-    let mut handle_copy = handle.clone();
+fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
     let x: f64 = x * 3.0;
     let axis: usize = x as usize;
     match axis {
-        0 => dqsort(&mut handle_copy, box_x_compare, hitable_list),
-        1 => dqsort(&mut handle_copy, box_y_compare, hitable_list),
-        _ => dqsort(&mut handle_copy, box_z_compare, hitable_list),
+        0 => dqsort(handle, box_x_compare, hitable_list),
+        1 => dqsort(handle, box_y_compare, hitable_list),
+        _ => dqsort(handle, box_z_compare, hitable_list),
     }
-    let handle_size = handle_copy.len();
+    let handle_size = handle.len();
     let (left_obj, right_obj): (
         Box<dyn Hitable + Send + Sync>,
         Box<dyn Hitable + Send + Sync>,
@@ -121,22 +118,10 @@ fn build_bvh(hitable_list: &Arc<HitableList>, handle: &Vec<usize>) -> BvhNode {
             (left_obj, right_obj)
         }
         _ => {
-            let a = handle_copy.split_off(handle_size / 2);
-            let b = handle_copy;
-            let (tx1, rx1) = mpsc::channel();
-            let hitable_list1 = Arc::clone(&hitable_list);
-            thread::spawn(move || {
-                let left_obj = Box::new(build_bvh(&hitable_list1, &a));
-                tx1.send(left_obj).unwrap();
-            });
-            let (tx2, rx2) = mpsc::channel();
-            let hitable_list2 = Arc::clone(&hitable_list);
-            thread::spawn(move || {
-                let right_obj = Box::new(build_bvh(&hitable_list2, &b));
-                tx2.send(right_obj).unwrap();
-            });
-            let left_obj = rx1.recv().unwrap();
-            let right_obj = rx2.recv().unwrap();
+            let mut a = handle.split_off(handle_size / 2);
+            let mut b = handle;
+            let left_obj = Box::new(build_bvh(hitable_list, &mut a));
+            let right_obj = Box::new(build_bvh(hitable_list, &mut b));
             (left_obj, right_obj)
         }
     };
@@ -159,11 +144,7 @@ impl BvhNode {
         for i in 0..hitable_list.len() {
             handle.push(i);
         }
-
-        let hitable_list: HitableList = hitable_list.clone();
-        let hitable_list = Arc::new(hitable_list);
-        let hitable_list = Arc::clone(&hitable_list);
-        build_bvh(&hitable_list, &handle)
+        build_bvh(hitable_list, &mut handle)
     }
 }
 

@@ -1,8 +1,8 @@
-use crate::hitable::{HitRecord, Hitable};
-use crate::material::MaterialHandle;
-use crate::ray::Ray;
-use crate::utils::{max, min};
-use crate::vec3::Vector3;
+use crate::vec3::{Vector3};
+use crate::ray::{Ray};
+use crate::utils::{min, max};
+use crate::hitable::{Hitable, HitRecord};
+use crate::material::{MaterialHandle};
 use std::mem::swap;
 
 #[derive(Clone)]
@@ -41,7 +41,7 @@ impl Hitable for Aabb {
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
             if tmax < tmin {
-                return None;
+                return None
             }
         }
         let t = 0.0;
@@ -50,11 +50,11 @@ impl Hitable for Aabb {
         let p = [0.0, 0.0, 0.0];
         let normal = [0.0, 0.0, 0.0];
         let mat_ptr = MaterialHandle(0);
-        return Some(HitRecord::new(t, u, v, p, normal, mat_ptr));
+        return Some(HitRecord::new(t, u, v, p, normal, mat_ptr))
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some(self.clone())
+        Some( self.clone() )
     }
 }
 
@@ -77,33 +77,29 @@ mod test {
         let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
-        };
+         };
         assert_eq!(true, result);
         let r = Ray::new([0.0, 0.0, 0.0], [1.5, 0.0, 1.5]);
         let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
-        };
+         };
         assert_eq!(false, result);
         let r = Ray::new([3.0, 3.0, 3.0], [-1.0, -1.0, -1.0]);
         let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
-        };
+         };
         assert_eq!(true, result);
     }
 }
 
 pub fn surrounding_box(box0: Aabb, box1: Aabb) -> Aabb {
-    let min = [
-        min(box0.min()[0], box1.min()[0]),
-        min(box0.min()[1], box1.min()[1]),
-        min(box0.min()[2], box1.min()[2]),
-    ];
-    let max = [
-        max(box0.max()[0], box1.max()[0]),
-        max(box0.max()[1], box1.max()[1]),
-        max(box0.max()[2], box1.max()[2]),
-    ];
+    let min = [min(box0.min()[0], box1.min()[0]),
+                min(box0.min()[1], box1.min()[1]),
+                min(box0.min()[2], box1.min()[2])];
+    let max = [max(box0.max()[0], box1.max()[0]),
+                max(box0.max()[1], box1.max()[1]),
+                max(box0.max()[2], box1.max()[2])];
     Aabb::new(min, max)
 }
