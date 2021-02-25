@@ -302,6 +302,7 @@ fn main() {
         let light_list = Arc::clone(&light_list);
         let material_list = Arc::clone(&material_list);
         let handle = thread::spawn(move || {
+            let mut img_line: [[u8; 4]; NX] = [[0; 4]; NX];
             for i in 0..NX {
                 let mut col = [0.0 as f64; 3];
                 let mut rng = rand::thread_rng();
@@ -334,8 +335,11 @@ fn main() {
                 let ir: u8 = (255.99 * col[0]) as u8;
                 let ig: u8 = (255.99 * col[1]) as u8;
                 let ib: u8 = (255.99 * col[2]) as u8;
-                let mut imgbuf = imgbuf_clone.lock().unwrap();
-                imgbuf[i][j] = [ir, ig, ib, 255];
+                img_line[i] = [ir, ig, ib, 255];
+            }
+            let mut imgbuf = imgbuf_clone.lock().unwrap();
+            for i in 0..NX {
+                imgbuf[i][j] = img_line[i];
             }
         });
         handles.push(handle);
