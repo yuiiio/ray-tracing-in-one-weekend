@@ -92,15 +92,22 @@ fn dpartition(
     i + 1
 }
 
-fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
+fn build_bvh_with_sorted_handle(
+    hitable_list: &HitableList,
+    handle: &mut Vec<usize>,
+    sorted_handle_x: &Vec<usize>,
+    sorted_handle_y: &Vec<usize>,
+    sorted_handle_z: &Vec<usize>,
+) -> BvhNode {
+    let mut picked_handle = Vec::new();
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
     let x: f64 = x * 3.0;
     let axis: usize = x as usize;
     match axis {
-        0 => dqsort(handle, box_x_compare, hitable_list),
-        1 => dqsort(handle, box_y_compare, hitable_list),
-        _ => dqsort(handle, box_z_compare, hitable_list),
+        0 => pick_handle_from(sorted_handle_x, handle, &mut picked_handle),
+        1 => pick_handle_from(sorted_handle_y, handle, &mut picked_handle),
+        _ => pick_handle_from(sorted_handle_z, handle, &mut picked_handle),
     }
     let handle_size = handle.len();
     let (left_obj, right_obj): (
@@ -108,20 +115,32 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
         Box<dyn Hitable + Send + Sync>,
     ) = match handle_size {
         1 => {
-            let left_obj = hitable_list[handle[0]].clone();
-            let right_obj = hitable_list[handle[0]].clone();
+            let left_obj = hitable_list[picked_handle[0]].clone();
+            let right_obj = hitable_list[picked_handle[0]].clone();
             (left_obj, right_obj)
         }
         2 => {
-            let left_obj = hitable_list[handle[0]].clone();
-            let right_obj = hitable_list[handle[1]].clone();
+            let left_obj = hitable_list[picked_handle[0]].clone();
+            let right_obj = hitable_list[picked_handle[1]].clone();
             (left_obj, right_obj)
         }
         _ => {
-            let mut a = handle.split_off(handle_size / 2);
-            let mut b = handle;
-            let left_obj = Box::new(build_bvh(hitable_list, &mut a));
-            let right_obj = Box::new(build_bvh(hitable_list, &mut b));
+            let mut a = picked_handle.split_off(handle_size / 2);
+            let mut b = picked_handle;
+            let left_obj = Box::new(build_bvh_with_sorted_handle(
+                hitable_list,
+                &mut a,
+                sorted_handle_x,
+                sorted_handle_y,
+                sorted_handle_z,
+            ));
+            let right_obj = Box::new(build_bvh_with_sorted_handle(
+                hitable_list,
+                &mut b,
+                sorted_handle_x,
+                sorted_handle_y,
+                sorted_handle_z,
+            ));
             (left_obj, right_obj)
         }
     };
@@ -136,6 +155,49 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
         left: left_obj,
         right: right_obj,
     }
+}
+
+fn pick_handle_from(
+    sorted_handle: &Vec<usize>,
+    handle: &Vec<usize>,
+    picked_handle: &mut Vec<usize>,
+) {
+    let sorted_handle_size = sorted_handle.len();
+    let handle_size = handle.len();
+    for i in 0..sorted_handle_size {
+        for j in 0..handle_size {
+            if sorted_handle[i] == handle[j] {
+                picked_handle.push(sorted_handle[i]);
+            }
+        }
+    }
+}
+
+fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
+    let mut sorted_handle_x = Vec::new();
+    for i in 0..hitable_list.len() {
+        sorted_handle_x.push(i);
+    }
+    let mut sorted_handle_y = Vec::new();
+    for i in 0..hitable_list.len() {
+        sorted_handle_y.push(i);
+    }
+    let mut sorted_handle_z = Vec::new();
+    for i in 0..hitable_list.len() {
+        sorted_handle_z.push(i);
+    }
+
+    dqsort(&mut sorted_handle_x, box_x_compare, hitable_list);
+    dqsort(&mut sorted_handle_y, box_y_compare, hitable_list);
+    dqsort(&mut sorted_handle_z, box_z_compare, hitable_list);
+
+    build_bvh_with_sorted_handle(
+        hitable_list,
+        handle,
+        &sorted_handle_x,
+        &sorted_handle_y,
+        &sorted_handle_z,
+    )
 }
 
 impl BvhNode {
