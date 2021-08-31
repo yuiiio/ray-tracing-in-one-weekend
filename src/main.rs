@@ -288,7 +288,7 @@ fn main() {
         [278.0, 278.0, 0.0],
         [0.0, 1.0, 0.0],
         40.0,
-        (NX / NY) as f64,
+        NX as f64 / NY as f64,
     );
 
     let cam = Arc::new(cam);
