@@ -60,13 +60,13 @@ fn color<T: Hitable, M: Hitable>(
                     let distance: f64 = rec.get_t();
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
-                        absorabance[0] = min(1.0 / (last_absorabance[0] * distance), 1.0);
+                        absorabance[0] = f64::exp(-(last_absorabance[0] * distance));
                     }
                     if last_absorabance[1] != 0.0 {
-                        absorabance[1] = min(1.0 / (last_absorabance[1] * distance), 1.0);
+                        absorabance[1] = f64::exp(-(last_absorabance[1] * distance));
                     }
                     if last_absorabance[2] != 0.0 {
-                        absorabance[2] = min(1.0 / (last_absorabance[2] * distance), 1.0);
+                        absorabance[2] = f64::exp(-(last_absorabance[2] * distance));
                     }
 
                     let scatterd = mat_rec.get_scatterd();
