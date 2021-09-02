@@ -138,6 +138,7 @@ fn color<T: Hitable, M: Hitable>(
                 return emitted;
             }
             None => {
+                /*
                 let v = vec3_unit_vector_f64(r.direction());
                 let a = (v[1] + 1.0) * 0.5;
                 let ret = vec3_add(
@@ -145,6 +146,7 @@ fn color<T: Hitable, M: Hitable>(
                     vec3_mul_b([0.5, 0.7, 1.0], a),
                 );
                 return ret;
+                */
             }
         }
     }
@@ -170,7 +172,7 @@ fn main() {
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba8(),
     )));
-    let glass = material_list.add_material(Dielectric::new(1.5, [0.03, 0.02, 0.0]));
+    let glass = material_list.add_material(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
     let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.8, 0.85, 0.88])));
 
     obj_list.push(FlipNormals::new(Rect::new(
@@ -236,7 +238,7 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
+    let bunny = obj_loader(&mut File::open("./bunny.obj").unwrap());
 
     let now1 = SystemTime::now();
     let bunny = BvhNode::new(&bunny);
