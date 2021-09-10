@@ -125,15 +125,19 @@ impl<T: Texture> Lambertian<T> {
 
 fn random_in_unit_sphere() -> Vector3<f64> {
     let mut rng = rand::thread_rng();
-    loop {
-        let rand_x: f64 = rng.gen();
-        let rand_y: f64 = rng.gen();
-        let rand_z: f64 = rng.gen();
-        let p = vec3_sub(vec3_mul_b([rand_x, rand_y, rand_z], 2.0), [1.0, 1.0, 1.0]);
-        if vec3_squared_length(p) <= 1.0 * 1.0 {
-            return p;
-        }
-    }
+    let r1: f64 = rng.gen();
+    let r2: f64 = rng.gen();
+    let r3: f64 = rng.gen();
+
+    let a = 2.0 * PI * r1;
+    let b = 2.0 * (r2 * (1.0 - r2)).sqrt();
+
+    let c = r3.cbrt();
+
+    let x = a.cos() * b * c;
+    let y = b.sin() * b * c;
+    let z = (1.0 - (2.0 * r2)) * c;
+    [x, y, z]
 }
 
 impl<T: Texture> Material for Lambertian<T> {
