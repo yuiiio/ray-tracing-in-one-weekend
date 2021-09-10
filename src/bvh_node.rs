@@ -115,56 +115,6 @@ pub fn dmerge_sort_wrap(
     dmerge_sort(vec, &mut stock_vec, compare, hitable_list, 0, len);
 }
 
-pub fn dqsort(
-    vec: &mut Vec<usize>,
-    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
-    hitable_list: &HitableList,
-) {
-    let start = 0;
-    let end = vec.len() - 1;
-    dqsort_partition(vec, start, end as isize, compare, hitable_list);
-}
-
-fn dqsort_partition(
-    vec: &mut Vec<usize>,
-    start: isize,
-    end: isize,
-    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
-    hitable_list: &HitableList,
-) {
-    if start < end && end - start >= 1 {
-        let pivot = dpartition(vec, start as isize, end as isize, compare, hitable_list);
-        dqsort_partition(vec, start, pivot - 1, compare, hitable_list);
-        dqsort_partition(vec, pivot + 1, end, compare, hitable_list);
-    }
-}
-
-fn dpartition(
-    vec: &mut Vec<usize>,
-    l: isize,
-    h: isize,
-    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
-    hitable_list: &HitableList,
-) -> isize {
-    let pivot = vec[h as usize];
-    let mut i = l - 1;
-
-    for j in l..h {
-        if compare(&hitable_list[vec[j as usize]], &hitable_list[pivot]) {
-            i = i + 1;
-            let temp = vec[i as usize];
-            vec[i as usize] = vec[j as usize];
-            vec[j as usize] = temp;
-        }
-    }
-
-    let temp = vec[(i + 1) as usize];
-    vec[(i + 1) as usize] = vec[h as usize];
-    vec[h as usize] = temp;
-
-    i + 1
-}
-
 fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
