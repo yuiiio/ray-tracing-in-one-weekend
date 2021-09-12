@@ -157,9 +157,9 @@ fn main() {
     let now = SystemTime::now();
     const NX: usize = 800;
     const NY: usize = 800;
-    let imgbuf = Arc::new(Mutex::new(vec![vec![[0, 0, 0, 255]; NY]; NX]));
+    let imgbuf = Arc::new(Mutex::new([[[0, 0, 0, 255]; NY]; NX]));
     const NS: usize = 20; //anti-aliasing sample-per-pixel
-    const NT: usize = 64; // use thread
+    const NT: usize = 64; // use thread(+1)
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
@@ -299,36 +299,36 @@ fn main() {
     let material_list = Arc::new(material_list);
     let mut handles = vec![];
 
-    let alighn_y: usize = NY / NT; // 800/12 = 66
-    let ay: usize = NY / alighn_y;
-    let mut aya = Vec::new();
-    let mut fizz = NY;
-    for _i in 0..(ay - 1) {
-        aya.push(alighn_y);
-        fizz -= alighn_y;
+    const ALIGHN_X: usize = NX / NT;
+    const AX: usize = NX / ALIGHN_X;
+    let mut axa = [0; AX];
+    let mut fizz = NX;
+    for i in 0..(AX - 1) {
+        axa[i] = ALIGHN_X;
+        fizz -= ALIGHN_X;
     }
-    aya.push(fizz);
-    let aya = Arc::new(aya);
+    axa[AX - 1] = fizz;
+    let axa = Arc::new(axa);
 
-    for j in 0..ay {
+    for j in 0..AX {
         let imgbuf_clone = Arc::clone(&imgbuf);
         let cam = Arc::clone(&cam);
         let obj_list = Arc::clone(&obj_list);
         let light_list = Arc::clone(&light_list);
         let material_list = Arc::clone(&material_list);
-        let aya = Arc::clone(&aya);
+        let axa = Arc::clone(&axa);
         let handle = thread::spawn(move || {
-            let mut img_box: Vec<[[u8; 4]; NX]> = Vec::new();
-            for in_j in 0..aya[j] {
-                let mut img_line: [[u8; 4]; NX] = [[0; 4]; NX];
-                for i in 0..NX {
+            let mut img_box: Vec<[[u8; 4]; NY]> = Vec::new();
+            for in_j in 0..axa[j] {
+                let mut img_line: [[u8; 4]; NY] = [[0; 4]; NY];
+                for i in 0..NY {
                     let mut col = [0.0 as f64; 3];
                     let mut rng = rand::thread_rng();
                     for _s in 0..NS {
                         let rand_x: f64 = rng.gen();
                         let rand_y: f64 = rng.gen();
-                        let u: f64 = (i as f64 + rand_x) / NX as f64;
-                        let v: f64 = (((j * alighn_y) + in_j) as f64 + rand_y) / NY as f64;
+                        let u: f64 = (((j * ALIGHN_X) + in_j) as f64 + rand_x) / NX as f64;
+                        let v: f64 = (i as f64 + rand_y) / NY as f64;
                         let r = cam.get_ray(u, v);
                         col = vec3_add(
                             color(
@@ -358,10 +358,8 @@ fn main() {
                 img_box.push(img_line);
             }
             let mut imgbuf = imgbuf_clone.lock().unwrap();
-            for y in 0..aya[j] {
-                for x in 0..NX {
-                    imgbuf[x][(alighn_y * j) + y] = img_box[y][x];
-                }
+            for x in 0..axa[j] {
+                imgbuf[(ALIGHN_X * j) + x] = img_box[x];
             }
         });
         handles.push(handle);
