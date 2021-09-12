@@ -89,14 +89,14 @@ fn reflect(v: Vector3<f64>, n: Vector3<f64>) -> Vector3<f64> {
 
 impl<T: Texture> Material for Metal<T> {
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
-        let reflected = reflect(
+        let mut reflected = reflect(
             vec3_unit_vector_f64(r_in.direction()),
             hit_record.get_normal(),
         );
-        let scatterd = Ray::new(
-            hit_record.get_p(),
-            vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz)),
-        );
+        if self.fuzz != 0.0 {
+            reflected = vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz));
+        }
+        let scatterd = Ray::new(hit_record.get_p(), reflected);
         let attenuation =
             self.texture
                 .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
