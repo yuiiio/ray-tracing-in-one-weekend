@@ -299,15 +299,13 @@ fn main() {
     let material_list = Arc::new(material_list);
     let mut handles = vec![];
 
-    const ALIGHN_X: usize = NX / NT;
-    const AX: usize = NX / ALIGHN_X;
-    let mut axa = [0; AX];
-    let mut fizz = NX;
-    for i in 0..(AX - 1) {
-        axa[i] = ALIGHN_X;
-        fizz -= ALIGHN_X;
+    const ALIGHN_X: usize = NX / NT; //small
+    const AX: usize = NX / ALIGHN_X; //large
+    let mut axa: [usize; AX] = [ALIGHN_X; AX];
+    const FIZZ: usize = NX % ALIGHN_X;
+    if FIZZ != 0 {
+        axa[AX - 1] = FIZZ;
     }
-    axa[AX - 1] = fizz;
     let axa = Arc::new(axa);
 
     for j in 0..AX {
