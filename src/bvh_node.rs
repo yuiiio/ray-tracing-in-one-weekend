@@ -116,6 +116,7 @@ pub fn dmerge_sort_wrap(
 }
 
 fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
+    /*
     let mut rng = rand::thread_rng();
     let x: f64 = rng.gen();
     let x: f64 = x * 3.0;
@@ -125,6 +126,45 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
         1 => dmerge_sort_wrap(handle, box_y_compare, hitable_list),
         _ => dmerge_sort_wrap(handle, box_z_compare, hitable_list),
     }
+    */
+
+    let mut handle_x = handle.clone();
+    let mut handle_y = handle.clone();
+    let mut handle_z = handle.clone();
+    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
+    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
+    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
+
+    let x_max: f64 = hitable_list[handle_x[handle.len() - 1]]
+        .bounding_box()
+        .unwrap()
+        .max()[0]
+        - hitable_list[handle_x[0]].bounding_box().unwrap().min()[0];
+    let y_max: f64 = hitable_list[handle_y[handle.len() - 1]]
+        .bounding_box()
+        .unwrap()
+        .max()[1]
+        - hitable_list[handle_y[0]].bounding_box().unwrap().min()[1];
+    let z_max: f64 = hitable_list[handle_z[handle.len() - 1]]
+        .bounding_box()
+        .unwrap()
+        .max()[2]
+        - hitable_list[handle_z[0]].bounding_box().unwrap().min()[2];
+
+    let mut handle = if x_max < y_max {
+        if y_max < z_max {
+            handle_z
+        } else {
+            handle_y
+        }
+    } else {
+        if x_max < z_max {
+            handle_z
+        } else {
+            handle_x
+        }
+    };
+
     let handle_size = handle.len();
     let (left_obj, right_obj): (
         Box<dyn Hitable + Send + Sync>,
