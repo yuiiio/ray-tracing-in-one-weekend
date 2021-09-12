@@ -238,7 +238,7 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let bunny = obj_loader(&mut File::open("./bunny.obj").unwrap());
+    let bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
 
     let now1 = SystemTime::now();
     let bunny = BvhNode::new(&bunny);
@@ -249,7 +249,7 @@ fn main() {
 
     let bunny = Translate::new(
         Box::new(Rotate::new(Box::new(bunny), [0.0, 1.0, 0.0], 180.0)),
-        [200.0, 200.0, 200.0],
+        [200.0, 300.0, 200.0],
     );
 
     obj_list.push(bunny.clone());
