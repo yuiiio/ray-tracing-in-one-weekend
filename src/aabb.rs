@@ -7,21 +7,21 @@ use std::mem::swap;
 
 #[derive(Clone)]
 pub struct Aabb {
-    min: Vector3<f64>,
-    max: Vector3<f64>,
+    b_min: Vector3<f64>,
+    b_max: Vector3<f64>,
 }
 
 impl Aabb {
-    pub fn new(min: Vector3<f64>, max: Vector3<f64>) -> Self {
-        Aabb { min, max }
+    pub fn new(b_min: Vector3<f64>, b_max: Vector3<f64>) -> Self {
+        Aabb { b_min, b_max }
     }
 
-    pub fn min(&self) -> Vector3<f64> {
-        self.min
+    pub fn b_min(&self) -> Vector3<f64> {
+        self.b_min
     }
 
-    pub fn max(&self) -> Vector3<f64> {
-        self.max
+    pub fn b_max(&self) -> Vector3<f64> {
+        self.b_max
     }
 }
 
@@ -31,8 +31,8 @@ impl Hitable for Aabb {
         let mut tmax = t_max;
         for i in 0..3 {
             let inv_d = 1.0 / r.direction()[i];
-            let mut t0 = (self.min[i] - r.origin()[i]) * inv_d;
-            let mut t1 = (self.max[i] - r.origin()[i]) * inv_d;
+            let mut t0 = (self.b_min[i] - r.origin()[i]) * inv_d;
+            let mut t1 = (self.b_max[i] - r.origin()[i]) * inv_d;
 
             if (inv_d < 0.0) {
                 swap(&mut t0, &mut t1);
@@ -95,11 +95,11 @@ mod test {
 }
 
 pub fn surrounding_box(box0: Aabb, box1: Aabb) -> Aabb {
-    let min = [min(box0.min()[0], box1.min()[0]),
-                min(box0.min()[1], box1.min()[1]),
-                min(box0.min()[2], box1.min()[2])];
-    let max = [max(box0.max()[0], box1.max()[0]),
-                max(box0.max()[1], box1.max()[1]),
-                max(box0.max()[2], box1.max()[2])];
+    let min = [min(box0.b_min()[0], box1.b_min()[0]),
+                min(box0.b_min()[1], box1.b_min()[1]),
+                min(box0.b_min()[2], box1.b_min()[2])];
+    let max = [max(box0.b_max()[0], box1.b_max()[0]),
+                max(box0.b_max()[1], box1.b_max()[1]),
+                max(box0.b_max()[2], box1.b_max()[2])];
     Aabb::new(min, max)
 }

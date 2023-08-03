@@ -16,7 +16,7 @@ pub struct BvhNode {
 fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
     let box_a: Aabb = a.bounding_box().unwrap();
     let box_b: Aabb = b.bounding_box().unwrap();
-    if box_a.min()[0] < box_b.min()[0] {
+    if box_a.b_min()[0] < box_b.b_min()[0] {
         return true;
     } else {
         return false;
@@ -26,7 +26,7 @@ fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
 fn box_y_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
     let box_a: Aabb = a.bounding_box().unwrap();
     let box_b: Aabb = b.bounding_box().unwrap();
-    if box_a.min()[1] < box_b.min()[1] {
+    if box_a.b_min()[1] < box_b.b_min()[1] {
         return true;
     } else {
         return false;
@@ -36,7 +36,7 @@ fn box_y_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
 fn box_z_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
     let box_a: Aabb = a.bounding_box().unwrap();
     let box_b: Aabb = b.bounding_box().unwrap();
-    if box_a.min()[2] < box_b.min()[2] {
+    if box_a.b_min()[2] < box_b.b_min()[2] {
         return true;
     } else {
         return false;
@@ -138,18 +138,18 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
     let x_max: f64 = hitable_list[handle_x[handle.len() - 1]]
         .bounding_box()
         .unwrap()
-        .max()[0]
-        - hitable_list[handle_x[0]].bounding_box().unwrap().min()[0];
+        .b_max()[0]
+        - hitable_list[handle_x[0]].bounding_box().unwrap().b_min()[0];
     let y_max: f64 = hitable_list[handle_y[handle.len() - 1]]
         .bounding_box()
         .unwrap()
-        .max()[1]
-        - hitable_list[handle_y[0]].bounding_box().unwrap().min()[1];
+        .b_max()[1]
+        - hitable_list[handle_y[0]].bounding_box().unwrap().b_min()[1];
     let z_max: f64 = hitable_list[handle_z[handle.len() - 1]]
         .bounding_box()
         .unwrap()
-        .max()[2]
-        - hitable_list[handle_z[0]].bounding_box().unwrap().min()[2];
+        .b_max()[2]
+        - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
 
     let mut handle = if x_max < y_max {
         if y_max < z_max {

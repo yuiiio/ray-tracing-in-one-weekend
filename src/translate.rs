@@ -35,8 +35,8 @@ impl Hitable for Translate {
     fn bounding_box(&self) -> Option<Aabb> {
         match self.obj.bounding_box() {
             Some(aabb) => Some(Aabb::new(
-                vec3_add(aabb.min(), self.offset),
-                vec3_add(aabb.max(), self.offset),
+                vec3_add(aabb.b_min(), self.offset),
+                vec3_add(aabb.b_max(), self.offset),
             )),
             None => None,
         }
@@ -72,9 +72,9 @@ impl Rotate {
         for i in [1, 0].iter() {
             for j in [1, 0].iter() {
                 for k in [1, 0].iter() {
-                    let x = *i as f64 * bbox.max()[0] + (1 - *i) as f64 * bbox.min()[0];
-                    let y = *j as f64 * bbox.max()[1] + (1 - *j) as f64 * bbox.min()[1];
-                    let z = *k as f64 * bbox.max()[2] + (1 - *k) as f64 * bbox.min()[2];
+                    let x = *i as f64 * bbox.b_max()[0] + (1 - *i) as f64 * bbox.b_min()[0];
+                    let y = *j as f64 * bbox.b_max()[1] + (1 - *j) as f64 * bbox.b_min()[1];
+                    let z = *k as f64 * bbox.b_max()[2] + (1 - *k) as f64 * bbox.b_min()[2];
 
                     let rotated = quat.rotate([x, y, z]);
                     for c in 0..3 {
