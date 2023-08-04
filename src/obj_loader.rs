@@ -16,7 +16,7 @@ pub fn obj_loader(file: &mut File) -> HitableList {
         .filter(|s| s.get(0..1).unwrap() == "v")
         .collect();
 
-    let mut vertex: Vec<Vector3<f64>> = vec![];
+    let mut vertex: Vec<Vector3<f64>> = Vec::with_capacity(vertex_line.len());
 
     for s in vertex_line {
         let attr: Vec<&str> = s.split(" ").skip(1).collect(); //remove "v" at front

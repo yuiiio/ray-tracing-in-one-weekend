@@ -11,7 +11,7 @@ mod camera;
 mod hitable;
 mod hitablelist;
 mod material;
-mod obj;
+mod obj_loader;
 mod onb;
 mod pdf;
 mod quotation;
@@ -29,7 +29,7 @@ use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
-use obj::obj_loader;
+use obj_loader::obj_loader;
 use pdf::{HitablePdf, MixturePdf, Pdf};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
@@ -316,7 +316,7 @@ fn main() {
         let material_list = Arc::clone(&material_list);
         let axa = Arc::clone(&axa);
         let handle = thread::spawn(move || {
-            let mut img_box: Vec<[[u8; 4]; NY]> = Vec::new();
+            let mut img_box: Vec<[[u8; 4]; NY]> = Vec::with_capacity(axa[j]);
             for in_j in 0..axa[j] {
                 let mut img_line: [[u8; 4]; NY] = [[0; 4]; NY];
                 for i in 0..NY {

@@ -204,7 +204,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
 
 impl BvhNode {
     pub fn new(hitable_list: &HitableList) -> Self {
-        let mut handle = Vec::new();
+        let mut handle = Vec::with_capacity(hitable_list.len());
         for i in 0..hitable_list.len() {
             handle.push(i);
         }
