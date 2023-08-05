@@ -238,21 +238,21 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let bunny = obj_loader(&mut File::open("./dragon.obj").unwrap());
+    let bunny_list = obj_loader(&mut File::open("./dragon.obj").unwrap());
 
     let now1 = SystemTime::now();
-    let bunny = BvhNode::new(&bunny);
+    let bunny_bvh = BvhNode::new(&bunny_list);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
     );
 
-    let bunny = Translate::new(
-        Box::new(Rotate::new(Box::new(bunny), [0.0, 1.0, 0.0], 180.0)),
+    let translated_bunny_bvh = Translate::new(
+        Box::new(Rotate::new(Box::new(bunny_bvh), [0.0, 1.0, 0.0], 180.0)),
         [200.0, 300.0, 200.0],
     );
 
-    obj_list.push(bunny.clone());
+    obj_list.push(translated_bunny_bvh.clone());
 
     /*
     let glass_box = obj_loader(&mut File::open("./box.obj").unwrap());
@@ -271,7 +271,7 @@ fn main() {
     */
 
     let now2 = SystemTime::now();
-    let obj_list = BvhNode::new(&obj_list);
+    let obj_bvh = BvhNode::new(&obj_list);
     println!(
         "BVH-2 Build Time elapsed: {}",
         now2.elapsed().unwrap().as_secs_f64()
@@ -294,7 +294,7 @@ fn main() {
     );
 
     let cam = Arc::new(cam);
-    let obj_list = Arc::new(obj_list);
+    let obj_bvh = Arc::new(obj_bvh);
     let light_list = Arc::new(light_list);
     let material_list = Arc::new(material_list);
     let mut handles = vec![];
@@ -311,7 +311,7 @@ fn main() {
     for j in 0..AX {
         let imgbuf_clone = Arc::clone(&imgbuf);
         let cam = Arc::clone(&cam);
-        let obj_list = Arc::clone(&obj_list);
+        let obj_bvh = Arc::clone(&obj_bvh);
         let light_list = Arc::clone(&light_list);
         let material_list = Arc::clone(&material_list);
         let axa = Arc::clone(&axa);
@@ -331,7 +331,7 @@ fn main() {
                         col = vec3_add(
                             color(
                                 &r,
-                                &obj_list,
+                                &obj_bvh,
                                 &light_list,
                                 0,
                                 &material_list,
