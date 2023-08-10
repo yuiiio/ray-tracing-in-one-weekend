@@ -155,10 +155,13 @@ fn color<T: Hitable, M: Hitable>(
 
 fn main() {
     let now = SystemTime::now();
-    const NX: usize = 800;
-    const NY: usize = 800;
-    let imgbuf = Arc::new(Mutex::new([[[0, 0, 0, 255]; NY]; NX]));
-    const NS: usize = 20; //anti-aliasing sample-per-pixel
+    const OUTPUT_X: usize = 800;
+    const OUTPUT_Y: usize = 800;
+    const NS: usize = 2;// x^2 / per pixel sample size;
+    const NX: usize = OUTPUT_X * NS;
+    const NY: usize = OUTPUT_Y * NS;
+
+    let imgbuf = Arc::new(Mutex::new(vec![[[0.0, 0.0, 0.0]; NY]; NX]));
     const NT: usize = 64; // use thread(+1)
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
@@ -309,6 +312,7 @@ fn main() {
     let axa = Arc::new(axa);
 
     for j in 0..AX {
+        //let img_box: Vec<[[u8; 4]; NY]> = Vec::with_capacity(axa[j]);
         let imgbuf_clone = Arc::clone(&imgbuf);
         let cam = Arc::clone(&cam);
         let obj_bvh = Arc::clone(&obj_bvh);
@@ -316,42 +320,22 @@ fn main() {
         let material_list = Arc::clone(&material_list);
         let axa = Arc::clone(&axa);
         let handle = thread::spawn(move || {
-            let mut img_box: Vec<[[u8; 4]; NY]> = Vec::with_capacity(axa[j]);
+            let mut img_box: Vec<[[f64; 3]; NY]> = Vec::with_capacity(axa[j]);
             for in_j in 0..axa[j] {
-                let mut img_line: [[u8; 4]; NY] = [[0; 4]; NY];
+                let mut img_line: [[f64; 3]; NY] = [[0.0; 3]; NY];
                 for i in 0..NY {
-                    let mut col = [0.0 as f64; 3];
-                    let mut rng = rand::thread_rng();
-                    for _s in 0..NS {
-                        let rand_x: f64 = rng.gen();
-                        let rand_y: f64 = rng.gen();
-                        let u: f64 = (((j * ALIGHN_X) + in_j) as f64 + rand_x) / NX as f64;
-                        let v: f64 = (i as f64 + rand_y) / NY as f64;
-                        let r = cam.get_ray(u, v);
-                        col = vec3_add(
-                            color(
-                                &r,
-                                &obj_bvh,
-                                &light_list,
-                                0,
-                                &material_list,
-                                [0.0, 0.0, 0.0],
-                            ),
-                            col,
+                    let u: f64 = (((j * ALIGHN_X) + in_j) as f64) / NX as f64;
+                    let v: f64 = (i as f64) / NY as f64;
+                    let r = cam.get_ray(u, v);
+                    let col = color(
+                        &r,
+                        &obj_bvh,
+                        &light_list,
+                        0,
+                        &material_list,
+                        [0.0, 0.0, 0.0],
                         );
-                    }
-                    let c = 1.0 / NS as f64;
-                    col = vec3_mul_b(col, c);
-                    col = [col[0].sqrt(), col[1].sqrt(), col[2].sqrt()];
-                    col = [
-                        clamp(col[0], 0.0, 1.0),
-                        clamp(col[1], 0.0, 1.0),
-                        clamp(col[2], 0.0, 1.0),
-                    ];
-                    let ir: u8 = (255.99 * col[0]) as u8;
-                    let ig: u8 = (255.99 * col[1]) as u8;
-                    let ib: u8 = (255.99 * col[2]) as u8;
-                    img_line[i] = [ir, ig, ib, 255];
+                    img_line[i] = col;
                 }
                 img_box.push(img_line);
             }
@@ -372,12 +356,30 @@ fn main() {
         now.elapsed().unwrap().as_secs_f64()
     );
 
-    let mut img = RgbaImage::new(NX as u32, NY as u32);
-    for x in 0..NX {
-        for y in 0..NY {
+    let mut output_img = RgbaImage::new(OUTPUT_X as u32, OUTPUT_Y as u32);
+    const SPP: u32 = (NS as u32).pow(2); 
+    for x in 0..OUTPUT_X {
+        for y in 0..OUTPUT_Y {
             let imgbuf = imgbuf.lock().unwrap();
-            img.put_pixel(x as u32, y as u32, Rgba(imgbuf[x][NY - (y + 1)]));
+            let mut accum_pixel: [f64; 3] = [0.0; 3];
+            for i in 0..NS {
+                for j in 0..NS {
+                    accum_pixel = [
+                        imgbuf[(x*NS) + i][(y*NS) + j][0] + accum_pixel[0],
+                        imgbuf[(x*NS) + i][(y*NS) + j][1] + accum_pixel[1],
+                        imgbuf[(x*NS) + i][(y*NS) + j][2] + accum_pixel[2],
+                    ];
+                }
+            }
+            let pixel = [
+                (accum_pixel[0] / (SPP as f64)).sqrt(),
+                (accum_pixel[1] / (SPP as f64)).sqrt(),
+                (accum_pixel[2] / (SPP as f64)).sqrt(), ];
+            let ir: u8 = (255.99 * pixel[0]) as u8;
+            let ig: u8 = (255.99 * pixel[1]) as u8;
+            let ib: u8 = (255.99 * pixel[2]) as u8;
+            output_img.put_pixel(x as u32, (OUTPUT_Y - (y + 1))as u32, Rgba([ir, ig, ib, 255]));
         }
     }
-    img.save("image.png").unwrap()
+    output_img.save("image.png").unwrap()
 }
