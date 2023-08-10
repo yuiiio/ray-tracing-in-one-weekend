@@ -1,5 +1,4 @@
 use image::{open, Rgba, RgbaImage};
-use rand::prelude::*;
 use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::thread;
@@ -38,7 +37,6 @@ use std::f64;
 use texture::{CheckerTexture, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
 use triangle::Triangle;
-use utils::{clamp, max, min};
 use vec3::{
     vec3_add, vec3_div, vec3_dot, vec3_mul, vec3_mul_b, vec3_squared_length, vec3_sub,
     vec3_unit_vector_f64, Vector3,
@@ -357,7 +355,7 @@ fn main() {
     );
 
     let mut output_img = RgbaImage::new(OUTPUT_X as u32, OUTPUT_Y as u32);
-    const SPP: u32 = (NS as u32).pow(2); 
+    const SPP_DIV: f64 = 1.0 / (NS as u32).pow(2) as f64; 
     for x in 0..OUTPUT_X {
         for y in 0..OUTPUT_Y {
             let imgbuf = imgbuf.lock().unwrap();
@@ -372,9 +370,9 @@ fn main() {
                 }
             }
             let pixel = [
-                (accum_pixel[0] / (SPP as f64)).sqrt(),
-                (accum_pixel[1] / (SPP as f64)).sqrt(),
-                (accum_pixel[2] / (SPP as f64)).sqrt(), ];
+                (accum_pixel[0] * SPP_DIV).sqrt(),
+                (accum_pixel[1] * SPP_DIV).sqrt(),
+                (accum_pixel[2] * SPP_DIV).sqrt(), ];
             let ir: u8 = (255.99 * pixel[0]) as u8;
             let ig: u8 = (255.99 * pixel[1]) as u8;
             let ib: u8 = (255.99 * pixel[2]) as u8;
