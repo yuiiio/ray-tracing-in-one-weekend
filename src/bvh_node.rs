@@ -187,25 +187,72 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
                 - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
 
             let sorted_axis: Axis;
+            let distance_max: f64;
 
             let mut handle = if x_max < y_max {
                 if y_max < z_max {
+                    distance_max = z_max;
                     sorted_axis = Axis::Z;
                     handle_z
                 } else {
+                    distance_max = y_max;
                     sorted_axis = Axis::Y;
                     handle_y
                 }
             } else {
                 if x_max < z_max {
+                    distance_max = z_max;
                     sorted_axis = Axis::Z;
                     handle_z
                 } else {
+                    distance_max = x_max;
                     sorted_axis = Axis::X;
                     handle_x
                 }
             };
-            let mut a = handle.split_off(handle_size / 2);
+
+            let distance_avg: f64 = distance_max / 2.0 as f64;
+
+            // found distance_max split point
+            let mut handle_size_log: usize = handle_size.ilog2() as usize;
+            let handle_size_log_pow: usize = 2usize.pow(handle_size_log as u32);
+            if handle_size_log != handle_size_log_pow {
+                handle_size_log = handle_size_log + 1;
+            }
+
+            let mut split_point: usize = handle_size / 2;
+
+            for i in handle_size_log..0
+            {
+                match sorted_axis {
+                    Axis::X => {
+                        if hitable_list[handle[split_point]].bounding_box().unwrap().b_min()[0] < distance_avg
+                        {
+                            split_point = split_point + 2usize.pow(i as u32);
+                        } else {
+                            split_point = split_point - 2usize.pow(i as u32);
+                        }
+                    },
+                    Axis::Y => {
+                        if hitable_list[handle[split_point]].bounding_box().unwrap().b_min()[1] < distance_avg
+                        {
+                            split_point = split_point + 2usize.pow(i as u32);
+                        } else {
+                            split_point = split_point - 2usize.pow(i as u32);
+                        }
+                    },
+                    Axis::Z => {
+                        if hitable_list[handle[split_point]].bounding_box().unwrap().b_min()[2] < distance_avg
+                        {
+                            split_point = split_point + 2usize.pow(i as u32);
+                        } else {
+                            split_point = split_point - 2usize.pow(i as u32);
+                        }
+                    },
+                }
+            }
+
+            let mut a = handle.split_off(split_point);
             let mut b = handle;
 
             let left_obj = Box::new(build_bvh(hitable_list, &mut a, sorted_axis.clone()));
