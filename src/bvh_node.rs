@@ -51,7 +51,7 @@ fn dmerge(
     left: usize,
     mid: usize,
     right: usize,
-) {
+    ) {
     let mut i: usize = left;
     let mut j: usize = mid;
     let mut k: usize = 0;
@@ -95,7 +95,7 @@ pub fn dmerge_sort(
     hitable_list: &HitableList,
     left: usize,
     right: usize,
-) {
+    ) {
     if (left == right) || (left + 1 == right) {
         return;
     }
@@ -109,19 +109,25 @@ pub fn dmerge_sort_wrap(
     vec: &mut Vec<usize>,
     compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
     hitable_list: &HitableList,
-) {
+    ) {
     let mut stock_vec = vec.clone();
     let len = vec.len();
     dmerge_sort(vec, &mut stock_vec, compare, hitable_list, 0, len);
 }
 
-fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
+#[derive(Clone)]
+enum Axis {
+    X,
+    Y,
+    Z,
+}
 
+fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis: Axis) -> BvhNode {
     let handle_size = handle.len();
     let (left_obj, right_obj): (
         Box<dyn Hitable + Send + Sync>,
         Box<dyn Hitable + Send + Sync>,
-    ) = match handle_size {
+        ) = match handle_size {
         1 => {
             let left_obj = hitable_list[handle[0]].clone();
             let right_obj = hitable_list[handle[0]].clone();
@@ -145,12 +151,24 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
                }
                */
 
-            let mut handle_x = handle.clone();
-            let mut handle_y = handle.clone();
-            let mut handle_z = handle.clone();
-            dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
-            dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
-            dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
+            let mut handle_x: Vec<usize> = handle.clone();
+            let mut handle_y: Vec<usize> = handle.clone();
+            let mut handle_z: Vec<usize> = handle.clone();
+
+            match pre_sort_axis {
+                Axis::X => {
+                    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
+                },
+                Axis::Y => {
+                    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
+                },
+                Axis::Z => {
+                    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
+                },
+            }
 
             let x_max: f64 = hitable_list[handle_x[handle.len() - 1]]
                 .bounding_box()
@@ -168,24 +186,30 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>) -> BvhNode {
                 .b_max()[2]
                 - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
 
+            let sorted_axis: Axis;
+
             let mut handle = if x_max < y_max {
                 if y_max < z_max {
+                    sorted_axis = Axis::Z;
                     handle_z
                 } else {
+                    sorted_axis = Axis::Y;
                     handle_y
                 }
             } else {
                 if x_max < z_max {
+                    sorted_axis = Axis::Z;
                     handle_z
                 } else {
+                    sorted_axis = Axis::X;
                     handle_x
                 }
             };
             let mut a = handle.split_off(handle_size / 2);
             let mut b = handle;
 
-            let left_obj = Box::new(build_bvh(hitable_list, &mut a));
-            let right_obj = Box::new(build_bvh(hitable_list, &mut b));
+            let left_obj = Box::new(build_bvh(hitable_list, &mut a, sorted_axis.clone()));
+            let right_obj = Box::new(build_bvh(hitable_list, &mut b, sorted_axis));
             (left_obj, right_obj)
         }
     };
@@ -208,7 +232,9 @@ impl BvhNode {
         for i in 0..hitable_list.len() {
             handle.push(i);
         }
-        build_bvh(hitable_list, &mut handle)
+
+        dmerge_sort_wrap(&mut handle, box_x_compare, hitable_list);
+        build_bvh(hitable_list, &mut handle, Axis::X)
     }
 }
 
