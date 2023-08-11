@@ -222,7 +222,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
 
             let mut split_point: usize = handle_size / 2;
 
-            for i in (0..(handle_size_log-2)).rev()
+            for i in handle_size_log..0
             {
                 match sorted_axis {
                     Axis::X => {
@@ -250,11 +250,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
                         }
                     },
                 }
-            }
-
-            //println!("handle_size/2: {}, split_point: {}", (handle_size/2) as usize, split_point);
-            if (handle_size/2) as usize != split_point {
-                println!("hadnle_size/2 != split_point");
             }
 
             let mut a = handle.split_off(split_point);
