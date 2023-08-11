@@ -1,6 +1,4 @@
 use rand::prelude::*;
-use std::sync::{Arc, Mutex};
-use std::thread;
 
 use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
@@ -124,7 +122,7 @@ enum Axis {
     Z,
 }
 
-fn build_bvh(hitable_list: Arc<HitableList>, handle: &mut Vec<usize>, pre_sort_axis: Axis) -> BvhNode {
+fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis: Axis) -> BvhNode {
     let handle_size = handle.len();
     let (left_obj, right_obj): (
         Box<dyn Hitable + Send + Sync>,
@@ -157,44 +155,18 @@ fn build_bvh(hitable_list: Arc<HitableList>, handle: &mut Vec<usize>, pre_sort_a
             let mut handle_y: Vec<usize> = handle.clone();
             let mut handle_z: Vec<usize> = handle.clone();
 
-            let handle_x_mutex = Arc::new(Mutex::new(handle_x.clone()));
-            let handle_x_clone = Arc::clone(&handle_x_mutex);
-            let handle_y_mutex = Arc::new(Mutex::new(handle_y.clone()));
-            let handle_y_clone = Arc::clone(&handle_y_mutex);
-            // let handle_z_mutex = Arc::new(Mutex::new(handle_z.clone()));
-            // let handle_z_clone = Arc::clone(&handle_z_mutex);
-
-            let hitable_list_clone = Arc::clone(&hitable_list);
-            let hitable_list_clone2 = Arc::clone(&hitable_list);
-
             match pre_sort_axis {
                 Axis::X => {
-                    // can sort in another thread
-                    let thread_handle = thread::spawn(move || {
-                        let mut handle_y_in_thread = handle_y_clone.lock().unwrap();
-                        dmerge_sort_wrap(&mut handle_y_in_thread, box_y_compare, &(*hitable_list_clone));
-                    });
-                    dmerge_sort_wrap(&mut handle_z, box_z_compare, &(*hitable_list));
-                    thread_handle.join().unwrap();
-                    handle_y = (handle_y_mutex.lock().unwrap()).clone();
+                    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
                 },
                 Axis::Y => {
-                    let thread_handle = thread::spawn(move || {
-                        let mut handle_x_in_thread = handle_x_clone.lock().unwrap();
-                        dmerge_sort_wrap(&mut handle_x_in_thread, box_x_compare, &(*hitable_list_clone));
-                    });
-                    dmerge_sort_wrap(&mut handle_z, box_z_compare, &(*hitable_list));
-                    thread_handle.join().unwrap();
-                    handle_x = (handle_x_mutex.lock().unwrap()).clone();
+                    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
                 },
                 Axis::Z => {
-                    let thread_handle = thread::spawn(move || {
-                        let mut handle_x_in_thread = handle_x_clone.lock().unwrap();
-                        dmerge_sort_wrap(&mut handle_x_in_thread, box_x_compare, &(*hitable_list_clone));
-                    });
-                    dmerge_sort_wrap(&mut handle_y, box_y_compare, &(*hitable_list));
-                    thread_handle.join().unwrap();
-                    handle_x = (handle_x_mutex.lock().unwrap()).clone();
+                    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
                 },
             }
 
@@ -237,7 +209,7 @@ fn build_bvh(hitable_list: Arc<HitableList>, handle: &mut Vec<usize>, pre_sort_a
             let mut b = handle;
 
             let left_obj = Box::new(build_bvh(hitable_list, &mut a, sorted_axis.clone()));
-            let right_obj = Box::new(build_bvh(hitable_list_clone2, &mut b, sorted_axis));
+            let right_obj = Box::new(build_bvh(hitable_list, &mut b, sorted_axis));
             (left_obj, right_obj)
         }
     };
@@ -261,11 +233,8 @@ impl BvhNode {
             handle.push(i);
         }
 
-        let hitable_list_arc = Arc::new(hitable_list.clone());
-        let hitable_list_clone = Arc::clone(&hitable_list_arc);
-
         dmerge_sort_wrap(&mut handle, box_x_compare, hitable_list);
-        build_bvh(hitable_list_clone, &mut handle, Axis::X)
+        build_bvh(hitable_list, &mut handle, Axis::X)
     }
 }
 
