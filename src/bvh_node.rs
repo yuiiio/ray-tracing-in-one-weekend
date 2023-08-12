@@ -115,14 +115,13 @@ pub fn dmerge_sort_wrap(
     dmerge_sort(vec, &mut stock_vec, compare, hitable_list, 0, len);
 }
 
-#[derive(Clone)]
 enum Axis {
     X,
     Y,
     Z,
 }
 
-fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis: Axis) -> BvhNode {
+fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis: &Axis) -> BvhNode {
     let handle_size = handle.len();
     let (left_obj, right_obj): (
         Box<dyn Hitable + Send + Sync>,
@@ -208,8 +207,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
             let mut a = handle.split_off(handle_size / 2);
             let mut b = handle;
 
-            let left_obj = Box::new(build_bvh(hitable_list, &mut a, sorted_axis.clone()));
-            let right_obj = Box::new(build_bvh(hitable_list, &mut b, sorted_axis));
+            let left_obj = Box::new(build_bvh(hitable_list, &mut a, &sorted_axis));
+            let right_obj = Box::new(build_bvh(hitable_list, &mut b, &sorted_axis));
             (left_obj, right_obj)
         }
     };
@@ -234,7 +233,7 @@ impl BvhNode {
         }
 
         dmerge_sort_wrap(&mut handle, box_x_compare, hitable_list);
-        build_bvh(hitable_list, &mut handle, Axis::X)
+        build_bvh(hitable_list, &mut handle, &Axis::X)
     }
 }
 
