@@ -101,7 +101,7 @@ impl<T: Texture> Material for Metal<T> {
             self.texture
                 .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         let absorabance = [0.0, 0.0, 0.0];
-        if vec3_dot(scatterd.direction(), hit_record.get_normal()) > 0.0 {
+        if vec3_dot(scatterd.direction(), hit_record.get_normal()).is_sign_positive() {
             Some(MatRecord {
                 scatterd: Scatterd::Ray(scatterd),
                 attenuation,
@@ -157,7 +157,7 @@ impl<T: Texture> Material for Lambertian<T> {
         let n = _hit_record.get_normal(); //Already normalized?
         let direction = vec3_unit_vector_f64(_r.direction());
         let cosine = vec3_dot(n, direction);
-        if cosine > 0.0 {
+        if cosine.is_sign_positive() {
             return cosine / PI;
         } else {
             return 0.0;
@@ -183,7 +183,7 @@ fn refract(v: Vector3<f64>, n: Vector3<f64>, ni_over_nt: f64) -> Option<Vector3<
     let uv = vec3_unit_vector_f64(vec3_mul_b(v, -1.0));
     let dt = vec3_dot(uv, n);
     let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
-    if discriminant > 0.0 {
+    if discriminant.is_sign_positive() {
         let refracted = vec3_sub(
             vec3_mul_b(vec3_mul_b(n, -1.0), discriminant.sqrt()),
             vec3_mul_b(vec3_sub(uv, vec3_mul_b(n, dt)), ni_over_nt),
@@ -209,7 +209,7 @@ impl Material for Dielectric {
         let reflect_prob: f64;
         let cosine: f64;
         let mut outside_to_inside: bool = false;
-        if vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal()) > 0.0 {
+        if vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal()).is_sign_positive() {
             outside_to_inside = true;
             outward_normal = hit_record.get_normal();
             ni_over_nt = 1.0 / self.ref_idx;

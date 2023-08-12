@@ -18,7 +18,7 @@ impl Pdf for CosinePdf {
         let n = hit_record.get_normal(); //Already normalized?
         let direction = vec3_unit_vector_f64(*direction); //just normalized
         let cosine = vec3_dot(n, direction);
-        if cosine > 0.0 {
+        if cosine.is_sign_positive() {
             return cosine / PI;
         } else {
             return 0.0;

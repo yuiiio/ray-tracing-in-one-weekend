@@ -101,7 +101,7 @@ fn color<T: Hitable, M: Hitable>(
                             let next_ray = &Ray::new(rec.get_p(), mix_pdf.generate(&rec));
                             let pdf_value = mix_pdf.value(&rec, &next_ray.direction());
 
-                            if pdf_value > 0.0 {
+                            if pdf_value.is_sign_positive() {
                                 let spdf_value = material_list
                                     .get(rec.get_mat_ptr())
                                     .scattering_pdf(&next_ray, &rec);
