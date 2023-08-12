@@ -34,7 +34,7 @@ impl Hitable for Aabb {
             let mut t0 = (self.b_min[i] - r.origin()[i]) * inv_d;
             let mut t1 = (self.b_max[i] - r.origin()[i]) * inv_d;
 
-            if (inv_d < 0.0) {
+            if inv_d.is_sign_negative() {
                 swap(&mut t0, &mut t1);
             }
 

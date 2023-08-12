@@ -59,12 +59,12 @@ impl Hitable for Triangle {
         let m = cross(d, r);
 
         let u = nor_lal * vec3_dot(self.e2, m);
-        if u < 0.0 || u > 1.0 {
+        if u.is_sign_negative() || u > 1.0 {
             return None;
         }
 
         let v = nor_lal * -1.0 * vec3_dot(self.e1, m);
-        if v < 0.0 || v > 1.0 {
+        if v.is_sign_negative() || v > 1.0 {
             return None;
         }
 

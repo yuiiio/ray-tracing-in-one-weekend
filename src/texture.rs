@@ -42,7 +42,7 @@ impl<T: Texture> Texture for CheckerTexture<T> {
     fn get_value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
         let sines: f64 =
             (self.m_freq * p[0]).sin() * (self.m_freq * p[1]).sin() * (self.m_freq * p[2]).sin();
-        if sines < 0.0 {
+        if sines.is_sign_negative() {
             self.m_even.get_value(u, v, p)
         } else {
             self.m_odd.get_value(u, v, p)
