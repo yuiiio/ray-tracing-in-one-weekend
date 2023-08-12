@@ -123,7 +123,7 @@ enum Axis {
     Z,
 }
 
-fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis: &Axis) -> BvhNode {
+fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis) -> BvhNode {
     let handle_size = handle.len();
     let (left_obj, right_obj): (
         Box<dyn Hitable + Send + Sync>,
@@ -171,17 +171,17 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
                 },
             }
 
-            let x_max: f64 = hitable_list[handle_x[handle.len() - 1]]
+            let x_max: f64 = hitable_list[handle_x[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
                 .b_max()[0]
                 - hitable_list[handle_x[0]].bounding_box().unwrap().b_min()[0];
-            let y_max: f64 = hitable_list[handle_y[handle.len() - 1]]
+            let y_max: f64 = hitable_list[handle_y[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
                 .b_max()[1]
                 - hitable_list[handle_y[0]].bounding_box().unwrap().b_min()[1];
-            let z_max: f64 = hitable_list[handle_z[handle.len() - 1]]
+            let z_max: f64 = hitable_list[handle_z[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
                 .b_max()[2]
@@ -189,7 +189,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
 
             let sorted_axis: Axis;
 
-            let mut handle = if x_max < y_max {
+            let mut selected_handle = if x_max < y_max {
                 if y_max < z_max {
                     sorted_axis = Axis::Z;
                     handle_z
@@ -206,11 +206,11 @@ fn build_bvh(hitable_list: &HitableList, handle: &mut Vec<usize>, pre_sort_axis:
                     handle_x
                 }
             };
-            let mut a = handle.split_off(handle_size / 2);
-            let mut b = handle;
+            let a = selected_handle.split_off(handle_size / 2);
+            let b = selected_handle;
 
-            let left_obj = Box::new(build_bvh(hitable_list, &mut a, &sorted_axis));
-            let right_obj = Box::new(build_bvh(hitable_list, &mut b, &sorted_axis));
+            let left_obj = Box::new(build_bvh(hitable_list, &a, &sorted_axis));
+            let right_obj = Box::new(build_bvh(hitable_list, &b, &sorted_axis));
             (left_obj, right_obj)
         }
     };
@@ -235,7 +235,7 @@ impl BvhNode {
         }
 
         dmerge_sort_wrap(&mut handle, box_x_compare, hitable_list);
-        build_bvh(hitable_list, &mut handle, &Axis::X)
+        build_bvh(hitable_list, &handle, &Axis::X)
     }
 }
 
