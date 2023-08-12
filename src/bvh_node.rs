@@ -110,8 +110,10 @@ pub fn dmerge_sort_wrap(
     compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
     hitable_list: &HitableList,
     ) {
-    let mut stock_vec = vec.clone();
     let len = vec.len();
+    let mut stock_vec: Vec<usize> = Vec::with_capacity(len);
+    stock_vec.resize_with(len, Default::default);
+
     dmerge_sort(vec, &mut stock_vec, compare, hitable_list, 0, len);
 }
 

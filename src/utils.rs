@@ -104,8 +104,11 @@ mod test {
             }
         };
 
-        let mut stock_vec = vec.clone();
         let len = vec.len();
+
+        let mut stock_vec: Vec<i32> = Vec::with_capacity(len);
+        stock_vec.resize_with(len, Default::default);
+
         assert_eq!(len, 8);
         merge_sort(&mut vec, &mut stock_vec, compare, 0, len);
         assert_eq!(vec, [1, 2, 3, 4, 5, 5, 6, 8]);
