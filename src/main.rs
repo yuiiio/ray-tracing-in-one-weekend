@@ -50,7 +50,7 @@ fn color<T: Hitable, M: Hitable>(
     material_list: &Materials,
     last_absorabance: Vector3<f64>,
 ) -> Vector3<f64> {
-    if depth < 50 {
+    if depth < 20 {
         match world.hit(r, 0.00001, 10000.0) {
             Some(rec) => {
                 let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
@@ -136,7 +136,8 @@ fn color<T: Hitable, M: Hitable>(
                 return emitted;
             }
             None => {
-                /*
+                // if not hit any obj
+                // sky
                 let v = vec3_unit_vector_f64(r.direction());
                 let a = (v[1] + 1.0) * 0.5;
                 let ret = vec3_add(
@@ -144,11 +145,11 @@ fn color<T: Hitable, M: Hitable>(
                     vec3_mul_b([0.5, 0.7, 1.0], a),
                 );
                 return ret;
-                */
             }
         }
     }
-    [0.0, 0.0, 0.0]
+    // when nest >= dephs
+    [0.5, 0.5, 0.5]
 }
 
 fn main() {
