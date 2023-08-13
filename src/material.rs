@@ -93,7 +93,7 @@ impl<T: Texture> Material for Metal<T> {
             vec3_unit_vector_f64(r_in.direction()),
             hit_record.get_normal(),
         );
-        if self.fuzz != 0.0 {
+        if self.fuzz != 0.0 { // should return Pdf instadof Ray when fuzz != 0.0 ?
             reflected = vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz));
         }
         let scatterd = Ray::new(hit_record.get_p(), reflected);
