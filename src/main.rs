@@ -169,8 +169,9 @@ fn main() {
     let red = material_list.add_material(Lambertian::new(ColorTexture::new([0.65, 0.05, 0.05])));
     let white = material_list.add_material(Lambertian::new(ColorTexture::new([0.73, 0.73, 0.73])));
     let green = material_list.add_material(Lambertian::new(ColorTexture::new([0.12, 0.45, 0.15])));
-    let light =
-        material_list.add_material(DiffuseLight::new(ColorTexture::new([15.0, 15.0, 15.0])));
+    let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
+                // but, > 1.0 can happen when powerfull light ?
+        material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
     let magick = material_list.add_material(Lambertian::new(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba8(),
     )));
