@@ -176,8 +176,11 @@ fn main() {
         open("./texture.png").unwrap().into_rgba8(),
     )));
     let glass = material_list.add_material(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
-    let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.8, 0.85, 0.88])));
+    let red_glass = material_list.add_material(Dielectric::new(1.5, [0.0, 0.006, 0.009]));
+    let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.5, 0.7, 0.7])));
+    let fuzzy_metal = material_list.add_material(Metal::new(0.1, ColorTexture::new([0.7, 0.7, 0.7])));
 
+    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -209,7 +212,6 @@ fn main() {
         AxisType::kXZ,
         white,
     )));
-    obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kXZ, white));
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -219,6 +221,10 @@ fn main() {
         AxisType::kXY,
         magick,
     )));
+    */
+
+    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kXZ, fuzzy_metal);
+    obj_list.push(floor.clone());
 
     obj_list.push(Translate::new(
         Box::new(Rotate::new(
@@ -280,7 +286,8 @@ fn main() {
         now2.elapsed().unwrap().as_secs_f64()
     );
 
-    light_list.push(light_rect);
+    //light_list.push(light_rect);
+    light_list.push(floor);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
     //light_list.push(bunny);
