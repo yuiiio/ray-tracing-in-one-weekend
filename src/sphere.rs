@@ -15,14 +15,20 @@ pub struct Sphere {
     center: Vector3<f64>,
     radius: f64,
     mat_ptr: MaterialHandle,
+    aabb_box: Aabb,
 }
 
 impl Sphere {
     pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Self {
+        let aabb_box = Aabb::new(
+            vec3_sub_b(center, radius),
+            vec3_add_b(center, radius),
+            );
         Sphere {
             center,
             radius,
             mat_ptr,
+            aabb_box,
         }
     }
 }
@@ -77,10 +83,7 @@ impl Hitable for Sphere {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some(Aabb::new(
-            vec3_sub_b(self.center, self.radius),
-            vec3_add_b(self.center, self.radius),
-        ))
+        Some(self.aabb_box.clone())
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {

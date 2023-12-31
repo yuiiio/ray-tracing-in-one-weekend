@@ -24,6 +24,7 @@ pub struct Rect {
     axis: AxisType,
     mat_ptr: MaterialHandle,
     area: f64,
+    aabb_box: Aabb,
 }
 
 impl Rect {
@@ -37,6 +38,20 @@ impl Rect {
         mat_ptr: MaterialHandle,
     ) -> Self {
         let area: f64 = (x1 - x0) * (y1 - y0);
+        let aabb_box = match axis {
+            AxisType::kXY => Aabb::new(
+                [x0, y0, k - 0.0001],
+                [x1, y1, k + 0.0001],
+                ),
+            AxisType::kXZ => Aabb::new(
+                [x0, k - 0.0001, y0],
+                [x1, k + 0.0001, y1],
+                ),
+            AxisType::kYZ => Aabb::new(
+                [k - 0.0001, x0, y0],
+                [k + 0.0001, x1, y1],
+                ),
+        };
         Rect {
             x0,
             x1,
@@ -46,6 +61,7 @@ impl Rect {
             axis,
             mat_ptr,
             area,
+            aabb_box,
         }
     }
 }
@@ -81,20 +97,7 @@ impl Hitable for Rect {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        match self.axis {
-            AxisType::kXY => Some(Aabb::new(
-                [self.x0, self.y0, self.k - 0.0001],
-                [self.x1, self.y1, self.k + 0.0001],
-            )),
-            AxisType::kXZ => Some(Aabb::new(
-                [self.x0, self.k - 0.0001, self.y0],
-                [self.x1, self.k + 0.0001, self.y1],
-            )),
-            AxisType::kYZ => Some(Aabb::new(
-                [self.k - 0.0001, self.x0, self.y0],
-                [self.k + 0.0001, self.x1, self.y1],
-            )),
-        }
+        Some(self.aabb_box.clone())
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
