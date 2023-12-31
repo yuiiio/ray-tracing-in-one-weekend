@@ -53,8 +53,8 @@ impl Hitable for Aabb {
         return Some(HitRecord::new(t, u, v, p, normal, mat_ptr))
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        Some( self.clone() )
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some( self )
     }
 }
 

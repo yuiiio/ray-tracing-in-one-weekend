@@ -96,8 +96,8 @@ impl Hitable for Rect {
         ))
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        Some(self.aabb_box.clone())
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
@@ -162,8 +162,8 @@ impl Hitable for FlipNormals {
         }
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        self.shape.bounding_box()
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some(&self.shape.bounding_box().unwrap())
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
@@ -180,6 +180,7 @@ pub struct Boxel {
     pmin: Vector3<f64>,
     pmax: Vector3<f64>,
     list: HitableList,
+    aabb_box: Aabb,
 }
 
 impl Boxel {
@@ -243,7 +244,8 @@ impl Boxel {
             AxisType::kYZ,
             mat_ptr,
         )));
-        Boxel { pmin, pmax, list }
+        let aabb_box = Aabb::new(pmin, pmax);
+        Boxel { pmin, pmax, list, aabb_box}
     }
 }
 
@@ -252,8 +254,8 @@ impl Hitable for Boxel {
         self.list.hit(r, t_min, t_max)
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        Some(Aabb::new(self.pmin, self.pmax))
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {

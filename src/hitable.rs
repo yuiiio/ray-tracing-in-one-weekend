@@ -58,7 +58,7 @@ impl HitRecord {
 
 pub trait Hitable: HitableClone {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
-    fn bounding_box(&self) -> Option<Aabb>;
+    fn bounding_box(&self) -> Option<&Aabb>;
     fn pdf_value(&self, _o: &Vector3<f64>, _v: &Vector3<f64>) -> f64 {
         return 0.0;
     }

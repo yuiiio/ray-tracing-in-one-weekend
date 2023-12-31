@@ -49,25 +49,25 @@ impl Hitable for HitableList {
         rec
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
         if self.hitable_list.len() < 1 {
             return None;
         }
         let mut temp_box: Aabb;
         match self.hitable_list[0].bounding_box() {
-            Some(aabb) => temp_box = aabb,
+            Some(aabb) => temp_box = aabb.clone(),
             None => return None,
         }
         for i in self.iter().skip(1) {
             temp_box = surrounding_box(
                 match i.bounding_box() {
-                    Some(aabb) => aabb,
+                    Some(aabb) => aabb.clone(),
                     None => return None,
                 },
                 temp_box,
             );
         }
-        Some(temp_box)
+        Some(&temp_box)
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {

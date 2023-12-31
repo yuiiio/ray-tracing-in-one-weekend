@@ -40,8 +40,8 @@ impl Hitable for Translate {
         }
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        self.aabb_box.clone()
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some(&self.aabb_box.unwrap())
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
@@ -119,8 +119,8 @@ impl Hitable for Rotate {
         }
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        Some(self.aabb_box.clone())
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {

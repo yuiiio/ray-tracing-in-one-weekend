@@ -14,8 +14,8 @@ pub struct BvhNode {
 }
 
 fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
-    let box_a: Aabb = a.bounding_box().unwrap();
-    let box_b: Aabb = b.bounding_box().unwrap();
+    let box_a: &Aabb = a.bounding_box().unwrap();
+    let box_b: &Aabb = b.bounding_box().unwrap();
     if box_a.b_min()[0] < box_b.b_min()[0] {
         return true;
     } else {
@@ -24,8 +24,8 @@ fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
 }
 
 fn box_y_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
-    let box_a: Aabb = a.bounding_box().unwrap();
-    let box_b: Aabb = b.bounding_box().unwrap();
+    let box_a: &Aabb = a.bounding_box().unwrap();
+    let box_b: &Aabb = b.bounding_box().unwrap();
     if box_a.b_min()[1] < box_b.b_min()[1] {
         return true;
     } else {
@@ -34,8 +34,8 @@ fn box_y_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
 }
 
 fn box_z_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
-    let box_a: Aabb = a.bounding_box().unwrap();
-    let box_b: Aabb = b.bounding_box().unwrap();
+    let box_a: &Aabb = a.bounding_box().unwrap();
+    let box_b: &Aabb = b.bounding_box().unwrap();
     if box_a.b_min()[2] < box_b.b_min()[2] {
         return true;
     } else {
@@ -221,7 +221,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
         .bounding_box()
         .expect("no bounding box in bvh_node constructor");
     BvhNode {
-        bvh_node_box: surrounding_box(left_box, right_box),
+        bvh_node_box: surrounding_box(left_box.clone(), right_box.clone()),
         left: left_obj,
         right: right_obj,
     }
@@ -262,8 +262,8 @@ impl Hitable for BvhNode {
         }
     }
 
-    fn bounding_box(&self) -> Option<Aabb> {
-        Some(self.bvh_node_box.clone())
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        Some(&self.bvh_node_box)
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
