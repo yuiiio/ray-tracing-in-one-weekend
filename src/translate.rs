@@ -8,11 +8,19 @@ use crate::vec3::{vec3_add, vec3_sub, Vector3};
 pub struct Translate {
     obj: Box<dyn Hitable + Send + Sync>,
     offset: Vector3<f64>,
+    aabb_box: Option<Aabb>,
 }
 
 impl Translate {
     pub fn new(obj: Box<dyn Hitable + Send + Sync>, offset: Vector3<f64>) -> Self {
-        Translate { obj, offset }
+        let aabb_box = match obj.bounding_box() {
+            Some(aabb) => Some(Aabb::new(
+                vec3_add(aabb.b_min(), offset),
+                vec3_add(aabb.b_max(), offset),
+            )),
+            None => None,
+        };
+        Translate { obj, offset, aabb_box }
     }
 }
 
@@ -33,13 +41,7 @@ impl Hitable for Translate {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        match self.obj.bounding_box() {
-            Some(aabb) => Some(Aabb::new(
-                vec3_add(aabb.b_min(), self.offset),
-                vec3_add(aabb.b_max(), self.offset),
-            )),
-            None => None,
-        }
+        self.aabb_box.clone()
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
@@ -57,7 +59,7 @@ pub struct Rotate {
     obj: Box<dyn Hitable + Send + Sync>,
     quat: Rotation,
     revq: Rotation,
-    aabb: Aabb,
+    aabb_box: Aabb,
 }
 
 impl Rotate {
@@ -88,13 +90,13 @@ impl Rotate {
                 }
             }
         }
-        let aabb = Aabb::new(min, max);
+        let aabb_box = Aabb::new(min, max);
 
         Rotate {
             obj,
             quat,
             revq,
-            aabb,
+            aabb_box,
         }
     }
 }
@@ -118,7 +120,7 @@ impl Hitable for Rotate {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        Some(self.aabb.clone())
+        Some(self.aabb_box.clone())
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
