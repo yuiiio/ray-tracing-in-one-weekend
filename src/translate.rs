@@ -41,7 +41,7 @@ impl Hitable for Translate {
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
-        Some(&self.aabb_box.unwrap())
+        self.aabb_box.as_ref()
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
