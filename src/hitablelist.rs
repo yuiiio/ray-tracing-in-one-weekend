@@ -8,17 +8,34 @@ use crate::vec3::Vector3;
 #[derive(Clone)]
 pub struct HitableList { 
     hitable_list: Vec<Box<dyn Hitable + Send + Sync>>,
+    aabb_box: Option<Aabb>,
 }
 
 impl HitableList {
     pub fn new() -> Self {
         HitableList{
             hitable_list: Vec::new(),
+            aabb_box: None,
         }
     }
 
     pub fn push<H: Hitable + 'static + Send + Sync>(&mut self, hitable: H) {
-        self.hitable_list.push(Box::new(hitable))
+        let aabb_box: Option<Aabb> = match self.aabb_box.clone() {
+            Some(self_aabb_box) => {
+                match hitable.bounding_box() {
+                    Some(hitable_aabb_box) => Some(surrounding_box(self_aabb_box, hitable_aabb_box.clone())),
+                    None => Some(self_aabb_box),
+                }
+            },
+            None => {
+                match hitable.bounding_box() {
+                    Some(hitable_aabb_box) => Some(hitable_aabb_box.clone()),
+                    None => None,
+                }
+            },
+        };
+        self.hitable_list.push(Box::new(hitable));
+        self.aabb_box = aabb_box;
     }
 }
 
@@ -50,24 +67,7 @@ impl Hitable for HitableList {
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
-        if self.hitable_list.len() < 1 {
-            return None;
-        }
-        let mut temp_box: Aabb;
-        match self.hitable_list[0].bounding_box() {
-            Some(aabb) => temp_box = aabb.clone(),
-            None => return None,
-        }
-        for i in self.iter().skip(1) {
-            temp_box = surrounding_box(
-                match i.bounding_box() {
-                    Some(aabb) => aabb.clone(),
-                    None => return None,
-                },
-                temp_box,
-            );
-        }
-        Some(&temp_box)
+        self.aabb_box.as_ref()
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
