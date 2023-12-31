@@ -221,7 +221,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
         .bounding_box()
         .expect("no bounding box in bvh_node constructor");
     BvhNode {
-        bvh_node_box: surrounding_box(left_box.clone(), right_box.clone()),
+        bvh_node_box: surrounding_box(left_box, right_box),
         left: left_obj,
         right: right_obj,
     }

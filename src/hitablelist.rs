@@ -23,7 +23,7 @@ impl HitableList {
         let aabb_box: Option<Aabb> = match self.aabb_box.clone() {
             Some(self_aabb_box) => {
                 match hitable.bounding_box() {
-                    Some(hitable_aabb_box) => Some(surrounding_box(self_aabb_box, hitable_aabb_box.clone())),
+                    Some(hitable_aabb_box) => Some(surrounding_box(&self_aabb_box, hitable_aabb_box)),
                     None => Some(self_aabb_box),
                 }
             },

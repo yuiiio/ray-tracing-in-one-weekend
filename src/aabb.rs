@@ -94,7 +94,7 @@ mod test {
     }
 }
 
-pub fn surrounding_box(box0: Aabb, box1: Aabb) -> Aabb {
+pub fn surrounding_box(box0: &Aabb, box1: &Aabb) -> Aabb {
     let min = [min(box0.b_min()[0], box1.b_min()[0]),
                 min(box0.b_min()[1], box1.b_min()[1]),
                 min(box0.b_min()[2], box1.b_min()[2])];
