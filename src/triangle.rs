@@ -20,6 +20,7 @@ pub struct Triangle {
     e2: Vector3<f64>,
     n: Vector3<f64>,
     area: f64,
+    aabb_box: Aabb,
 }
 
 impl Triangle {
@@ -33,6 +34,19 @@ impl Triangle {
         let e2 = vec3_sub(v2, v0);
         let n = cross(e2, e1);
         let area: f64 = vec3_length_f64(n) / 2.0;
+
+        let min = [
+            min(min(v0[0], v1[0]), v2[0]),
+            min(min(v0[1], v1[1]), v2[1]),
+            min(min(v0[2], v1[2]), v2[2]),
+        ];
+        let max = [
+            max(max(v0[0], v1[0]), v2[0]),
+            max(max(v0[1], v1[1]), v2[1]),
+            max(max(v0[2], v1[2]), v2[2]),
+        ];
+        let aabb_box = Aabb::new(min, max);
+
         Triangle {
             v0,
             v1,
@@ -42,6 +56,7 @@ impl Triangle {
             e2,
             n,
             area,
+            aabb_box,
         }
     }
 }
@@ -85,17 +100,7 @@ impl Hitable for Triangle {
     }
 
     fn bounding_box(&self) -> Option<Aabb> {
-        let min = [
-            min(min(self.v0[0], self.v1[0]), self.v2[0]),
-            min(min(self.v0[1], self.v1[1]), self.v2[1]),
-            min(min(self.v0[2], self.v1[2]), self.v2[2]),
-        ];
-        let max = [
-            max(max(self.v0[0], self.v1[0]), self.v2[0]),
-            max(max(self.v0[1], self.v1[1]), self.v2[1]),
-            max(max(self.v0[2], self.v1[2]), self.v2[2]),
-        ];
-        return Some(Aabb::new(min, max));
+        return Some(self.aabb_box.clone());
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
