@@ -123,6 +123,24 @@ enum Axis {
     Z,
 }
 
+#[derive(Clone)]
+pub struct EmptyHitable {
+}
+impl EmptyHitable{
+    pub fn new() -> Self {
+        EmptyHitable{}
+    }
+}
+impl Hitable for EmptyHitable {
+    fn hit(&self, _r: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
+        None
+    }
+    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+        None
+    }
+}
+
+
 fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis) -> BvhNode {
     let handle_size = handle.len();
     let (left_obj, right_obj): (
@@ -131,7 +149,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
         ) = match handle_size {
         1 => {
             let left_obj = hitable_list[handle[0]].clone();
-            let right_obj = hitable_list[handle[0]].clone();
+            let right_obj = Box::new(EmptyHitable::new());
             (left_obj, right_obj)
         }
         2 => {
@@ -217,9 +235,10 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
     let left_box = left_obj
         .bounding_box()
         .expect("no bounding box in bvh_node constructor");
-    let right_box = right_obj
-        .bounding_box()
-        .expect("no bounding box in bvh_node constructor");
+    let right_box = match right_obj.bounding_box() {
+        Some(right_box) => right_box,
+        None => left_box, // right_box == left_box
+    };
     BvhNode {
         bvh_node_box: surrounding_box(left_box, right_box),
         left: left_obj,
