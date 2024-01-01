@@ -1,5 +1,6 @@
 use crate::vec3::{Vector3, vec3_add, vec3_mul_b};
 
+#[derive(Clone)]
 pub struct Ray {
     a: Vector3<f64>,
     b: Vector3<f64>,

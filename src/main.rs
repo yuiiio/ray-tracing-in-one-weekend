@@ -42,19 +42,23 @@ use vec3::{
     vec3_unit_vector_f64, Vector3,
 };
 
+const MAX_DEPTH: usize = 20;
+
 fn color<T: Hitable, M: Hitable>(
-    r: &Ray,
+    ray: Ray,
     world: &Arc<T>,
     light_list: &Arc<M>,
-    depth: u32,
     material_list: &Materials,
-    last_absorabance: Vector3<f64>,
 ) -> Vector3<f64> {
-    if depth < 20 {
-        match world.hit(r, 0.00001, 10000.0) {
+    let mut cur_emitted: Vector3<f64> = [0.0, 0.0, 0.0];
+    let mut last_throughput: Vector3<f64> = [1.0, 1.0, 1.0];
+    let mut last_absorabance: Vector3<f64> = [0.0, 0.0, 0.0];
+    let mut ray: Ray = ray;
+    for _i in 0..MAX_DEPTH {
+        match world.hit(&ray, 0.00001, 10000.0) {
             Some(rec) => {
-                let emitted = material_list.get(rec.get_mat_ptr()).emitted(r, &rec);
-                if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(r, &rec) {
+                let last_emitted = material_list.get(rec.get_mat_ptr()).emitted(&ray, &rec);
+                if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(&ray, &rec) {
                     let distance: f64 = rec.get_t();
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
@@ -66,27 +70,15 @@ fn color<T: Hitable, M: Hitable>(
                     if last_absorabance[2] != 0.0 {
                         absorabance[2] = f64::exp(-(last_absorabance[2] * distance));
                     }
-
                     let scatterd = mat_rec.get_scatterd();
                     match scatterd {
                         Scatterd::Ray(next_ray) => {
-                            return vec3_add(
-                                emitted,
-                                vec3_mul(
-                                    vec3_mul(
-                                        mat_rec.get_attenuation(),
-                                        color(
-                                            next_ray,
-                                            world,
-                                            light_list,
-                                            depth + 1,
-                                            material_list,
-                                            mat_rec.get_absorabance(),
-                                        ),
-                                    ),
-                                    absorabance,
-                                ),
-                            );
+                            cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                            // cur_emitted should calc before last_throughput
+                            last_throughput = vec3_mul(last_throughput, vec3_mul(mat_rec.get_attenuation(), absorabance));
+                            last_absorabance = mat_rec.get_absorabance();
+                            ray = next_ray.clone();
+                            continue;
                         }
                         Scatterd::Pdf(pdf) => {
                             let hitable_pdf = HitablePdf {
@@ -95,10 +87,10 @@ fn color<T: Hitable, M: Hitable>(
 
                             let mix_pdf = MixturePdf {
                                 pdf0: hitable_pdf,
-                                pdf1: pdf,
+                                pdf1: &pdf,
                             }; // mix pdf light and hitable
 
-                            let next_ray = &Ray::new(rec.get_p(), mix_pdf.generate(&rec));
+                            let next_ray = Ray::new(rec.get_p(), mix_pdf.generate(&rec));
                             let pdf_value = mix_pdf.value(&rec, &next_ray.direction());
 
                             if pdf_value.is_sign_positive() {
@@ -107,49 +99,40 @@ fn color<T: Hitable, M: Hitable>(
                                     .scattering_pdf(&next_ray, &rec);
                                 let albedo = vec3_mul_b(mat_rec.get_attenuation(), spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
-                                return vec3_add(
-                                    emitted,
-                                    vec3_mul_b(
-                                        vec3_mul(
-                                            vec3_mul(
-                                                albedo,
-                                                color(
-                                                    next_ray,
-                                                    world,
-                                                    light_list,
-                                                    depth + 1,
-                                                    material_list,
-                                                    mat_rec.get_absorabance(),
-                                                ),
-                                            ),
-                                            absorabance,
-                                        ),
-                                        nor_pdf_value,
-                                    ),
-                                );
+                                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                                // cur_emitted should calc before last_throughput
+                                last_throughput = vec3_mul(last_throughput, vec3_mul_b(vec3_mul(albedo, absorabance), nor_pdf_value));
+                                last_absorabance = mat_rec.get_absorabance();
+                                ray = next_ray;
+                                continue;
                             } else {
-                                return emitted;
+                                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                                return cur_emitted;
                             }
                         }
                     };
-                }
-                return emitted;
-            }
+                };
+                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                return cur_emitted;
+            },
             None => {
                 // if not hit any obj
                 // sky
-                let v = vec3_unit_vector_f64(r.direction());
+                let v = vec3_unit_vector_f64(ray.direction());
                 let a = (v[1] + 1.0) * 0.5;
-                let ret = vec3_add(
+                let last_emitted = vec3_add(
                     vec3_mul_b([1.0, 1.0, 1.0], 1.0 - a),
                     vec3_mul_b([0.5, 0.7, 1.0], a),
                 );
-                return ret;
+                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                return cur_emitted;
             }
         }
     }
     // when nest >= dephs
-    [0.5, 0.5, 0.5]
+    let last_emitted = [0.5, 0.5, 0.5];
+    cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+    return cur_emitted;
 }
 
 fn main() {
@@ -335,12 +318,10 @@ fn main() {
                     let v: f64 = (i as f64) / NY as f64;
                     let r = cam.get_ray(u, v);
                     let col = color(
-                        &r,
+                        r,
                         &obj_bvh,
                         &light_list,
-                        0,
                         &material_list,
-                        [0.0, 0.0, 0.0],
                         );
                     img_line[i] = col;
                 }
