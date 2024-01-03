@@ -73,9 +73,9 @@ fn color<T: Hitable, M: Hitable>(
                     let scatterd = mat_rec.get_scatterd();
                     match scatterd {
                         Scatterd::Ray(next_ray) => {
-                            cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                            cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                             // cur_emitted should calc before last_throughput
-                            last_throughput = vec3_mul(last_throughput, vec3_mul(mat_rec.get_attenuation(), absorabance));
+                            last_throughput = vec3_mul(&last_throughput, &vec3_mul(&mat_rec.get_attenuation(), &absorabance));
                             last_absorabance = mat_rec.get_absorabance();
                             ray = next_ray.clone();
                             continue;
@@ -97,41 +97,41 @@ fn color<T: Hitable, M: Hitable>(
                                 let spdf_value = material_list
                                     .get(rec.get_mat_ptr())
                                     .scattering_pdf(&next_ray, &rec);
-                                let albedo = vec3_mul_b(mat_rec.get_attenuation(), spdf_value);
+                                let albedo = vec3_mul_b(&mat_rec.get_attenuation(), spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
-                                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                                 // cur_emitted should calc before last_throughput
-                                last_throughput = vec3_mul(last_throughput, vec3_mul_b(vec3_mul(albedo, absorabance), nor_pdf_value));
+                                last_throughput = vec3_mul(&last_throughput, &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value));
                                 last_absorabance = mat_rec.get_absorabance();
                                 ray = next_ray;
                                 continue;
                             } else {
-                                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                                 return cur_emitted;
                             }
                         }
                     };
                 };
-                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             },
             None => {
                 // if not hit any obj
                 // sky
-                let v = vec3_unit_vector_f64(ray.direction());
+                let v = vec3_unit_vector_f64(&ray.direction());
                 let a = (v[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
-                    vec3_mul_b([1.0, 1.0, 1.0], 1.0 - a),
-                    vec3_mul_b([0.5, 0.7, 1.0], a),
+                    &vec3_mul_b(&[1.0, 1.0, 1.0], 1.0 - a),
+                    &vec3_mul_b(&[0.5, 0.7, 1.0], a),
                 );
-                cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
         }
     }
     // when nest >= dephs
     let last_emitted = [0.5, 0.5, 0.5];
-    cur_emitted = vec3_add(cur_emitted, vec3_mul(last_throughput, last_emitted));
+    cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
     return cur_emitted;
 }
 
@@ -212,7 +212,7 @@ fn main() {
     obj_list.push(Translate::new(
         Box::new(Rotate::new(
             Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], white)),
-            [0.0, 1.0, 0.0],
+            &[0.0, 1.0, 0.0],
             -18.0,
         )),
         [130.0, 0.0, 65.0],
@@ -220,7 +220,7 @@ fn main() {
     let metal_box = Translate::new(
         Box::new(Rotate::new(
             Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal)),
-            [0.0, 1.0, 0.0],
+            &[0.0, 1.0, 0.0],
             15.0,
         )),
         [265.0, 0.00, 295.0],
@@ -240,7 +240,7 @@ fn main() {
     );
 
     let translated_bunny_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(bunny_bvh), [0.0, 1.0, 0.0], 180.0)),
+        Box::new(Rotate::new(Box::new(bunny_bvh), &[0.0, 1.0, 0.0], 180.0)),
         [200.0, 300.0, 200.0],
     );
 
@@ -280,8 +280,8 @@ fn main() {
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
-        [278.0, 278.0, 0.0],
-        [0.0, 1.0, 0.0],
+        &[278.0, 278.0, 0.0],
+        &[0.0, 1.0, 0.0],
         40.0,
         NX as f64 / NY as f64,
     );

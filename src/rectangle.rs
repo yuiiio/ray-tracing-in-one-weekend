@@ -103,8 +103,8 @@ impl Hitable for Rect {
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(rec) => {
-                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(*v);
-                let cosine = vec3_dot(*v, rec.get_normal()).abs() / vec3_length_f64(*v);
+                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
+                let cosine = vec3_dot(v, &rec.get_normal()).abs() / vec3_length_f64(v);
                 return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
@@ -132,7 +132,7 @@ impl Hitable for Rect {
                 self.y0 + rng_y * (self.y1 - self.y0),
             ],
         };
-        vec3_sub(random_point, *o)
+        vec3_sub(&random_point, o)
     }
 }
 
@@ -155,7 +155,7 @@ impl Hitable for FlipNormals {
                 hit.get_u(),
                 hit.get_v(),
                 hit.get_p(),
-                vec3_mul_b(hit.get_normal(), -1.0),
+                vec3_mul_b(&hit.get_normal(), -1.0),
                 hit.get_mat_ptr(),
             )),
             None => None,

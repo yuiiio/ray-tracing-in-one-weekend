@@ -80,28 +80,28 @@ impl<T: Texture> Metal<T> {
     }
 }
 
-fn reflect(v: Vector3<f64>, n: Vector3<f64>) -> Vector3<f64> {
+fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     vec3_add(
-        vec3_mul_b(vec3_mul_b(n, vec3_dot(vec3_mul_b(v, -1.0), n)), 2.0),
-        v,
+        &vec3_mul_b(&vec3_mul_b(n, vec3_dot(&vec3_mul_b(v, -1.0), n)), 2.0),
+        &v,
     )
 }
 
 impl<T: Texture> Material for Metal<T> {
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let mut reflected = reflect(
-            vec3_unit_vector_f64(r_in.direction()),
-            hit_record.get_normal(),
+            &vec3_unit_vector_f64(&r_in.direction()),
+            &hit_record.get_normal(),
         );
         if self.fuzz != 0.0 { // should return Pdf instadof Ray when fuzz != 0.0 ?
-            reflected = vec3_add(reflected, vec3_mul_b(random_in_unit_sphere(), self.fuzz));
+            reflected = vec3_add(&reflected, &vec3_mul_b(&random_in_unit_sphere(), self.fuzz));
         }
         let scatterd = Ray::new(hit_record.get_p(), reflected);
         let attenuation =
             self.texture
                 .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         let absorabance = [0.0, 0.0, 0.0];
-        if vec3_dot(scatterd.direction(), hit_record.get_normal()).is_sign_positive() {
+        if vec3_dot(&scatterd.direction(), &hit_record.get_normal()).is_sign_positive() {
             Some(MatRecord {
                 scatterd: Scatterd::Ray(scatterd),
                 attenuation,
@@ -153,10 +153,10 @@ impl<T: Texture> Material for Lambertian<T> {
             absorabance,
         })
     }
-    fn scattering_pdf(&self, _r: &Ray, _hit_record: &HitRecord) -> f64 {
+    fn scattering_pdf(&self, r: &Ray, _hit_record: &HitRecord) -> f64 {
         let n = _hit_record.get_normal(); //Already normalized?
-        let direction = vec3_unit_vector_f64(_r.direction());
-        let cosine = vec3_dot(n, direction);
+        let direction = vec3_unit_vector_f64(&r.direction());
+        let cosine = vec3_dot(&n, &direction);
         if cosine.is_sign_positive() {
             return cosine / PI;
         } else {
@@ -179,14 +179,14 @@ impl Dielectric {
     }
 }
 
-fn refract(v: Vector3<f64>, n: Vector3<f64>, ni_over_nt: f64) -> Option<Vector3<f64>> {
-    let uv = vec3_unit_vector_f64(vec3_mul_b(v, -1.0));
-    let dt = vec3_dot(uv, n);
+fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64) -> Option<Vector3<f64>> {
+    let uv = vec3_unit_vector_f64(&vec3_mul_b(v, -1.0));
+    let dt = vec3_dot(&uv, n);
     let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
     if discriminant.is_sign_positive() {
         let refracted = vec3_sub(
-            vec3_mul_b(vec3_mul_b(n, -1.0), discriminant.sqrt()),
-            vec3_mul_b(vec3_sub(uv, vec3_mul_b(n, dt)), ni_over_nt),
+            &vec3_mul_b(&vec3_mul_b(n, -1.0), discriminant.sqrt()),
+            &vec3_mul_b(&vec3_sub(&uv, &vec3_mul_b(n, dt)), ni_over_nt),
         );
         Some(refracted)
     } else {
@@ -201,7 +201,7 @@ fn schlick(cosine: f64, ref_idx: f64) -> f64 {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
+    fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
         let outward_normal: Vector3<f64>;
         let ni_over_nt: f64;
         let attenuation: Vector3<f64> = [1.0, 1.0, 1.0];
@@ -209,18 +209,20 @@ impl Material for Dielectric {
         let reflect_prob: f64;
         let cosine: f64;
         let mut outside_to_inside: bool = false;
-        if vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal()).is_sign_positive() {
+        let hit_normal = hit_record.get_normal();
+        if vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal).is_sign_positive() {
             outside_to_inside = true;
             outward_normal = hit_record.get_normal();
             ni_over_nt = 1.0 / self.ref_idx;
-            cosine = 1.0 * vec3_dot(vec3_mul_b(_r_in.direction(), -1.0), hit_record.get_normal());
+            cosine = 1.0 * vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal);
         } else {
-            outward_normal = vec3_mul_b(hit_record.get_normal(), -1.0);
+            outward_normal = vec3_mul_b(&hit_normal, -1.0);
             ni_over_nt = self.ref_idx / 1.0;
-            cosine = self.ref_idx * vec3_dot(_r_in.direction(), hit_record.get_normal());
+            cosine = self.ref_idx * vec3_dot(&r_in.direction(), &hit_normal);
         }
         let mut inside_to_inside: bool = false;
-        let refracted = match refract(_r_in.direction(), outward_normal, ni_over_nt) {
+        let r_in_direction = r_in.direction();
+        let refracted = match refract(&r_in_direction, &outward_normal, ni_over_nt) {
             Some(refracted) => {
                 reflect_prob = schlick(cosine, self.ref_idx);
                 Some(refracted)
@@ -238,7 +240,7 @@ impl Material for Dielectric {
         if rand < reflect_prob {
             scatterd = Ray::new(
                 hit_record.get_p(),
-                reflect(_r_in.direction(), outward_normal),
+                reflect(&r_in_direction, &outward_normal),
             );
         } else {
             refracted_root = true;
@@ -275,7 +277,7 @@ impl<T: Texture> Material for DiffuseLight<T> {
     }
 
     fn emitted(&self, r: &Ray, hit_record: &HitRecord) -> Vector3<f64> {
-        if vec3_dot(hit_record.get_normal(), r.direction()).is_sign_negative() {
+        if vec3_dot(&hit_record.get_normal(), &r.direction()).is_sign_negative() {
             return self.texture.get_value(
                 hit_record.get_u(),
                 hit_record.get_v(),

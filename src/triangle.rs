@@ -30,10 +30,10 @@ impl Triangle {
         v2: Vector3<f64>,
         mat_ptr: MaterialHandle,
     ) -> Self {
-        let e1 = vec3_sub(v1, v0);
-        let e2 = vec3_sub(v2, v0);
-        let n = cross(e2, e1);
-        let area: f64 = vec3_length_f64(n) / 2.0;
+        let e1 = vec3_sub(&v1, &v0);
+        let e2 = vec3_sub(&v2, &v0);
+        let n = cross(&e2, &e1);
+        let area: f64 = vec3_length_f64(&n) / 2.0;
 
         let min = [
             min(min(v0[0], v1[0]), v2[0]),
@@ -64,21 +64,21 @@ impl Triangle {
 impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let d = ray.direction();
-        let lal = -1.0 * vec3_dot(d, self.n);
+        let lal = -1.0 * vec3_dot(&d, &self.n);
         if lal == 0.0 {
             return None;
         }
         let nor_lal: f64 = 1.0 / lal;
 
-        let r = vec3_sub(ray.origin(), self.v0);
-        let m = cross(d, r);
+        let r = vec3_sub(&ray.origin(), &self.v0);
+        let m = cross(&d, &r);
 
-        let u = nor_lal * vec3_dot(self.e2, m);
+        let u = nor_lal * vec3_dot(&self.e2, &m);
         if u.is_sign_negative() || u > 1.0 {
             return None;
         }
 
-        let v = nor_lal * -1.0 * vec3_dot(self.e1, m);
+        let v = nor_lal * -1.0 * vec3_dot(&self.e1, &m);
         if v.is_sign_negative() || v > 1.0 {
             return None;
         }
@@ -87,12 +87,12 @@ impl Hitable for Triangle {
             return None;
         }
 
-        let t = nor_lal * vec3_dot(r, self.n);
+        let t = nor_lal * vec3_dot(&r, &self.n);
         if t < t_min || t > t_max {
             return None;
         }
 
-        let normal = vec3_unit_vector_f64(self.n);
+        let normal = vec3_unit_vector_f64(&self.n);
         let p: Vector3<f64> = ray.point_at_parameter(t);
         let uu = u;
         let vv = v;
@@ -106,8 +106,8 @@ impl Hitable for Triangle {
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(rec) => {
-                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(*v);
-                let cosine = vec3_dot(*v, rec.get_normal()).abs() / vec3_length_f64(*v);
+                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
+                let cosine = vec3_dot(v, &rec.get_normal()).abs() / vec3_length_f64(v);
                 return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
@@ -137,10 +137,10 @@ impl Hitable for Triangle {
         let w = max - min;
 
         let random_point = vec3_add(
-            vec3_add(vec3_mul_b(self.v0, u), vec3_mul_b(self.v1, v)),
-            vec3_mul_b(self.v2, w),
+            &vec3_add(&vec3_mul_b(&self.v0, u), &vec3_mul_b(&self.v1, v)),
+            &vec3_mul_b(&self.v2, w),
         );
 
-        vec3_sub(random_point, *o)
+        vec3_sub(&random_point, o)
     }
 }

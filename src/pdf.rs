@@ -16,8 +16,8 @@ pub struct CosinePdf {}
 impl Pdf for CosinePdf {
     fn value(&self, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
         let n = hit_record.get_normal(); //Already normalized?
-        let direction = vec3_unit_vector_f64(*direction); //just normalized
-        let cosine = vec3_dot(n, direction);
+        let direction = vec3_unit_vector_f64(direction); //just normalized
+        let cosine = vec3_dot(&n, &direction);
         if cosine.is_sign_positive() {
             return cosine / PI;
         } else {

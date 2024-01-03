@@ -13,8 +13,8 @@ pub struct Camera {
 impl Camera {
     pub fn new(
         lookfrom: Vector3<f64>,
-        lookat: Vector3<f64>,
-        vup: Vector3<f64>,
+        lookat: &Vector3<f64>,
+        vup: &Vector3<f64>,
         vfov: f64,
         aspect: f64,
     ) -> Self {
@@ -22,20 +22,20 @@ impl Camera {
         let half_height = (theta / 2.0).tan() * 1.0;
         let half_width = half_height * aspect;
 
-        let w = vec3_unit_vector_f64(vec3_sub(lookfrom, lookat));
-        let u = vec3_unit_vector_f64(cross(vup, w));
-        let v = cross(w, u); //already length = 1.0 * 1.0 * sin(90) = 1.0
+        let w = vec3_unit_vector_f64(&vec3_sub(&lookfrom, lookat));
+        let u = vec3_unit_vector_f64(&cross(vup, &w));
+        let v = cross(&w, &u); //already length = 1.0 * 1.0 * sin(90) = 1.0
 
         let origin = lookfrom;
         let lower_left_corner = vec3_sub(
-            vec3_add(
-                vec3_add(origin, vec3_mul_b(u, -half_width)),
-                vec3_mul_b(v, -half_height),
+            &vec3_add(
+                &vec3_add(&origin, &vec3_mul_b(&u, -half_width)),
+                &vec3_mul_b(&v, -half_height),
             ),
-            w,
+            &w,
         );
-        let horizontal = vec3_mul_b(u, 2.0 * half_width);
-        let vertical = vec3_mul_b(v, 2.0 * half_height);
+        let horizontal = vec3_mul_b(&u, 2.0 * half_width);
+        let vertical = vec3_mul_b(&v, 2.0 * half_height);
         Camera {
             origin,
             lower_left_corner,
@@ -48,11 +48,11 @@ impl Camera {
         Ray::new(
             self.origin,
             vec3_sub(
-                vec3_add(
-                    vec3_add(self.lower_left_corner, vec3_mul_b(self.horizontal, s)),
-                    vec3_mul_b(self.vertical, t),
+                &vec3_add(
+                    &vec3_add(&self.lower_left_corner, &vec3_mul_b(&self.horizontal, s)),
+                    &vec3_mul_b(&self.vertical, t),
                 ),
-                self.origin,
+                &self.origin,
             ),
         )
     }
@@ -80,7 +80,7 @@ mod test {
         for i in 0..1000 {
             let pos = random_in_unit_disk();
             println!("{:?}", pos);
-            let result = if vec3_dot(pos, pos) < 1.0 { 1 } else { 0 };
+            let result = if vec3_dot(&pos, &pos) < 1.0 { 1 } else { 0 };
             assert_eq!(1, result);
         }
     }
