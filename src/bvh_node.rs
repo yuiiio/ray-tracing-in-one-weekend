@@ -95,7 +95,21 @@ pub fn dmerge_sort_wrap(
     let mut stock_vec: Vec<usize> = Vec::with_capacity(len);
     stock_vec.resize_with(len, Default::default);
 
-    let mut k = 1;
+    let mut i = 0;
+    while i < len {
+        let next_block = i + 2;
+        let right = i+1;
+        if len <= right {
+            break; 
+        } else {
+            if compare(&hitable_list[vec[right]], &hitable_list[vec[i]]) {
+                vec.swap(i, right);
+            }
+        }
+        i = next_block;
+    }
+
+    let mut k = 1 * 2;
     while k < len {// if len = 10, k => 1, 2, 4, 8
         let mut i = 0;
         while i < len { // k=1: i => 0, 2, 4, 6

@@ -116,8 +116,23 @@ mod test {
         stock_vec.resize_with(len, Default::default);
 
         //merge_sort(&mut vec, &mut stock_vec, compare, 0, len);
-        
-        let mut k = 1;
+       
+        let mut i = 0;
+        while i < len {
+            let next_block = i + 2;
+            let right = i+1;
+            if len <= right {
+                break; 
+            } else {
+                println!("swap: left:{}, right:{}\n", i, right);
+                if vec[i] > vec[right] {
+                    vec.swap(i, right);
+                }
+            }
+            i = next_block;
+        }
+
+        let mut k = 1 * 2;
         while k < len {// if len = 10, k => 1, 2, 4, 8
             let mut i = 0;
             while i < len { // k=1: i => 0, 2, 4, 6
