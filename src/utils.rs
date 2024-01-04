@@ -66,20 +66,28 @@ fn merge<T: Clone>(
     }
 }
 
-pub fn merge_sort<T: Clone>(
+pub fn merge_sort<T: Clone + std::fmt::Debug>(
     vec: &mut Vec<T>,
     stock_vec: &mut Vec<T>,
     compare: fn(&T, &T) -> bool,
     left: usize,
     right: usize,
 ) {
-    if (left == right) || (left + 1 == right) {
+    if (left == right) || (left + 1 == right) { // when left+1 = right, 
+                                                // left = 1,right = 3: mid = (1+3)/2; => 2;
+                                                // {[1, 2], [2, 3]} => return
+                                                // merge (1, 2, 3) => mid 2 is absolutely compare
+                                                // vs 1
+        println!("ealy return: left:{}, right:{}\n", left, right);
         return;
     }
-    let mid: usize = (left + right) / 2;
+    let mid: usize = (left + right) / 2; // (right - left)/2 + left
     merge_sort(vec, stock_vec, compare, left, mid);
+    println!("left-mid{:?}\n", vec);
     merge_sort(vec, stock_vec, compare, mid, right);
+    println!("mid-right{:?}\n", vec);
     merge(vec, stock_vec, compare, left, mid, right);
+    println!("{:?}\n", vec);
 }
 
 mod test {
@@ -100,14 +108,32 @@ mod test {
             } else {
                 return false;
             }
-        };
+        }
 
         let len = vec.len();
 
         let mut stock_vec: Vec<i32> = Vec::with_capacity(len);
         stock_vec.resize_with(len, Default::default);
 
-        merge_sort(&mut vec, &mut stock_vec, compare, 0, len);
+        //merge_sort(&mut vec, &mut stock_vec, compare, 0, len);
+        
+        let mut k = 1;
+        while k < len {// if len = 10, k => 1, 2, 4, 8
+            let mut i = 0;
+            while i < len { // k=1: i => 0, 2, 4, 6
+                            // k=2: i => 0, 4, 8, 12
+                            // k=4: i => 0, 8, 16, 24
+                            // k=8: i => 0, 16
+                let next_block = i + (k*2);
+                // right: next_block: could over len, so need check and shrink to len
+                let right = if len < next_block { len } else { next_block };
+                merge(&mut vec, &mut stock_vec, compare, i, i+k, right);
+
+                i = next_block;
+            }
+            k = k*2;
+        }
+
         assert_eq!(vec, [1, 2, 3, 4, 5, 5, 6, 7, 8]);
     }
 }

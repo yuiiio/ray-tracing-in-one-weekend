@@ -85,33 +85,32 @@ fn dmerge(
     }
 }
 
-pub fn dmerge_sort(
-    vec: &mut Vec<usize>,
-    stock_vec: &mut Vec<usize>,
-    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
-    hitable_list: &HitableList,
-    left: usize,
-    right: usize,
-    ) {
-    if (left == right) || (left + 1 == right) {
-        return;
-    }
-    let mid: usize = (left + right) / 2;
-    dmerge_sort(vec, stock_vec, compare, hitable_list, left, mid);
-    dmerge_sort(vec, stock_vec, compare, hitable_list, mid, right);
-    dmerge(vec, stock_vec, compare, hitable_list, left, mid, right);
-}
-
 pub fn dmerge_sort_wrap(
     vec: &mut Vec<usize>,
     compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
     hitable_list: &HitableList,
     ) {
     let len = vec.len();
+    // stock_vec is temporary memory for merge sort.
     let mut stock_vec: Vec<usize> = Vec::with_capacity(len);
     stock_vec.resize_with(len, Default::default);
 
-    dmerge_sort(vec, &mut stock_vec, compare, hitable_list, 0, len);
+    let mut k = 1;
+    while k < len {// if len = 10, k => 1, 2, 4, 8
+        let mut i = 0;
+        while i < len { // k=1: i => 0, 2, 4, 6
+                        // k=2: i => 0, 4, 8, 12
+                        // k=4: i => 0, 8, 16, 24
+                        // k=8: i => 0, 16
+            let next_block = i + (k*2);
+            // right: next_block: could over len, so need check and shrink to len
+            let right = if len < next_block { len } else { next_block };
+            dmerge(vec, &mut stock_vec, compare, hitable_list, i, i+k, right);
+
+            i = next_block;
+        }
+        k = k*2;
+    }
 }
 
 enum Axis {
