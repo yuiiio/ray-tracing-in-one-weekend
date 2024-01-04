@@ -35,7 +35,7 @@ fn merge<T: Clone>(
     let mut i: usize = left;
     let mut j: usize = mid;
     let mut k: usize = 0;
-    let mut l: usize = 0;
+    let length: usize = right - left;
 
     while i < mid && j < right {
         if compare(&vec[i], &vec[j]) {
@@ -48,23 +48,21 @@ fn merge<T: Clone>(
         k = k + 1;
     }
 
-    if i == mid {
-        while j < right {
-            stock_vec[k] = vec[j].clone();
+    if i == mid { // already left~mid is move to stock_vec
+                  // so mid(>j)~right move to stock_vec
+        for m in k..length {
+            stock_vec[m] = vec[j].clone(); 
             j = j + 1;
-            k = k + 1;
         }
     } else {
-        while i < mid {
-            stock_vec[k] = vec[i].clone();
+        for m in k..length {
+            stock_vec[m] = vec[i].clone();
             i = i + 1;
-            k = k + 1;
         }
     }
 
-    while l < k {
-        vec[left + l] = stock_vec[l].clone();
-        l = l + 1;
+    for m in 0..length {
+        vec[left + m] = stock_vec[m].clone();
     }
 }
 
@@ -95,7 +93,7 @@ mod test {
 
     #[test]
     fn merge_sort_test() {
-        let mut vec = vec![4, 5, 2, 6, 1, 8, 3, 5];
+        let mut vec = vec![4, 5, 2, 6, 1, 8, 3, 5, 7];
         fn compare(a: &i32, b: &i32) -> bool {
             if a < b {
                 return true;
@@ -109,8 +107,7 @@ mod test {
         let mut stock_vec: Vec<i32> = Vec::with_capacity(len);
         stock_vec.resize_with(len, Default::default);
 
-        assert_eq!(len, 8);
         merge_sort(&mut vec, &mut stock_vec, compare, 0, len);
-        assert_eq!(vec, [1, 2, 3, 4, 5, 5, 6, 8]);
+        assert_eq!(vec, [1, 2, 3, 4, 5, 5, 6, 7, 8]);
     }
 }
