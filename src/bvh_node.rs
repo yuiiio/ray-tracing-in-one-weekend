@@ -7,10 +7,18 @@ use crate::ray::Ray;
 use crate::vec3::Vector3;
 
 #[derive(Clone)]
+pub struct BvhTree {
+    hitable_list: HitableList,
+    bvh_node_list: Vec<BvhNode>,
+    aabb_box: Aabb,
+}
+
+#[derive(Clone)]
 pub struct BvhNode {
     bvh_node_box: Aabb,
-    left: Box<dyn Hitable + Send + Sync>,
-    right: Box<dyn Hitable + Send + Sync>,
+    left: usize,
+    right: usize,
+    this_node_is_last: bool,// if true, this node has actual item instead of node.
 }
 
 fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
@@ -151,39 +159,38 @@ impl Hitable for EmptyHitable {
 }
 
 
-fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis) -> BvhNode {
+// push bvh_node_list and return handle
+//              7
+//           3     6
+//          1 2   4 5
+fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>) -> usize {
     let handle_size = handle.len();
-    let (left_obj, right_obj): (
-        Box<dyn Hitable + Send + Sync>,
-        Box<dyn Hitable + Send + Sync>,
-        ) = match handle_size {
-        1 => {
-            let left_obj = hitable_list[handle[0]].clone();
-            let right_obj = Box::new(EmptyHitable::new());
-            (left_obj, right_obj)
+    match handle_size {
+        1 => { // create bvh new node when item is onece, so we have perfect binary tree. 
+            let new_node = BvhNode {
+                bvh_node_box: (hitable_list[handle[0]].bounding_box().unwrap()).clone(),
+                left: handle[0],
+                right: handle[0], // maybe should have empty hitable
+                this_node_is_last: true,
+            };
+            bvh_node_list.push(new_node);
+            return bvh_node_list.len() - 1;
         }
         2 => {
-            let left_obj = hitable_list[handle[0]].clone();
-            let right_obj = hitable_list[handle[1]].clone();
-            (left_obj, right_obj)
+            let new_node = BvhNode {
+                bvh_node_box: surrounding_box(hitable_list[handle[0]].bounding_box().unwrap()
+                                              , hitable_list[handle[1]].bounding_box().unwrap()),
+                left: handle[0],
+                right: handle[1],
+                this_node_is_last: true,
+            };
+            bvh_node_list.push(new_node);
+            return bvh_node_list.len() - 1;
         }
         _ => {
-            /*
-               let mut rng = rand::thread_rng();
-               let x: f64 = rng.gen();
-               let x: f64 = x * 3.0;
-               let axis: usize = x as usize;
-               match axis {
-               0 => dmerge_sort_wrap(handle, box_x_compare, hitable_list),
-               1 => dmerge_sort_wrap(handle, box_y_compare, hitable_list),
-               _ => dmerge_sort_wrap(handle, box_z_compare, hitable_list),
-               }
-               */
-
             let mut handle_x: Vec<usize> = handle.clone();
             let mut handle_y: Vec<usize> = handle.clone();
             let mut handle_z: Vec<usize> = handle.clone();
-
             match pre_sort_axis {
                 Axis::X => {
                     dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
@@ -198,7 +205,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                     dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
                 },
             }
-
             let x_max: f64 = hitable_list[handle_x[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
@@ -216,7 +222,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                 - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
 
             let sorted_axis: Axis;
-
             let mut selected_handle = if x_max < y_max {
                 if y_max < z_max {
                     sorted_axis = Axis::Z;
@@ -237,40 +242,58 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let a = selected_handle.split_off(handle_size / 2);
             let b = selected_handle;
 
-            let left_obj = Box::new(build_bvh(hitable_list, &a, &sorted_axis));
-            let right_obj = Box::new(build_bvh(hitable_list, &b, &sorted_axis));
-            (left_obj, right_obj)
+            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list);
+            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list);
+            let new_node = BvhNode {
+                bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
+                                              , &bvh_node_list[right_handle].bvh_node_box),
+                left: left_handle,
+                right: right_handle,
+                this_node_is_last: false,
+            };
+            bvh_node_list.push(new_node);
+            return bvh_node_list.len() - 1;
         }
-    };
-    let left_box = left_obj
-        .bounding_box()
-        .expect("no bounding box in bvh_node constructor");
-    let right_box = match right_obj.bounding_box() {
-        Some(right_box) => right_box,
-        None => left_box, // right_box == left_box
-    };
-    BvhNode {
-        bvh_node_box: surrounding_box(left_box, right_box),
-        left: left_obj,
-        right: right_obj,
     }
 }
 
-impl BvhNode {
-    pub fn new(hitable_list: &HitableList) -> Self {
-        let mut handle = Vec::with_capacity(hitable_list.len());
-        for i in 0..hitable_list.len() {
+impl BvhTree {
+    pub fn new(hitable_list: HitableList) -> Self {
+        let hitable_list_len: usize = hitable_list.len();
+        let mut handle = Vec::with_capacity(hitable_list_len);
+        for i in 0..hitable_list_len {
             handle.push(i);
         }
 
-        dmerge_sort_wrap(&mut handle, box_x_compare, hitable_list);
-        build_bvh(hitable_list, &handle, &Axis::X)
+        let mut bvh_node_list: Vec<BvhNode> = Vec::new();
+        dmerge_sort_wrap(&mut handle, box_x_compare, &hitable_list);
+        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list);
+
+        /*
+        let bvh_tree_depth = hitable_list_len.ilog2() + 1;
+        let mut k = 1;
+        for now_depth in 0..bvh_tree_depth {
+            for i in 0..k {
+            }
+            k = k*2;
+        }
+        */
+        let aabb_box = bvh_node_list[last_node_num].bvh_node_box.clone();
+        BvhTree {
+            hitable_list,
+            bvh_node_list,
+            aabb_box,
+        }
     }
 }
 
-impl Hitable for BvhNode {
+impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        match self.bvh_node_box.hit(r, t_min, t_max) {
+        match self.aabb_box.hit(r, t_min, t_max) {
+            Some(_hit_rec) => {
+                return None
+            },
+            /*
             Some(_hit_rec) => match self.left.hit(r, t_min, t_max) {
                 Some(left_rec) => match self.right.hit(r, t_min, t_max) {
                     Some(right_rec) => {
@@ -287,26 +310,29 @@ impl Hitable for BvhNode {
                     None => return None,
                 },
             },
+            */
             None => return None,
         }
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
-        Some(&self.bvh_node_box)
+        Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        return (self.left.pdf_value(o, v) + self.right.pdf_value(o, v)) / 2.0; // now bvh was fill both left and right so / 2.0
+        let hitable_list_len = self.hitable_list.len();
+        let mut pdf_sum: f64 = 0.0;
+        for i in 0..hitable_list_len {
+            pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(o, v);
+        }
+        return pdf_sum / (hitable_list_len as f64);
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
+        let hitable_list_len = self.hitable_list.len();
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
-
-        if rand > 0.5 {
-            return self.left.random(o);
-        } else {
-            return self.right.random(o);
-        }
+        let rand_handle = (rand * hitable_list_len as f64) as usize;
+        return self.hitable_list[rand_handle].random(o);
     }
 }

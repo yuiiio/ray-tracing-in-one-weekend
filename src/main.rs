@@ -23,7 +23,7 @@ mod triangle;
 mod utils;
 mod vec3;
 
-use bvh_node::BvhNode;
+use bvh_node::BvhTree;
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
@@ -233,7 +233,7 @@ fn main() {
     let bunny_list = obj_loader(&mut File::open("./dragon.obj").unwrap());
 
     let now1 = SystemTime::now();
-    let bunny_bvh = BvhNode::new(&bunny_list);
+    let bunny_bvh = BvhTree::new(bunny_list);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -263,7 +263,7 @@ fn main() {
     */
 
     let now2 = SystemTime::now();
-    let obj_bvh = BvhNode::new(&obj_list);
+    let obj_bvh = BvhTree::new(obj_list);
     println!(
         "BVH-2 Build Time elapsed: {}",
         now2.elapsed().unwrap().as_secs_f64()
