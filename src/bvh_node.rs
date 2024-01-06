@@ -18,7 +18,7 @@ pub struct BvhNode {
     bvh_node_box: Aabb,
     left: usize,
     right: usize,
-    this_node_is_last: bool,// if true, this node has actual item instead of node.
+    bvh_depth: usize,// 1 is last
 }
 
 fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
@@ -175,7 +175,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                 bvh_node_box: (hitable_list[handle[0]].bounding_box().unwrap()).clone(),
                 left: handle[0],
                 right: handle[0], // maybe should have empty hitable
-                this_node_is_last: true,
+                bvh_depth,
             };
             bvh_node_list.push(new_node);
             return bvh_node_list.len() - 1;
@@ -187,7 +187,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                                                   , hitable_list[handle[1]].bounding_box().unwrap()),
                     left: handle[0],
                     right: handle[1],
-                    this_node_is_last: true,
+                    bvh_depth,
                 };
                 bvh_node_list.push(new_node);
                 return bvh_node_list.len() - 1;
@@ -201,7 +201,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                                                   , &bvh_node_list[right_handle].bvh_node_box),
                     left: left_handle,
                     right: right_handle,
-                    this_node_is_last: false,
+                    bvh_depth,
                 };
                 bvh_node_list.push(new_node);
                 return bvh_node_list.len() - 1;
@@ -269,7 +269,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                                               , &bvh_node_list[right_handle].bvh_node_box),
                 left: left_handle,
                 right: right_handle,
-                this_node_is_last: false,
+                bvh_depth,
             };
             bvh_node_list.push(new_node);
             return bvh_node_list.len() - 1;
@@ -316,9 +316,10 @@ impl Hitable for BvhTree {
         let mut min_hit_t: f64 = f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
         loop {
-            let next_pos_diff: usize = 1;
+            let mut next_pos_diff: usize = 1;
             let current_bvh_node = &self.bvh_node_list[current_pos];
-            if current_bvh_node.this_node_is_last == true { // this node has actual item
+            let current_depth = current_bvh_node.bvh_depth;
+            if current_depth == 1 { // this node has actual item
                 let right_obj = &self.hitable_list[current_bvh_node.right];
                 match right_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // check bounding_box
                     Some(_right_rec) => {
@@ -411,10 +412,12 @@ impl Hitable for BvhTree {
                match current_bvh_node.bvh_node_box.hit(r, t_min, t_max) {
                    Some(_hit_rec) => {},
                    None => {
-                       //next_pos_diff = ; // set skip number using current depth
+                       next_pos_diff = 2usize.pow(current_depth as u32) - 1; // set skip number using current depth
+                                                                             // (2^depth) -1
                    },
                };
             };
+            assert!(current_pos >= next_pos_diff);
             current_pos = current_pos - next_pos_diff; // 1 is always
                                                        // this_node_is_last(line)
                                                        // *1 so sould not be negative
