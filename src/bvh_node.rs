@@ -164,7 +164,7 @@ impl Hitable for EmptyHitable {
 //              7             14       <=  diff 7 (2^3 - 1)
 //           3     6      10      13   <=  diff 3 (2^2 - 1)
 //          1 2   4 5    8  9    11 12 <=  diff 1 (2^1 - 1)
-fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, empty_hitable_handle: usize) -> usize {
+fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize) -> usize {
     let handle_size = handle.len();
     match handle_size {
         1 => { // create bvh new node when item is onece,
@@ -174,7 +174,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let new_node = BvhNode {
                 bvh_node_box: (hitable_list[handle[0]].bounding_box().unwrap()).clone(),
                 left: handle[0],
-                right: empty_hitable_handle,
+                right: handle[0], // maybe should have empty hitable
                 bvh_depth,
             };
             bvh_node_list.push(new_node);
@@ -194,8 +194,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             } else {
                 //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
-                let left_handle = build_bvh(hitable_list, &vec![handle[0]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
-                let right_handle = build_bvh(hitable_list, &vec![handle[1]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
+                let left_handle = build_bvh(hitable_list, &vec![handle[0]], &pre_sort_axis, bvh_node_list, bvh_depth - 1);
+                let right_handle = build_bvh(hitable_list, &vec![handle[1]], &pre_sort_axis, bvh_node_list, bvh_depth - 1);
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                                   , &bvh_node_list[right_handle].bvh_node_box),
@@ -262,8 +262,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let a = selected_handle.split_off(handle_size / 2);
             let b = selected_handle;
 
-            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
-            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
+            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1);
+            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                               , &bvh_node_list[right_handle].bvh_node_box),
@@ -278,7 +278,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
 }
 
 impl BvhTree {
-    pub fn new(mut hitable_list: HitableList) -> Self {
+    pub fn new(hitable_list: HitableList) -> Self {
         let hitable_list_len: usize = hitable_list.len();
         let mut handle = Vec::with_capacity(hitable_list_len);
         for i in 0..hitable_list_len {
@@ -294,12 +294,9 @@ impl BvhTree {
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, box_x_compare, &hitable_list);
 
-        let empty_hitable_handle: usize =  hitable_list_len;
         let bvh_tree_depth: usize = hitable_list_len.next_power_of_two().ilog2() as usize;
-        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth, empty_hitable_handle);
+        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth);
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
-
-        hitable_list.push(EmptyHitable::new()); // sould add after build_bvh// because break sort.
 
         /*
         let mut k = 1;
