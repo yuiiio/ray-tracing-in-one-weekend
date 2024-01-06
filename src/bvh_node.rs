@@ -290,32 +290,45 @@ impl BvhTree {
 
 impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        match self.aabb_box.hit(r, t_min, t_max) {
-            Some(_hit_rec) => {
-                let last_node_num: usize = self.bvh_node_list.len() - 1;
-                let mut current_pos: usize = last_node_num;
-                let mut min_hit_t: f64 = f64::MAX;
-                let mut return_rec: Option<HitRecord> = None;
-                loop {
-                    let next_pos_diff: usize = 1;
-                    let current_bvh_node = &self.bvh_node_list[current_pos];
-                    if current_bvh_node.this_node_is_last == true { // this node has actual item
-                        match self.hitable_list[current_bvh_node.right].hit(r, t_min, t_max) {
+        let last_node_num: usize = self.bvh_node_list.len() - 1;
+        let mut current_pos: usize = last_node_num;
+        let mut min_hit_t: f64 = f64::MAX;
+        let mut return_rec: Option<HitRecord> = None;
+        loop {
+            let next_pos_diff: usize = 1;
+            let current_bvh_node = &self.bvh_node_list[current_pos];
+            if current_bvh_node.this_node_is_last == true { // this node has actual item
+                let right_obj = &self.hitable_list[current_bvh_node.right];
+                match right_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // check bounding_box
+                    Some(_right_rec) => {
+                        match right_obj.hit(r, t_min, t_max) { // actual hit check
                             Some(right_rec) => {
-                                match self.hitable_list[current_bvh_node.left].hit(r, t_min, t_max) {
-                                    Some(left_rec) => {
-                                        let left_t = left_rec.get_t();
-                                        let right_t = right_rec.get_t();
-                                        if left_rec.get_t() < right_t {
-                                            if left_t < min_hit_t {
-                                                return_rec = Some(left_rec);
-                                                min_hit_t = left_t;
-                                            };
-                                        } else {
-                                            if right_t < min_hit_t {
-                                                return_rec = Some(right_rec);
-                                                min_hit_t = right_t;
-                                            };
+                                let left_obj = &self.hitable_list[current_bvh_node.left];
+                                match left_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // bounding_box
+                                    Some(_left_rec) => {
+                                        match left_obj.hit(r, t_min, t_max) { // acutual hit check
+                                            Some(left_rec) => {
+                                                let left_t = left_rec.get_t();
+                                                let right_t = right_rec.get_t();
+                                                if left_rec.get_t() < right_t {
+                                                    if left_t < min_hit_t {
+                                                        return_rec = Some(left_rec);
+                                                        min_hit_t = left_t;
+                                                    };
+                                                } else {
+                                                    if right_t < min_hit_t {
+                                                        return_rec = Some(right_rec);
+                                                        min_hit_t = right_t;
+                                                    };
+                                                };
+                                            },
+                                            None => {
+                                                let right_t = right_rec.get_t();
+                                                if right_t < min_hit_t {
+                                                    return_rec = Some(right_rec);
+                                                    min_hit_t = right_t;
+                                                };
+                                            },
                                         };
                                     },
                                     None => {
@@ -325,54 +338,70 @@ impl Hitable for BvhTree {
                                             min_hit_t = right_t;
                                         };
                                     },
-                                }
+                                };
                             },
-                            None => match self.hitable_list[current_bvh_node.left].hit(r, t_min, t_max) {
-                                Some(left_rec) => {
+                            None => {
+                                let left_obj = &self.hitable_list[current_bvh_node.left];
+                                match left_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // bounding_box
+                                    Some(_left_rec) => {
+                                        match left_obj.hit(r, t_min, t_max) { // acutual hit check
+                                            Some(left_rec) => {
+                                                let left_t = left_rec.get_t();
+                                                if left_t < min_hit_t {
+                                                    return_rec = Some(left_rec);
+                                                    min_hit_t = left_t;
+                                                };
+                                            },
+                                            None => { // nothing update
+                                            },
+                                        };
+                                    },
+                                    None => { // nothing update
+                                    },
+                                };
+                            },
+                        };
+                    },
+                    None => {
+                        let left_obj = &self.hitable_list[current_bvh_node.left];
+                        match left_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // bounding_box
+                            Some(_left_rec) => {
+                                match left_obj.hit(r, t_min, t_max) { // acutual hit check
+                                    Some(left_rec) => {
                                         let left_t = left_rec.get_t();
                                         if left_t < min_hit_t {
                                             return_rec = Some(left_rec);
                                             min_hit_t = left_t;
                                         };
-                                },
-                                None => {
-                                },
+                                    },
+                                    None => { // nothing update
+                                    },
+                                };
+                            },
+                            None => { // nothing update
                             },
                         };
-                        if current_pos == 0 { // *1
-                            break; // last node
-                        }
-                    } else { // this node has other nodes
-                    }
-                    current_pos = current_pos - next_pos_diff; // 1 is always
-                                                               // this_node_is_last(line)
-                                                               // *1 so sould not be negative
-                    if current_pos == 0 {
-                        break; // no more hit node, ealy return;
-                    }
+                    },
+                };
+                if current_pos == 0 { // *1
+                    break; // last node
                 }
-                return return_rec
-            },
-            /*
-            Some(_hit_rec) => match self.left.hit(r, t_min, t_max) {
-                Some(left_rec) => match self.right.hit(r, t_min, t_max) {
-                    Some(right_rec) => {
-                        if left_rec.get_t() < right_rec.get_t() {
-                            return Some(left_rec);
-                        } else {
-                            return Some(right_rec);
-                        }
-                    }
-                    None => return Some(left_rec),
-                },
-                None => match self.right.hit(r, t_min, t_max) {
-                    Some(right_rec) => return Some(right_rec),
-                    None => return None,
-                },
-            },
-            */
-            None => return None,
+            } else { // this node has other nodes
+               match current_bvh_node.bvh_node_box.hit(r, t_min, t_max) {
+                   Some(_hit_rec) => {},
+                   None => {
+                       //next_pos_diff = ; // set skip number using current depth
+                   },
+               };
+            };
+            current_pos = current_pos - next_pos_diff; // 1 is always
+                                                       // this_node_is_last(line)
+                                                       // *1 so sould not be negative
+            if current_pos == 0 {
+                break; // no more hit node, ealy return;
+            }
         }
+        return return_rec
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
