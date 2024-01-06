@@ -290,6 +290,7 @@ impl BvhTree {
 
         let bvh_tree_depth: usize = hitable_list_len.next_power_of_two().ilog2() as usize;
 
+        println!("bvh_tree_depth: {}", bvh_tree_depth);
         let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth);
 
         /*
@@ -414,6 +415,7 @@ impl Hitable for BvhTree {
                    None => {
                        next_pos_diff = 2usize.pow(current_depth as u32) - 1; // set skip number using current depth
                                                                              // (2^depth) -1
+                        println!("(skip) next_pos_diff: {}, current_pos: {}", next_pos_diff, current_pos);
                    },
                };
             };
