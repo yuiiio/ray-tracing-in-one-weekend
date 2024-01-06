@@ -161,13 +161,14 @@ impl Hitable for EmptyHitable {
 
 // push bvh_node_list and return handle(-1)
 //                    15
-//              7             14
-//           3     6      10      13
-//          1 2   4 5    8  9    11 12
-fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>) -> usize {
+//              7             14       <=  diff 7 (2^3 - 1)
+//           3     6      10      13   <=  diff 3 (2^2 - 1)
+//          1 2   4 5    8  9    11 12 <=  diff 1 (2^1 - 1)
+fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize) -> usize {
     let handle_size = handle.len();
     match handle_size {
-        1 => { // create bvh new node when item is onece, so we have perfect binary tree. 
+        1 => { // create bvh new node when item is onece, so we have perfect binary tree.
+            assert_eq!(bvh_depth, 1);
             let new_node = BvhNode {
                 bvh_node_box: (hitable_list[handle[0]].bounding_box().unwrap()).clone(),
                 left: handle[0],
@@ -178,6 +179,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             return bvh_node_list.len() - 1;
         }
         2 => {
+            assert_eq!(bvh_depth, 1);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(hitable_list[handle[0]].bounding_box().unwrap()
                                               , hitable_list[handle[1]].bounding_box().unwrap()),
@@ -243,8 +245,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let a = selected_handle.split_off(handle_size / 2);
             let b = selected_handle;
 
-            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list);
-            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list);
+            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1);
+            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                               , &bvh_node_list[right_handle].bvh_node_box),
@@ -268,10 +270,12 @@ impl BvhTree {
 
         let mut bvh_node_list: Vec<BvhNode> = Vec::new();
         dmerge_sort_wrap(&mut handle, box_x_compare, &hitable_list);
-        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list);
+
+        let bvh_tree_depth: usize = hitable_list_len.next_power_of_two().ilog2() as usize;
+
+        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth);
 
         /*
-        let bvh_tree_depth = hitable_list_len.ilog2() + 1;
         let mut k = 1;
         for now_depth in 0..bvh_tree_depth {
             for i in 0..k {
