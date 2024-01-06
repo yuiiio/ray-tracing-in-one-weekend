@@ -159,10 +159,11 @@ impl Hitable for EmptyHitable {
 }
 
 
-// push bvh_node_list and return handle
-//              7
-//           3     6
-//          1 2   4 5
+// push bvh_node_list and return handle(-1)
+//                    15
+//              7             14
+//           3     6      10      13
+//          1 2   4 5    8  9    11 12
 fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>) -> usize {
     let handle_size = handle.len();
     match handle_size {
@@ -291,7 +292,66 @@ impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self.aabb_box.hit(r, t_min, t_max) {
             Some(_hit_rec) => {
-                return None
+                let last_node_num: usize = self.bvh_node_list.len() - 1;
+                let mut current_pos: usize = last_node_num;
+                let mut min_hit_t: f64 = f64::MAX;
+                let mut return_rec: Option<HitRecord> = None;
+                loop {
+                    let next_pos_diff: usize = 1;
+                    let current_bvh_node = &self.bvh_node_list[current_pos];
+                    if current_bvh_node.this_node_is_last == true { // this node has actual item
+                        match self.hitable_list[current_bvh_node.right].hit(r, t_min, t_max) {
+                            Some(right_rec) => {
+                                match self.hitable_list[current_bvh_node.left].hit(r, t_min, t_max) {
+                                    Some(left_rec) => {
+                                        let left_t = left_rec.get_t();
+                                        let right_t = right_rec.get_t();
+                                        if left_rec.get_t() < right_t {
+                                            if left_t < min_hit_t {
+                                                return_rec = Some(left_rec);
+                                                min_hit_t = left_t;
+                                            };
+                                        } else {
+                                            if right_t < min_hit_t {
+                                                return_rec = Some(right_rec);
+                                                min_hit_t = right_t;
+                                            };
+                                        };
+                                    },
+                                    None => {
+                                        let right_t = right_rec.get_t();
+                                        if right_t < min_hit_t {
+                                            return_rec = Some(right_rec);
+                                            min_hit_t = right_t;
+                                        };
+                                    },
+                                }
+                            },
+                            None => match self.hitable_list[current_bvh_node.left].hit(r, t_min, t_max) {
+                                Some(left_rec) => {
+                                        let left_t = left_rec.get_t();
+                                        if left_t < min_hit_t {
+                                            return_rec = Some(left_rec);
+                                            min_hit_t = left_t;
+                                        };
+                                },
+                                None => {
+                                },
+                            },
+                        };
+                        if current_pos == 0 { // *1
+                            break; // last node
+                        }
+                    } else { // this node has other nodes
+                    }
+                    current_pos = current_pos - next_pos_diff; // 1 is always
+                                                               // this_node_is_last(line)
+                                                               // *1 so sould not be negative
+                    if current_pos == 0 {
+                        break; // no more hit node, ealy return;
+                    }
+                }
+                return return_rec
             },
             /*
             Some(_hit_rec) => match self.left.hit(r, t_min, t_max) {
