@@ -159,7 +159,7 @@ impl Hitable for EmptyHitable {
 }
 
 
-// push bvh_node_list and return handle(-1)
+// push bvh_node_list and return handle
 //                    15
 //              7             14       <=  diff 7 (2^3 - 1)
 //           3     6      10      13   <=  diff 3 (2^2 - 1)
@@ -286,12 +286,17 @@ impl BvhTree {
         }
 
         let mut bvh_node_list: Vec<BvhNode> = Vec::new();
+        bvh_node_list.push(BvhNode {
+            bvh_node_box: Aabb::new([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]),
+            left: 0,
+            right: 0,
+            bvh_depth: 0,
+        }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, box_x_compare, &hitable_list);
 
         let bvh_tree_depth: usize = hitable_list_len.next_power_of_two().ilog2() as usize;
-
-        println!("bvh_tree_depth: {}", bvh_tree_depth);
         let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth);
+        println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
         /*
         let mut k = 1;
@@ -316,6 +321,7 @@ impl Hitable for BvhTree {
         let mut current_pos: usize = last_node_num;
         let mut min_hit_t: f64 = f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
+        //let top_depth = self.bvh_node_list[last_node_num].bvh_depth;
         loop {
             let mut next_pos_diff: usize = 1;
             let current_bvh_node = &self.bvh_node_list[current_pos];
@@ -415,7 +421,7 @@ impl Hitable for BvhTree {
                    None => {
                        next_pos_diff = 2usize.pow(current_depth as u32) - 1; // set skip number using current depth
                                                                              // (2^depth) -1
-                        println!("(skip) next_pos_diff: {}, current_pos: {}", next_pos_diff, current_pos);
+                        //println!("(skip) next_pos_diff: {}, current_pos: {}, top_depth: {}", next_pos_diff, current_pos, top_depth);
                    },
                };
             };
