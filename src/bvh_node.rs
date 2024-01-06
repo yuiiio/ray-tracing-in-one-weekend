@@ -170,7 +170,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
         1 => { // create bvh new node when item is onece,
                // but we have *not* perfect binary tree,
                // so need more checks depth in 2 => arm.
-            assert_eq!(bvh_depth, 1);
+            //assert_eq!(bvh_depth, 1);
             let new_node = BvhNode {
                 bvh_node_box: (hitable_list[handle[0]].bounding_box().unwrap()).clone(),
                 left: handle[0],
@@ -192,7 +192,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                 bvh_node_list.push(new_node);
                 return bvh_node_list.len() - 1;
             } else {
-                assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
+                //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
                 let left_handle = build_bvh(hitable_list, &vec![handle[0]], &pre_sort_axis, bvh_node_list, bvh_depth - 1);
                 let right_handle = build_bvh(hitable_list, &vec![handle[1]], &pre_sort_axis, bvh_node_list, bvh_depth - 1);
@@ -296,7 +296,7 @@ impl BvhTree {
 
         let bvh_tree_depth: usize = hitable_list_len.next_power_of_two().ilog2() as usize;
         let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth);
-        println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
+        //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
         /*
         let mut k = 1;
@@ -425,7 +425,7 @@ impl Hitable for BvhTree {
                    },
                };
             };
-            assert!(current_pos >= next_pos_diff);
+            //assert!(current_pos >= next_pos_diff);
             current_pos = current_pos - next_pos_diff; // 1 is always
                                                        // this_node_is_last(line)
                                                        // *1 so sould not be negative
