@@ -339,7 +339,7 @@ impl Hitable for BvhTree {
                                             Some(left_rec) => {
                                                 let left_t = left_rec.get_t();
                                                 let right_t = right_rec.get_t();
-                                                if left_rec.get_t() < right_t {
+                                                if left_t < right_t {
                                                     if left_t < min_hit_t {
                                                         return_rec = Some(left_rec);
                                                         min_hit_t = left_t;
