@@ -286,7 +286,12 @@ impl BvhTree {
             handle.push(i);
         }
 
-        let mut bvh_node_list: Vec<BvhNode> = Vec::new();
+        let hitable_list_next_power_of_two_len = hitable_list_len.next_power_of_two();
+        let mut bvh_node_list: Vec<BvhNode> = Vec::with_capacity(hitable_list_next_power_of_two_len*2); // n:(0~k), sigma(2*n)
+                                                                                                        // = (2*k) - 1
+                                                    // and not affect bvh_node_list.len();
+                                                    // affect only bvh_node_list.capacity();
+                                                    
         bvh_node_list.push(BvhNode {
             bvh_node_box: Aabb::new([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]),
             left: 0,
@@ -296,7 +301,7 @@ impl BvhTree {
         dmerge_sort_wrap(&mut handle, box_x_compare, &hitable_list);
 
         let empty_hitable_handle: usize =  hitable_list_len;
-        let bvh_tree_depth: usize = hitable_list_len.next_power_of_two().ilog2() as usize;
+        let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
         let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth, empty_hitable_handle);
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
