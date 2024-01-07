@@ -371,7 +371,37 @@ impl Hitable for BvhTree {
                             },
                             None => {
                                 let left_obj = &self.hitable_list[current_bvh_node.left];
-                                match left_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // bounding_box
+                                match left_obj.bounding_box() {
+                                    Some(left_bounding_box) => {
+                                        match left_bounding_box.hit(r, t_min, t_max) { // bounding_box
+                                            Some(_left_rec) => {
+                                                match left_obj.hit(r, t_min, t_max) { // acutual hit check
+                                                    Some(left_rec) => {
+                                                        let left_t = left_rec.get_t();
+                                                        if left_t < min_hit_t {
+                                                            return_rec = Some(left_rec);
+                                                            min_hit_t = left_t;
+                                                        };
+                                                    },
+                                                    None => { // nothing update
+                                                    },
+                                                };
+                                            },
+                                            None => { // nothing update
+                                            },
+                                        };
+                                    },
+                                    None => { // not having bounding_box maybe EmptyHitable
+                                    },
+                                };
+                            },
+                        };
+                    },
+                    None => {
+                        let left_obj = &self.hitable_list[current_bvh_node.left];
+                        match left_obj.bounding_box() {
+                            Some(left_bounding_box) => {
+                                match left_bounding_box.hit(r, t_min, t_max) { // bounding_box
                                     Some(_left_rec) => {
                                         match left_obj.hit(r, t_min, t_max) { // acutual hit check
                                             Some(left_rec) => {
@@ -389,25 +419,7 @@ impl Hitable for BvhTree {
                                     },
                                 };
                             },
-                        };
-                    },
-                    None => {
-                        let left_obj = &self.hitable_list[current_bvh_node.left];
-                        match left_obj.bounding_box().unwrap().hit(r, t_min, t_max) { // bounding_box
-                            Some(_left_rec) => {
-                                match left_obj.hit(r, t_min, t_max) { // acutual hit check
-                                    Some(left_rec) => {
-                                        let left_t = left_rec.get_t();
-                                        if left_t < min_hit_t {
-                                            return_rec = Some(left_rec);
-                                            min_hit_t = left_t;
-                                        };
-                                    },
-                                    None => { // nothing update
-                                    },
-                                };
-                            },
-                            None => { // nothing update
+                            None => { // not having bounding_box maybe EmptyHitable
                             },
                         };
                     },
