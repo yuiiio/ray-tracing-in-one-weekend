@@ -103,18 +103,12 @@ pub fn dmerge_sort_wrap(
     let mut stock_vec: Vec<usize> = Vec::with_capacity(len);
     stock_vec.resize_with(len, Default::default);
 
-    let mut i = 0;
-    while i < len {
-        let next_block = i + 2;
-        let right = i+1;
-        if len <= right {
-            break; 
-        } else {
-            if compare(&hitable_list[vec[right]], &hitable_list[vec[i]]) {
-                vec.swap(i, right);
-            }
+    for i in 0..(len/2) { // first merge two element use swap.
+        let left = i*2;
+        let right = left+1;
+        if compare(&hitable_list[vec[right]], &hitable_list[vec[left]]) {
+            vec.swap(left, right);
         }
-        i = next_block;
     }
 
     let mut k = 1 * 2;
