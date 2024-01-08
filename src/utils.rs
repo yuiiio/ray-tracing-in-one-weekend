@@ -37,15 +37,26 @@ fn merge<T: Clone>(
     let mut k: usize = 0;
     let length: usize = right - left;
 
-    while i < mid && j < right {
-        if compare(&vec[i], &vec[j]) {
-            stock_vec[k] = vec[i].clone();
-            i = i + 1;
-        } else {
-            stock_vec[k] = vec[j].clone();
-            j = j + 1;
+    
+    if i < mid && j < right {
+        loop {
+            if compare(&vec[i], &vec[j]) {
+                stock_vec[k] = vec[i].clone();
+                i = i + 1;
+                if i == mid {
+                    k = k + 1;
+                    break;
+                }
+            } else {
+                stock_vec[k] = vec[j].clone();
+                j = j + 1;
+                if j == right {
+                    k = k + 1;
+                    break;
+                }
+            }
+            k = k + 1;
         }
-        k = k + 1;
     }
 
     if i == mid { // already left~mid is move to stock_vec

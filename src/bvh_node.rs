@@ -65,15 +65,25 @@ fn dmerge(
     let mut k: usize = 0;
     let length: usize = right - left;
 
-    while i < mid && j < right {
-        if compare(&hitable_list[vec[i]], &hitable_list[vec[j]]) {
-            stock_vec[k] = vec[i];
-            i = i + 1;
-        } else {
-            stock_vec[k] = vec[j];
-            j = j + 1;
+    if i < mid && j < right {
+        loop {
+            if compare(&hitable_list[vec[i]], &hitable_list[vec[j]]) {
+                stock_vec[k] = vec[i];
+                i = i + 1;
+                if i == mid {
+                    k = k + 1;
+                    break;
+                }
+            } else {
+                stock_vec[k] = vec[j];
+                j = j + 1;
+                if j == right {
+                    k = k + 1;
+                    break;
+                }
+            }
+            k = k + 1;
         }
-        k = k + 1;
     }
 
     if i == mid {
