@@ -222,12 +222,29 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                     dmerge_sort_wrap(&mut handle_y, box_y_compare, center_list);
                 },
             }
+            /*
             let x_max: f64 = center_list[handle_x[handle_size - 1]][0]
                 - center_list[handle_x[0]][0];
             let y_max: f64 = center_list[handle_x[handle_size - 1]][1]
                 - center_list[handle_x[0]][1];
             let z_max: f64 = center_list[handle_x[handle_size - 1]][2]
                 - center_list[handle_x[0]][2];
+            */
+            let x_max: f64 = hitable_list[handle_x[handle_size - 1]]
+                .bounding_box()
+                .unwrap()
+                .b_max()[0]
+                - hitable_list[handle_x[0]].bounding_box().unwrap().b_min()[0];
+            let y_max: f64 = hitable_list[handle_y[handle_size - 1]]
+                .bounding_box()
+                .unwrap()
+                .b_max()[1]
+                - hitable_list[handle_y[0]].bounding_box().unwrap().b_min()[1];
+            let z_max: f64 = hitable_list[handle_z[handle_size - 1]]
+                .bounding_box()
+                .unwrap()
+                .b_max()[2]
+                - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
 
             let sorted_axis: Axis;
             let mut selected_handle = if x_max < y_max {
