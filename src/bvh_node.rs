@@ -21,30 +21,22 @@ pub struct BvhNode {
     next_pos_diff: usize,// 1 is last // (2^depth) -1
 }
 
-fn box_x_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
-    let box_a: &Aabb = a.bounding_box().unwrap();
-    let box_b: &Aabb = b.bounding_box().unwrap();
-    if box_a.b_min()[0] < box_b.b_min()[0] {
+fn box_x_compare(a: &Vector3<f64>, b: &Vector3<f64>) -> bool {
+    if a[0] < b[0] {
         return true;
     } else {
         return false;
     }
 }
-
-fn box_y_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
-    let box_a: &Aabb = a.bounding_box().unwrap();
-    let box_b: &Aabb = b.bounding_box().unwrap();
-    if box_a.b_min()[1] < box_b.b_min()[1] {
+fn box_y_compare(a: &Vector3<f64>, b: &Vector3<f64>) -> bool {
+    if a[1] < b[1] {
         return true;
     } else {
         return false;
     }
 }
-
-fn box_z_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send + Sync>) -> bool {
-    let box_a: &Aabb = a.bounding_box().unwrap();
-    let box_b: &Aabb = b.bounding_box().unwrap();
-    if box_a.b_min()[2] < box_b.b_min()[2] {
+fn box_z_compare(a: &Vector3<f64>, b: &Vector3<f64>) -> bool {
+    if a[2] < b[2] {
         return true;
     } else {
         return false;
@@ -54,8 +46,8 @@ fn box_z_compare(a: &Box<dyn Hitable + Send + Sync>, b: &Box<dyn Hitable + Send 
 fn dmerge(
     vec: &mut Vec<usize>,
     stock_vec: &mut Vec<usize>,
-    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
-    hitable_list: &HitableList,
+    compare: fn(&Vector3<f64>, &Vector3<f64>) -> bool,
+    center_list: &Vec<Vector3<f64>>,
     left: usize,
     mid: usize,
     right: usize,
@@ -67,7 +59,7 @@ fn dmerge(
 
     if i < mid && j < right {
         loop {
-            if compare(&hitable_list[vec[i]], &hitable_list[vec[j]]) {
+            if compare(&center_list[vec[i]], &center_list[vec[j]]) {
                 stock_vec[k] = vec[i];
                 i = i + 1;
                 if i == mid {
@@ -105,8 +97,8 @@ fn dmerge(
 
 pub fn dmerge_sort_wrap(
     vec: &mut Vec<usize>,
-    compare: fn(&Box<dyn Hitable + Send + Sync>, &Box<dyn Hitable + Send + Sync>) -> bool,
-    hitable_list: &HitableList,
+    compare: fn(&Vector3<f64>, &Vector3<f64>) -> bool,
+    center_list: &Vec<Vector3<f64>>,
     ) {
     let len = vec.len();
     // stock_vec is temporary memory for merge sort.
@@ -116,7 +108,7 @@ pub fn dmerge_sort_wrap(
     for i in 0..(len/2) { // first merge two element use swap.
         let left = i*2;
         let right = left+1;
-        if compare(&hitable_list[vec[right]], &hitable_list[vec[left]]) {
+        if compare(&center_list[vec[right]], &center_list[vec[left]]) {
             vec.swap(left, right);
         }
     }
@@ -131,7 +123,7 @@ pub fn dmerge_sort_wrap(
             let next_block = i + (k*2);
             // right: next_block: could over len, so need check and shrink to len
             let right = if len < next_block { len } else { next_block };
-            dmerge(vec, &mut stock_vec, compare, hitable_list, i, i+k, right);
+            dmerge(vec, &mut stock_vec, compare, center_list, i, i+k, right);
 
             i = next_block;
         }
@@ -168,7 +160,7 @@ impl Hitable for EmptyHitable {
 //              7             14       <=  diff 7 (2^3 - 1)
 //           3     6      10      13   <=  diff 3 (2^2 - 1)
 //          1 2   4 5    8  9    11 12 <=  diff 1 (2^1 - 1)
-fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, empty_hitable_handle: usize) -> usize {
+fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, empty_hitable_handle: usize, center_list: &Vec<Vector3<f64>>) -> usize {
     let handle_size = handle.len();
     let next_pos_diff = 2usize.pow(bvh_depth as u32) - 1;
     match handle_size {
@@ -199,8 +191,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             } else {
                 //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
-                let left_handle = build_bvh(hitable_list, &vec![handle[0]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
-                let right_handle = build_bvh(hitable_list, &vec![handle[1]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
+                let left_handle = build_bvh(hitable_list, &vec![handle[0]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+                let right_handle = build_bvh(hitable_list, &vec![handle[1]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                                   , &bvh_node_list[right_handle].bvh_node_box),
@@ -218,33 +210,24 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let mut handle_z: Vec<usize> = handle.clone();
             match pre_sort_axis {
                 Axis::X => {
-                    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
-                    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_y, box_y_compare, center_list);
+                    dmerge_sort_wrap(&mut handle_z, box_z_compare, center_list);
                 },
                 Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
-                    dmerge_sort_wrap(&mut handle_z, box_z_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_x, box_x_compare, center_list);
+                    dmerge_sort_wrap(&mut handle_z, box_z_compare, center_list);
                 },
                 Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_x, box_x_compare, hitable_list);
-                    dmerge_sort_wrap(&mut handle_y, box_y_compare, hitable_list);
+                    dmerge_sort_wrap(&mut handle_x, box_x_compare, center_list);
+                    dmerge_sort_wrap(&mut handle_y, box_y_compare, center_list);
                 },
             }
-            let x_max: f64 = hitable_list[handle_x[handle_size - 1]]
-                .bounding_box()
-                .unwrap()
-                .b_max()[0]
-                - hitable_list[handle_x[0]].bounding_box().unwrap().b_min()[0];
-            let y_max: f64 = hitable_list[handle_y[handle_size - 1]]
-                .bounding_box()
-                .unwrap()
-                .b_max()[1]
-                - hitable_list[handle_y[0]].bounding_box().unwrap().b_min()[1];
-            let z_max: f64 = hitable_list[handle_z[handle_size - 1]]
-                .bounding_box()
-                .unwrap()
-                .b_max()[2]
-                - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
+            let x_max: f64 = center_list[handle_x[handle_size - 1]][0]
+                - center_list[handle_x[0]][0];
+            let y_max: f64 = center_list[handle_x[handle_size - 1]][1]
+                - center_list[handle_x[0]][1];
+            let z_max: f64 = center_list[handle_x[handle_size - 1]][2]
+                - center_list[handle_x[0]][2];
 
             let sorted_axis: Axis;
             let mut selected_handle = if x_max < y_max {
@@ -267,8 +250,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let a = selected_handle.split_off(handle_size / 2);
             let b = selected_handle;
 
-            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
-            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle);
+            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                               , &bvh_node_list[right_handle].bvh_node_box),
@@ -290,6 +273,18 @@ impl BvhTree {
             handle.push(i);
         }
 
+        let mut aabb_center_list = Vec::with_capacity(hitable_list_len);
+        for i in 0..hitable_list_len {
+            let bounding_box_max = hitable_list[i].bounding_box().unwrap().b_max();
+            let bounding_box_min = hitable_list[i].bounding_box().unwrap().b_min();
+            let center_point: Vector3<f64> = [
+                (bounding_box_max[0] + bounding_box_min[0])*0.5,
+                (bounding_box_max[1] + bounding_box_min[1])*0.5,
+                (bounding_box_max[2] + bounding_box_min[2])*0.5,
+            ];
+            aabb_center_list.push(center_point);
+        }
+
         let hitable_list_next_power_of_two_len = hitable_list_len.next_power_of_two();
         let mut bvh_node_list: Vec<BvhNode> = Vec::with_capacity(hitable_list_next_power_of_two_len*2); // n:(0~k), sigma(2*n)
                                                                                                         // = (2*k) - 1
@@ -302,11 +297,11 @@ impl BvhTree {
             right: 0,
             next_pos_diff: 0,
         }); // [0] dummy node; to actually node start at 1;
-        dmerge_sort_wrap(&mut handle, box_x_compare, &hitable_list);
+        dmerge_sort_wrap(&mut handle, box_x_compare, &aabb_center_list);
 
         let empty_hitable_handle: usize =  hitable_list_len;
         let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
-        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth, empty_hitable_handle);
+        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth, empty_hitable_handle, &aabb_center_list);
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
         hitable_list.push(EmptyHitable::new()); // sould add after build_bvh// because break sort.
