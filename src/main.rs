@@ -114,9 +114,12 @@ fn color(
                 let v = vec3_unit_vector_f64(&ray.direction());
                 let a = (v[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
-                    &vec3_mul_b(&[1.0, 1.0, 1.0], 1.0 - a),
+                    &vec3_mul_b(&[0.7, 0.7, 0.5], 1.0 - a),
                     &vec3_mul_b(&[0.5, 0.7, 1.0], a),
                 );
+                /*
+                let last_emitted = [0.0, 0.0, 0.0];
+                */
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
@@ -159,11 +162,10 @@ fn main() {
         material_list.add_material(DiffuseLight::new(light_texture));
     let magick = material_list.add_material(Lambertian::new(magick_texture));
     let glass = material_list.add_material(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
-    let red_glass = material_list.add_material(Dielectric::new(1.5, [0.0, 0.006, 0.009]));
+    let red_glass = material_list.add_material(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_material(Metal::new(0.0, metal_texture));
     let fuzzy_metal = material_list.add_material(Metal::new(0.1, fuzzy_metal_texture));
 
-    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -175,6 +177,7 @@ fn main() {
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kYZ, red));
 
+    /*
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -195,6 +198,7 @@ fn main() {
         AxisType::kXZ,
         white,
     )));
+    */
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -204,7 +208,6 @@ fn main() {
         AxisType::kXY,
         magick,
     )));
-    */
 
     let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kXZ, fuzzy_metal);
     obj_list.push(floor.clone());
