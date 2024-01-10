@@ -2,8 +2,55 @@ use crate::utils::min;
 use crate::vec3::Vector3;
 use image::RgbaImage;
 
-pub trait Texture {
-    fn get_value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64>;
+pub enum Texture {
+    ColorTexture,
+    //CheckerTexture,
+    ImageTexture,
+}
+
+pub struct TextureHandle {
+    texture_type: Texture,
+    position: usize, // each type
+}
+
+pub struct TextureList {
+    color_texture_list: Vec<ColorTexture>,
+    //checker_texture_list: Vec<CheckerTexture>,
+    image_texture_list: Vec<ImageTexture>,
+}
+
+impl TextureList {
+    pub fn new() -> TextureList {
+        TextureList {
+            color_texture_list: Vec::new(),
+            //checker_texture_list: Vec::new(),
+            image_texture_list: Vec::new(),
+        }
+    }
+
+    pub fn add_color_texture(&mut self, texture: ColorTexture) -> TextureHandle {
+        self.color_texture_list.push(texture);
+        TextureHandle {
+            texture_type: Texture::ColorTexture,
+            position: self.color_texture_list.len() - 1,
+        }
+    }
+
+    pub fn add_image_texture(&mut self, texture: ImageTexture) -> TextureHandle {
+        self.image_texture_list.push(texture);
+        TextureHandle {
+            texture_type: Texture::ImageTexture,
+            position: self.image_texture_list.len() - 1,
+        }
+    }
+
+    pub fn get_value(&self, u: f64, v: f64, p: &Vector3<f64>, texture_handle: &TextureHandle) -> Vector3<f64> {
+        let texture_pos = texture_handle.position;
+        match texture_handle.texture_type {
+            Texture::ColorTexture => self.color_texture_list[texture_pos].get_value(u, v, p),
+            Texture::ImageTexture => self.image_texture_list[texture_pos].get_value(u, v, p),
+        }
+    }
 }
 
 pub struct ColorTexture {
@@ -14,31 +61,28 @@ impl ColorTexture {
     pub fn new(m_color: Vector3<f64>) -> ColorTexture {
         ColorTexture { m_color }
     }
-}
 
-impl Texture for ColorTexture {
     fn get_value(&self, _u: f64, _v: f64, _p: &Vector3<f64>) -> Vector3<f64> {
         return self.m_color;
     }
 }
 
-pub struct CheckerTexture<T: Texture> {
-    m_odd: T,
-    m_even: T,
+/* disable recursion type Texture now.
+pub struct CheckerTexture {
+    m_odd: TextureHandle,
+    m_even: TextureHandle,
     m_freq: f64,
 }
 
-impl<T: Texture> CheckerTexture<T> {
-    pub fn new(m_odd: T, m_even: T, m_freq: f64) -> Self {
+impl CheckerTexture {
+    pub fn new(m_odd: TextureHandle, m_even: TextureHandle, m_freq: f64) -> Self {
         CheckerTexture {
             m_odd,
             m_even,
             m_freq,
         }
     }
-}
 
-impl<T: Texture> Texture for CheckerTexture<T> {
     fn get_value(&self, u: f64, v: f64, p: &Vector3<f64>) -> Vector3<f64> {
         let sines: f64 =
             (self.m_freq * p[0]).sin() * (self.m_freq * p[1]).sin() * (self.m_freq * p[2]).sin();
@@ -49,6 +93,7 @@ impl<T: Texture> Texture for CheckerTexture<T> {
         }
     }
 }
+*/
 
 pub struct ImageTexture {
     teximage: RgbaImage,
@@ -58,9 +103,7 @@ impl ImageTexture {
     pub fn new(teximage: RgbaImage) -> Self {
         ImageTexture { teximage }
     }
-}
 
-impl Texture for ImageTexture {
     fn get_value(&self, u: f64, v: f64, _p: &Vector3<f64>) -> Vector3<f64> {
         let width = self.teximage.width();
         let height = self.teximage.height();

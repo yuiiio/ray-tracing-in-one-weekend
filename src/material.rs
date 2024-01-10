@@ -3,7 +3,7 @@ use std::f64::consts::PI;
 
 use crate::hitable::HitRecord;
 use crate::ray::Ray;
-use crate::texture::Texture;
+use crate::texture::{Texture, TextureHandle, TextureList};
 use crate::vec3::{
     vec3_add, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_unit_vector_f64, Vector3,
 };
@@ -35,8 +35,8 @@ impl MatRecord {
 }
 
 pub trait Material {
-    fn scatter(&self, r: &Ray, hit_record: &HitRecord) -> Option<MatRecord>;
-    fn emitted(&self, _r: &Ray, _hit_record: &HitRecord) -> Vector3<f64> {
+    fn scatter(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord>;
+    fn emitted(&self, _r: &Ray, _hit_record: &HitRecord, texture_list: &TextureList) -> Vector3<f64> {
         [0.0, 0.0, 0.0]
     }
     fn scattering_pdf(&self, _r: &Ray, _hit_record: &HitRecord) -> f64 {
@@ -71,13 +71,13 @@ impl Materials {
     }
 }
 
-pub struct Metal<T: Texture> {
+pub struct Metal {
     fuzz: f64,
-    texture: T,
+    texture: TextureHandle,
 }
 
-impl<T: Texture> Metal<T> {
-    pub fn new(f: f64, texture: T) -> Self {
+impl Metal {
+    pub fn new(f: f64, texture: TextureHandle) -> Self {
         let fuzz = if f < 1.0 { f } else { 1.0 };
         Metal { fuzz, texture }
     }
@@ -90,8 +90,8 @@ fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     )
 }
 
-impl<T: Texture> Material for Metal<T> {
-    fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
+impl Material for Metal {
+    fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
         let mut reflected = reflect(
             &vec3_unit_vector_f64(&r_in.direction()),
             &hit_record.get_normal(),
@@ -100,9 +100,8 @@ impl<T: Texture> Material for Metal<T> {
             reflected = vec3_add(&reflected, &vec3_mul_b(&random_in_unit_sphere(), self.fuzz));
         }
         let scatterd = Ray::new(hit_record.get_p(), reflected);
-        let attenuation =
-            self.texture
-                .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
+        let attenuation = texture_list
+            .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p(), &self.texture);
         let absorabance = [0.0, 0.0, 0.0];
         if vec3_dot(&scatterd.direction(), &hit_record.get_normal()).is_sign_positive() {
             Some(MatRecord {
@@ -116,12 +115,12 @@ impl<T: Texture> Material for Metal<T> {
     }
 }
 
-pub struct Lambertian<T: Texture> {
-    texture: T,
+pub struct Lambertian {
+    texture: TextureHandle,
 }
 
-impl<T: Texture> Lambertian<T> {
-    pub fn new(texture: T) -> Self {
+impl Lambertian {
+    pub fn new(texture: TextureHandle) -> Self {
         Lambertian { texture }
     }
 }
@@ -143,11 +142,10 @@ fn random_in_unit_sphere() -> Vector3<f64> {
     [x, y, z]
 }
 
-impl<T: Texture> Material for Lambertian<T> {
-    fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
-        let attenuation =
-            self.texture
-                .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
+impl Material for Lambertian {
+    fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
+        let attenuation = texture_list
+            .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p(), &self.texture);
         let absorabance = [0.0, 0.0, 0.0];
         Some(MatRecord {
             scatterd: Scatterd::CosinePdf,
@@ -203,7 +201,7 @@ fn schlick(cosine: f64, ref_idx: f64) -> f64 {
 }
 
 impl Material for Dielectric {
-    fn scatter(&self, r_in: &Ray, hit_record: &HitRecord) -> Option<MatRecord> {
+    fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, _texture_list: &TextureList) -> Option<MatRecord> {
         let outward_normal: Vector3<f64>;
         let ni_over_nt: f64;
         let attenuation: Vector3<f64> = [1.0, 1.0, 1.0];
@@ -263,28 +261,29 @@ impl Material for Dielectric {
     }
 }
 
-pub struct DiffuseLight<T: Texture> {
-    texture: T,
+pub struct DiffuseLight {
+    texture: TextureHandle,
 }
 
-impl<T: Texture> DiffuseLight<T> {
-    pub fn new(texture: T) -> Self {
+impl DiffuseLight {
+    pub fn new(texture: TextureHandle) -> Self {
         DiffuseLight { texture }
     }
 }
 
-impl<T: Texture> Material for DiffuseLight<T> {
-    fn scatter(&self, _r: &Ray, _hit_record: &HitRecord) -> Option<MatRecord> {
+impl Material for DiffuseLight {
+    fn scatter(&self, _r: &Ray, _hit_record: &HitRecord, _texture_list: &TextureList) -> Option<MatRecord> {
         None
     }
 
-    fn emitted(&self, r: &Ray, hit_record: &HitRecord) -> Vector3<f64> {
+    fn emitted(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Vector3<f64> {
         if vec3_dot(&hit_record.get_normal(), &r.direction()).is_sign_negative() {
-            return self.texture.get_value(
+            return texture_list.get_value(
                 hit_record.get_u(),
                 hit_record.get_v(),
                 &hit_record.get_p(),
-            );
+                &self.texture
+                );
         } else {
             return [0.0, 0.0, 0.0];
         }

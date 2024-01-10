@@ -34,7 +34,7 @@ use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
 use std::f64;
-use texture::{CheckerTexture, ColorTexture, ImageTexture};
+use texture::{Texture, TextureHandle, TextureList, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
 use triangle::Triangle;
 use vec3::{
@@ -48,6 +48,7 @@ fn color(
     ray: Ray,
     world: &Arc<BvhTree>,
     light_list: &Arc<BvhTree>,
+    texture_list: &TextureList,
     material_list: &Materials,
 ) -> Vector3<f64> {
     let mut cur_emitted: Vector3<f64> = [0.0, 0.0, 0.0];
@@ -59,9 +60,9 @@ fn color(
             Some(rec) => {
                 // TODO avoid trait object at material, texture.. 
                 let material_obj = material_list.get(rec.get_mat_ptr());
-                let last_emitted = material_obj.emitted(&ray, &rec);
+                let last_emitted = material_obj.emitted(&ray, &rec, texture_list);
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
-                if let Some(mat_rec) = material_obj.scatter(&ray, &rec) {
+                if let Some(mat_rec) = material_obj.scatter(&ray, &rec, texture_list) {
                     let distance: f64 = rec.get_t();
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
@@ -141,19 +142,26 @@ fn main() {
     let mut light_list = HitableList::new();
     let mut material_list = Materials::new();
 
-    let red = material_list.add_material(Lambertian::new(ColorTexture::new([0.65, 0.05, 0.05])));
-    let white = material_list.add_material(Lambertian::new(ColorTexture::new([0.73, 0.73, 0.73])));
-    let green = material_list.add_material(Lambertian::new(ColorTexture::new([0.12, 0.45, 0.15])));
+    let mut texture_list = TextureList::new();
+    let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
+    let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
+    let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
+    let light_texture = texture_list.add_color_texture(ColorTexture::new([1.0, 1.0, 1.0]));
+    let magick_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.png").unwrap().into_rgba8()));
+    let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
+    let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
+
+    let red = material_list.add_material(Lambertian::new(red_texture));
+    let white = material_list.add_material(Lambertian::new(white_texture));
+    let green = material_list.add_material(Lambertian::new(green_texture));
     let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
-        material_list.add_material(DiffuseLight::new(ColorTexture::new([1.0, 1.0, 1.0])));
-    let magick = material_list.add_material(Lambertian::new(ImageTexture::new(
-        open("./texture.png").unwrap().into_rgba8(),
-    )));
+        material_list.add_material(DiffuseLight::new(light_texture));
+    let magick = material_list.add_material(Lambertian::new(magick_texture));
     let glass = material_list.add_material(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
     let red_glass = material_list.add_material(Dielectric::new(1.5, [0.0, 0.006, 0.009]));
-    let metal = material_list.add_material(Metal::new(0.0, ColorTexture::new([0.5, 0.7, 0.7])));
-    let fuzzy_metal = material_list.add_material(Metal::new(0.1, ColorTexture::new([0.7, 0.7, 0.7])));
+    let metal = material_list.add_material(Metal::new(0.0, metal_texture));
+    let fuzzy_metal = material_list.add_material(Metal::new(0.1, fuzzy_metal_texture));
 
     /*
     obj_list.push(FlipNormals::new(Rect::new(
@@ -286,6 +294,7 @@ fn main() {
     let cam = Arc::new(cam);
     let obj_bvh = Arc::new(obj_bvh);
     let light_list = Arc::new(light_list);
+    let texture_list = Arc::new(texture_list);
     let material_list = Arc::new(material_list);
     let mut handles = vec![];
 
@@ -304,6 +313,7 @@ fn main() {
         let cam = Arc::clone(&cam);
         let obj_bvh = Arc::clone(&obj_bvh);
         let light_list = Arc::clone(&light_list);
+        let texture_list = Arc::clone(&texture_list);
         let material_list = Arc::clone(&material_list);
         let axa = Arc::clone(&axa);
         let handle = thread::spawn(move || {
@@ -318,6 +328,7 @@ fn main() {
                         r,
                         &obj_bvh,
                         &light_list,
+                        &texture_list,
                         &material_list,
                         );
                     img_line[i] = col;
