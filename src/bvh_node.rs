@@ -174,8 +174,9 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                 right: empty_hitable_handle,
                 next_pos_diff,
             };
+            let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            return bvh_node_list.len() - 1;
+            return pos;
         },
         2 => {
             if bvh_depth == 1 {
@@ -186,8 +187,9 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                     right: handle[1],
                     next_pos_diff,
                 };
+                let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
-                return bvh_node_list.len() - 1;
+                return pos;
             } else {
                 //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
@@ -200,8 +202,9 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                     right: right_handle,
                     next_pos_diff,
                 };
+                let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
-                return bvh_node_list.len() - 1;
+                return pos;
             };
         },
         _ => {
@@ -276,8 +279,9 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                 right: right_handle,
                 next_pos_diff,
             };
+            let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            return bvh_node_list.len() - 1;
+            return pos;
         },
     };
 }

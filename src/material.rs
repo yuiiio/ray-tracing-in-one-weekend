@@ -66,31 +66,35 @@ impl MaterialList {
     }
 
     pub fn add_metal_mat(&mut self, material: Metal) -> MaterialHandle {
+        let pos = self.metal_list.len();
         self.metal_list.push(material);
         MaterialHandle {
             material_type: Material::Metal,
-            position: self.metal_list.len() - 1,
+            position: pos,
         }
     }
     pub fn add_lambertian_mat(&mut self, material: Lambertian) -> MaterialHandle {
+        let pos = self.lambertian_list.len();
         self.lambertian_list.push(material);
         MaterialHandle {
             material_type: Material::Lambertian,
-            position: self.lambertian_list.len() - 1,
+            position: pos,
         }
     }
     pub fn add_dielectric_mat(&mut self, material: Dielectric) -> MaterialHandle {
+        let pos = self.dielectric_list.len();
         self.dielectric_list.push(material);
         MaterialHandle {
             material_type: Material::Dielectric,
-            position: self.dielectric_list.len() - 1,
+            position: pos,
         }
     }
     pub fn add_diffuselight_mat(&mut self, material: DiffuseLight) -> MaterialHandle {
+        let pos = self.diffuselight_list.len();
         self.diffuselight_list.push(material);
         MaterialHandle {
             material_type: Material::DiffuseLight,
-            position: self.diffuselight_list.len() - 1,
+            position: pos,
         }
     }
 

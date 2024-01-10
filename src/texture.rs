@@ -29,18 +29,20 @@ impl TextureList {
     }
 
     pub fn add_color_texture(&mut self, texture: ColorTexture) -> TextureHandle {
+        let pos = self.color_texture_list.len();
         self.color_texture_list.push(texture);
         TextureHandle {
             texture_type: Texture::ColorTexture,
-            position: self.color_texture_list.len() - 1,
+            position: pos,
         }
     }
 
     pub fn add_image_texture(&mut self, texture: ImageTexture) -> TextureHandle {
+        let pos = self.image_texture_list.len();
         self.image_texture_list.push(texture);
         TextureHandle {
             texture_type: Texture::ImageTexture,
-            position: self.image_texture_list.len() - 1,
+            position: pos,
         }
     }
 
