@@ -60,7 +60,7 @@ impl Hitable for Sphere {
                     v,
                     point,
                     nnormal,
-                    self.mat_ptr,
+                    self.mat_ptr.clone(),
                 ));
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
@@ -75,7 +75,7 @@ impl Hitable for Sphere {
                     v,
                     point,
                     nnormal,
-                    self.mat_ptr,
+                    self.mat_ptr.clone(),
                 ));
             }
         }

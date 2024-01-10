@@ -96,7 +96,7 @@ impl Hitable for Triangle {
         let p: Vector3<f64> = ray.point_at_parameter(t);
         let uu = u;
         let vv = v;
-        return Some(HitRecord::new(t, uu, vv, p, normal, self.mat_ptr));
+        return Some(HitRecord::new(t, uu, vv, p, normal, self.mat_ptr.clone()));
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {

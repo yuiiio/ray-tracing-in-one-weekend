@@ -92,7 +92,7 @@ impl Hitable for Rect {
             v,
             p,
             nnormal,
-            self.mat_ptr,
+            self.mat_ptr.clone(),
         ))
     }
 
@@ -195,7 +195,7 @@ impl Boxel {
             p1[1],
             p1[2],
             AxisType::kXY,
-            mat_ptr,
+            mat_ptr.clone(),
         ));
         list.push(FlipNormals::new(Rect::new(
             p0[0],
@@ -204,7 +204,7 @@ impl Boxel {
             p1[1],
             p0[2],
             AxisType::kXY,
-            mat_ptr,
+            mat_ptr.clone(),
         )));
 
         list.push(Rect::new(
@@ -214,7 +214,7 @@ impl Boxel {
             p1[2],
             p1[1],
             AxisType::kXZ,
-            mat_ptr,
+            mat_ptr.clone(),
         ));
         list.push(FlipNormals::new(Rect::new(
             p0[0],
@@ -223,7 +223,7 @@ impl Boxel {
             p1[2],
             p0[1],
             AxisType::kXZ,
-            mat_ptr,
+            mat_ptr.clone(),
         )));
 
         list.push(Rect::new(
@@ -233,7 +233,7 @@ impl Boxel {
             p1[2],
             p1[0],
             AxisType::kYZ,
-            mat_ptr,
+            mat_ptr.clone(),
         ));
         list.push(FlipNormals::new(Rect::new(
             p0[1],
