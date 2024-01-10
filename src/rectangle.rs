@@ -92,7 +92,7 @@ impl Hitable for Rect {
             v,
             p,
             nnormal,
-            MaterialHandle(self.mat_ptr.0),
+            self.mat_ptr,
         ))
     }
 

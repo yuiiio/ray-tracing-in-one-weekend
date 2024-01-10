@@ -6,7 +6,7 @@ use crate::material::MaterialHandle;
 use crate::triangle::Triangle;
 use crate::vec3::Vector3;
 
-pub fn obj_loader(file: &mut File) -> HitableList {
+pub fn obj_loader(file: &mut File, material_handle: MaterialHandle) -> HitableList {
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Failed to read to string obj-file");
@@ -57,7 +57,7 @@ pub fn obj_loader(file: &mut File) -> HitableList {
         let v1 = vertex[i1 - 1];
         let v2 = vertex[i2 - 1];
 
-        let triangle = Triangle::new(v0, v2, v1, MaterialHandle(6)); //0:red, 1:white
+        let triangle = Triangle::new(v0, v2, v1, material_handle); 
         hitablelist.push(triangle);
     }
 

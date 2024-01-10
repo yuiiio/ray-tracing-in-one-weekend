@@ -32,7 +32,7 @@ impl HitRecord {
     }
 
     pub fn get_mat_ptr(&self) -> MaterialHandle {
-        MaterialHandle(self.mat_ptr.0)
+        self.mat_ptr.clone()
     }
 
     pub fn get_t(&self) -> f64 {

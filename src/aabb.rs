@@ -5,6 +5,9 @@ use crate::hitable::{Hitable, HitRecord};
 use crate::material::{MaterialHandle};
 use std::mem::swap;
 
+pub struct AabbHitRecord {
+}
+
 #[derive(Clone)]
 pub struct Aabb {
     b_min: Vector3<f64>,
@@ -23,10 +26,8 @@ impl Aabb {
     pub fn b_max(&self) -> Vector3<f64> {
         self.b_max
     }
-}
 
-impl Hitable for Aabb {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
@@ -44,13 +45,7 @@ impl Hitable for Aabb {
                 return None
             }
         }
-        let t = 0.0;
-        let u = 0.0;
-        let v = 0.0;
-        let p = [0.0, 0.0, 0.0];
-        let normal = [0.0, 0.0, 0.0];
-        let mat_ptr = MaterialHandle(0);
-        return Some(HitRecord::new(t, u, v, p, normal, mat_ptr))
+        return Some(AabbHitRecord{})
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {

@@ -27,7 +27,7 @@ use bvh_node::BvhTree;
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
-use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
+use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatterd};
 use obj_loader::obj_loader;
 use pdf::{mix_cosine_pdf_generate, mix_cosine_pdf_value};
 use ray::Ray;
@@ -49,7 +49,7 @@ fn color(
     world: &Arc<BvhTree>,
     light_list: &Arc<BvhTree>,
     texture_list: &TextureList,
-    material_list: &Materials,
+    material_list: &MaterialList,
 ) -> Vector3<f64> {
     let mut cur_emitted: Vector3<f64> = [0.0, 0.0, 0.0];
     let mut last_throughput: Vector3<f64> = [1.0, 1.0, 1.0];
@@ -58,11 +58,14 @@ fn color(
     for _i in 0..MAX_DEPTH {
         match world.hit(&ray, 0.00001, 10000.0) {
             Some(rec) => {
-                // TODO avoid trait object at material, texture.. 
-                let material_obj = material_list.get(rec.get_mat_ptr());
-                let last_emitted = material_obj.emitted(&ray, &rec, texture_list);
+                // TODO avoid trait object at material,
+                // material obj: scatter,  emitted scattering_pdf,
+                // emitted is must called.
+                // if scatter get Pdf then called scattering_pdf too.
+                let mat_ptr = rec.get_mat_ptr();
+                let last_emitted = material_list.emitted(&ray, &rec, texture_list, &mat_ptr);
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
-                if let Some(mat_rec) = material_obj.scatter(&ray, &rec, texture_list) {
+                if let Some(mat_rec) = material_list.scatter(&ray, &rec, texture_list, &mat_ptr) {
                     let distance: f64 = rec.get_t();
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
@@ -90,7 +93,7 @@ fn color(
                             let pdf_value = mix_cosine_pdf_value(light_list, &rec, &next_ray.direction());
 
                             if pdf_value.is_sign_positive() {
-                                let spdf_value = material_obj.scattering_pdf(&next_ray, &rec);
+                                let spdf_value = material_list.scattering_pdf(&next_ray, &rec, &mat_ptr);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
                                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
@@ -143,7 +146,7 @@ fn main() {
     const NT: usize = 128; // use thread(+1)
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
-    let mut material_list = Materials::new();
+    let mut material_list = MaterialList::new();
 
     let mut texture_list = TextureList::new();
     let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
@@ -154,17 +157,17 @@ fn main() {
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
-    let red = material_list.add_material(Lambertian::new(red_texture));
-    let white = material_list.add_material(Lambertian::new(white_texture));
-    let green = material_list.add_material(Lambertian::new(green_texture));
+    let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
+    let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
+    let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
     let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
-        material_list.add_material(DiffuseLight::new(light_texture));
-    let magick = material_list.add_material(Lambertian::new(magick_texture));
-    let glass = material_list.add_material(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
-    let red_glass = material_list.add_material(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
-    let metal = material_list.add_material(Metal::new(0.0, metal_texture));
-    let fuzzy_metal = material_list.add_material(Metal::new(0.1, fuzzy_metal_texture));
+        material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
+    let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
+    let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
+    let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
+    let metal = material_list.add_metal_mat(Metal::new(0.0, metal_texture));
+    let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
@@ -233,7 +236,7 @@ fn main() {
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
     obj_list.push(glass_sphere.clone());
 
-    let bunny_list = obj_loader(&mut File::open("./dragon.obj").unwrap());
+    let bunny_list = obj_loader(&mut File::open("./dragon.obj").unwrap(), red_glass);
 
     let now1 = SystemTime::now();
     let bunny_bvh = BvhTree::new(bunny_list);

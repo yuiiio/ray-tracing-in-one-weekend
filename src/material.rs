@@ -34,53 +34,102 @@ impl MatRecord {
     }
 }
 
-pub trait Material {
-    fn scatter(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord>;
-    fn emitted(&self, _r: &Ray, _hit_record: &HitRecord, _texture_list: &TextureList) -> Vector3<f64> {
-        [0.0, 0.0, 0.0]
-    }
-    fn scattering_pdf(&self, _r: &Ray, _hit_record: &HitRecord) -> f64 {
-        return 0.0;
-    }
+#[derive(Clone)]
+pub enum Material {
+    Metal,
+    Lambertian,
+    Dielectric,
+    DiffuseLight,
 }
 
-#[derive(Clone, Copy)]
-pub struct MaterialHandle(pub usize);
-
-pub struct Materials {
-    material_list: Vec<Box<dyn Material + Send + Sync>>,
+#[derive(Clone)]
+pub struct MaterialHandle {
+    material_type: Material,
+    position: usize, // each type
 }
 
-impl Materials {
+pub struct MaterialList {
+    metal_list: Vec<Metal>,
+    lambertian_list: Vec<Lambertian>,
+    dielectric_list: Vec<Dielectric>,
+    diffuselight_list: Vec<DiffuseLight>,
+}
+
+impl MaterialList {
     pub fn new() -> Self {
-        Materials{
-            material_list: Vec::new(),
+        MaterialList{
+            metal_list: Vec::new(),
+            lambertian_list: Vec::new(),
+            dielectric_list: Vec::new(),
+            diffuselight_list: Vec::new(),
         }
     }
 
-    pub fn add_material<M: Material + 'static + Send + Sync>(
-        &mut self,
-        material: M,
-    ) -> MaterialHandle {
-        self.material_list.push(Box::new(material));
-        MaterialHandle(self.material_list.len() - 1)
+    pub fn add_metal_mat(&mut self, material: Metal) -> MaterialHandle {
+        self.metal_list.push(material);
+        MaterialHandle {
+            material_type: Material::Metal,
+            position: self.metal_list.len() - 1,
+        }
+    }
+    pub fn add_lambertian_mat(&mut self, material: Lambertian) -> MaterialHandle {
+        self.lambertian_list.push(material);
+        MaterialHandle {
+            material_type: Material::Lambertian,
+            position: self.lambertian_list.len() - 1,
+        }
+    }
+    pub fn add_dielectric_mat(&mut self, material: Dielectric) -> MaterialHandle {
+        self.dielectric_list.push(material);
+        MaterialHandle {
+            material_type: Material::Dielectric,
+            position: self.dielectric_list.len() - 1,
+        }
+    }
+    pub fn add_diffuselight_mat(&mut self, material: DiffuseLight) -> MaterialHandle {
+        self.diffuselight_list.push(material);
+        MaterialHandle {
+            material_type: Material::DiffuseLight,
+            position: self.diffuselight_list.len() - 1,
+        }
     }
 
-    pub fn get(&self, handle: MaterialHandle) -> &dyn Material {
-        self.material_list[handle.0].as_ref()
+    pub fn scatter(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList, mat_handle: &MaterialHandle) -> Option<MatRecord> {
+        let mat_pos = mat_handle.position;
+        match mat_handle.material_type {
+            Material::Metal => self.metal_list[mat_pos].scatter(r, hit_record, texture_list),
+            Material::Lambertian => self.lambertian_list[mat_pos].scatter(r, hit_record, texture_list),
+            Material::Dielectric => self.dielectric_list[mat_pos].scatter(r, hit_record, texture_list),
+            Material::DiffuseLight => self.diffuselight_list[mat_pos].scatter(r, hit_record, texture_list),
+        }
+    }
+
+    pub fn emitted(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList, mat_handle: &MaterialHandle) -> Vector3<f64> {
+        let mat_pos = mat_handle.position;
+        match mat_handle.material_type {
+            Material::Metal => [0.0, 0.0, 0.0], //self.metal_list[mat_pos].emitted(r, hit_record, texture_list),
+            Material::Lambertian => [0.0, 0.0, 0.0], // self.lambertian_list[mat_pos].emitted(r, hit_record, texture_list),
+            Material::Dielectric => [0.0, 0.0, 0.0], // self.dielectric_list[mat_pos].emitted(r, hit_record, texture_list),
+            Material::DiffuseLight => self.diffuselight_list[mat_pos].emitted(r, hit_record, texture_list),
+        }
+    }
+
+    pub fn scattering_pdf(&self, r: &Ray, hit_record: &HitRecord, mat_handle: &MaterialHandle) -> f64 {
+        let mat_pos = mat_handle.position;
+        //should naver call on metal, Dielectric, DiffuseLight doesn't have pdf
+        //scatter dpesn't return Pdf type.
+        match mat_handle.material_type {
+            Material::Metal => 0.0, //self.metal_list[mat_pos].scattering_pdf(r, hit_record),
+            Material::Lambertian => self.lambertian_list[mat_pos].scattering_pdf(r, hit_record),
+            Material::Dielectric => 0.0, //self.dielectric_list[mat_pos].scattering_pdf(r, hit_record),
+            Material::DiffuseLight => 0.0 //self.diffuselight_list[mat_pos].scattering_pdf(r, hit_record),
+        }
     }
 }
 
 pub struct Metal {
     fuzz: f64,
     texture: TextureHandle,
-}
-
-impl Metal {
-    pub fn new(f: f64, texture: TextureHandle) -> Self {
-        let fuzz = if f < 1.0 { f } else { 1.0 };
-        Metal { fuzz, texture }
-    }
 }
 
 fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
@@ -90,7 +139,12 @@ fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     )
 }
 
-impl Material for Metal {
+impl Metal {
+    pub fn new(f: f64, texture: TextureHandle) -> Self {
+        let fuzz = if f < 1.0 { f } else { 1.0 };
+        Metal { fuzz, texture }
+    }
+
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
         let mut reflected = reflect(
             &vec3_unit_vector_f64(&r_in.direction()),
@@ -119,12 +173,6 @@ pub struct Lambertian {
     texture: TextureHandle,
 }
 
-impl Lambertian {
-    pub fn new(texture: TextureHandle) -> Self {
-        Lambertian { texture }
-    }
-}
-
 fn random_in_unit_sphere() -> Vector3<f64> {
     let mut rng = rand::thread_rng();
     let r1: f64 = rng.gen();
@@ -142,7 +190,12 @@ fn random_in_unit_sphere() -> Vector3<f64> {
     [x, y, z]
 }
 
-impl Material for Lambertian {
+
+impl Lambertian {
+    pub fn new(texture: TextureHandle) -> Self {
+        Lambertian { texture }
+    }
+
     fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
         let attenuation = texture_list
             .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p(), &self.texture);
@@ -170,15 +223,6 @@ pub struct Dielectric {
     absorabance: Vector3<f64>,
 }
 
-impl Dielectric {
-    pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Self {
-        Dielectric {
-            ref_idx,
-            absorabance,
-        }
-    }
-}
-
 fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64) -> Option<Vector3<f64>> {
     let uv = vec3_unit_vector_f64(&vec3_mul_b(v, -1.0));
     let dt = vec3_dot(&uv, n);
@@ -200,7 +244,14 @@ fn schlick(cosine: f64, ref_idx: f64) -> f64 {
     r0 + ((1.0 - r0) * (1.0 - cosine).powi(5))
 }
 
-impl Material for Dielectric {
+impl Dielectric {
+    pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Self {
+        Dielectric {
+            ref_idx,
+            absorabance,
+        }
+    }
+
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, _texture_list: &TextureList) -> Option<MatRecord> {
         let outward_normal: Vector3<f64>;
         let ni_over_nt: f64;
@@ -269,9 +320,7 @@ impl DiffuseLight {
     pub fn new(texture: TextureHandle) -> Self {
         DiffuseLight { texture }
     }
-}
 
-impl Material for DiffuseLight {
     fn scatter(&self, _r: &Ray, _hit_record: &HitRecord, _texture_list: &TextureList) -> Option<MatRecord> {
         None
     }
