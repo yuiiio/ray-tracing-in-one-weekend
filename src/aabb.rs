@@ -1,8 +1,6 @@
-use crate::vec3::{Vector3};
-use crate::ray::{Ray};
+use crate::vec3::Vector3;
+use crate::ray::Ray;
 use crate::utils::{min, max};
-use crate::hitable::{Hitable, HitRecord};
-use crate::material::{MaterialHandle};
 use std::mem::swap;
 
 pub struct AabbHitRecord {
@@ -46,10 +44,6 @@ impl Aabb {
             }
         }
         return Some(AabbHitRecord{})
-    }
-
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
-        Some( self )
     }
 }
 
