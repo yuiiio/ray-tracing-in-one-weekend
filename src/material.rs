@@ -47,23 +47,27 @@ pub trait Material {
 #[derive(Clone, Copy)]
 pub struct MaterialHandle(pub usize);
 
-pub struct Materials(Vec<Box<dyn Material + Send + Sync>>);
+pub struct Materials {
+    material_list: Vec<Box<dyn Material + Send + Sync>>,
+}
 
 impl Materials {
     pub fn new() -> Self {
-        Materials(Vec::new())
+        Materials{
+            material_list: Vec::new(),
+        }
     }
 
     pub fn add_material<M: Material + 'static + Send + Sync>(
         &mut self,
         material: M,
     ) -> MaterialHandle {
-        self.0.push(Box::new(material));
-        MaterialHandle(self.0.len() - 1)
+        self.material_list.push(Box::new(material));
+        MaterialHandle(self.material_list.len() - 1)
     }
 
     pub fn get(&self, handle: MaterialHandle) -> &dyn Material {
-        self.0[handle.0].as_ref()
+        self.material_list[handle.0].as_ref()
     }
 }
 

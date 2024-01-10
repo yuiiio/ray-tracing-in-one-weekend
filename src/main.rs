@@ -57,9 +57,11 @@ fn color(
     for _i in 0..MAX_DEPTH {
         match world.hit(&ray, 0.00001, 10000.0) {
             Some(rec) => {
-                let last_emitted = material_list.get(rec.get_mat_ptr()).emitted(&ray, &rec);
+                // TODO avoid trait object at material, texture.. 
+                let material_obj = material_list.get(rec.get_mat_ptr());
+                let last_emitted = material_obj.emitted(&ray, &rec);
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
-                if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(&ray, &rec) {
+                if let Some(mat_rec) = material_obj.scatter(&ray, &rec) {
                     let distance: f64 = rec.get_t();
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
@@ -87,9 +89,7 @@ fn color(
                             let pdf_value = mix_cosine_pdf_value(light_list, &rec, &next_ray.direction());
 
                             if pdf_value.is_sign_positive() {
-                                let spdf_value = material_list
-                                    .get(rec.get_mat_ptr())
-                                    .scattering_pdf(&next_ray, &rec);
+                                let spdf_value = material_obj.scattering_pdf(&next_ray, &rec);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
                                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
@@ -268,7 +268,12 @@ fn main() {
     //light_list.push(bunny);
     //light_list.push(glass_box);
 
+    let now3 = SystemTime::now();
     let light_list = BvhTree::new(light_list);
+    println!(
+        "BVH-3 Build Time elapsed: {}",
+        now3.elapsed().unwrap().as_secs_f64()
+    );
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
