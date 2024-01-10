@@ -2,7 +2,6 @@ use rand::prelude::*;
 use std::f64::consts::PI;
 
 use crate::hitable::HitRecord;
-use crate::pdf::{CosinePdf, Pdf};
 use crate::ray::Ray;
 use crate::texture::Texture;
 use crate::vec3::{
@@ -12,7 +11,7 @@ use std::f64;
 
 pub enum Scatterd {
     Ray(Ray),
-    Pdf(Box<dyn Pdf>),
+    CosinePdf,
 }
 
 pub struct MatRecord {
@@ -146,9 +145,8 @@ impl<T: Texture> Material for Lambertian<T> {
             self.texture
                 .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p());
         let absorabance = [0.0, 0.0, 0.0];
-        let pdf = CosinePdf {};
         Some(MatRecord {
-            scatterd: Scatterd::Pdf(Box::new(pdf)),
+            scatterd: Scatterd::CosinePdf,
             attenuation,
             absorabance,
         })

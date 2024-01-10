@@ -29,7 +29,7 @@ use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, Materials, Metal, Scatterd};
 use obj_loader::obj_loader;
-use pdf::{HitablePdf, MixturePdf, Pdf};
+use pdf::{mix_cosine_pdf_generate, mix_cosine_pdf_value};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -44,10 +44,10 @@ use vec3::{
 
 const MAX_DEPTH: usize = 20;
 
-fn color<T: Hitable, M: Hitable>(
+fn color(
     ray: Ray,
-    world: &Arc<T>,
-    light_list: &Arc<M>,
+    world: &Arc<BvhTree>,
+    light_list: &Arc<BvhTree>,
     material_list: &Materials,
 ) -> Vector3<f64> {
     let mut cur_emitted: Vector3<f64> = [0.0, 0.0, 0.0];
@@ -58,6 +58,7 @@ fn color<T: Hitable, M: Hitable>(
         match world.hit(&ray, 0.00001, 10000.0) {
             Some(rec) => {
                 let last_emitted = material_list.get(rec.get_mat_ptr()).emitted(&ray, &rec);
+                // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
                 if let Some(mat_rec) = material_list.get(rec.get_mat_ptr()).scatter(&ray, &rec) {
                     let distance: f64 = rec.get_t();
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
@@ -71,38 +72,29 @@ fn color<T: Hitable, M: Hitable>(
                         absorabance[2] = f64::exp(-(last_absorabance[2] * distance));
                     }
                     let scatterd = mat_rec.get_scatterd();
+                    let attenuation = mat_rec.get_attenuation();
+                    last_absorabance = mat_rec.get_absorabance();
                     match scatterd {
                         Scatterd::Ray(next_ray) => {
                             cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                             // cur_emitted should calc before last_throughput
-                            last_throughput = vec3_mul(&last_throughput, &vec3_mul(&mat_rec.get_attenuation(), &absorabance));
-                            last_absorabance = mat_rec.get_absorabance();
+                            last_throughput = vec3_mul(&last_throughput, &vec3_mul(&attenuation, &absorabance));
                             ray = next_ray.clone();
                             continue;
                         }
-                        Scatterd::Pdf(pdf) => {
-                            let hitable_pdf = HitablePdf {
-                                hitable: light_list,
-                            };
-
-                            let mix_pdf = MixturePdf {
-                                pdf0: hitable_pdf,
-                                pdf1: &pdf,
-                            }; // mix pdf light and hitable
-
-                            let next_ray = Ray::new(rec.get_p(), mix_pdf.generate(&rec));
-                            let pdf_value = mix_pdf.value(&rec, &next_ray.direction());
+                        Scatterd::CosinePdf => {
+                            let next_ray = Ray::new(rec.get_p(), mix_cosine_pdf_generate(light_list, &rec));
+                            let pdf_value = mix_cosine_pdf_value(light_list, &rec, &next_ray.direction());
 
                             if pdf_value.is_sign_positive() {
                                 let spdf_value = material_list
                                     .get(rec.get_mat_ptr())
                                     .scattering_pdf(&next_ray, &rec);
-                                let albedo = vec3_mul_b(&mat_rec.get_attenuation(), spdf_value);
+                                let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
                                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                                 // cur_emitted should calc before last_throughput
                                 last_throughput = vec3_mul(&last_throughput, &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value));
-                                last_absorabance = mat_rec.get_absorabance();
                                 ray = next_ray;
                                 continue;
                             } else {
