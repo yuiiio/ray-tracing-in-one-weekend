@@ -3,9 +3,9 @@ use std::f64::consts::PI;
 
 use crate::hitable::HitRecord;
 use crate::ray::Ray;
-use crate::texture::{Texture, TextureHandle, TextureList};
+use crate::texture::{TextureHandle, TextureList};
 use crate::vec3::{
-    vec3_add, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_unit_vector_f64, Vector3,
+    vec3_add, vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3,
 };
 use std::f64;
 
@@ -36,7 +36,7 @@ impl MatRecord {
 
 pub trait Material {
     fn scatter(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord>;
-    fn emitted(&self, _r: &Ray, _hit_record: &HitRecord, texture_list: &TextureList) -> Vector3<f64> {
+    fn emitted(&self, _r: &Ray, _hit_record: &HitRecord, _texture_list: &TextureList) -> Vector3<f64> {
         [0.0, 0.0, 0.0]
     }
     fn scattering_pdf(&self, _r: &Ray, _hit_record: &HitRecord) -> f64 {
