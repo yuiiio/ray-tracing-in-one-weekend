@@ -138,7 +138,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 800;
     const OUTPUT_Y: usize = 800;
-    const NS: usize = 4;// x^2 / per pixel sample size;
+    const NS: usize = 8;// x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -169,6 +169,7 @@ fn main() {
     let metal = material_list.add_metal_mat(Metal::new(0.0, metal_texture));
     let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
+    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -180,7 +181,6 @@ fn main() {
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kYZ, red));
 
-    /*
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -201,7 +201,6 @@ fn main() {
         AxisType::kXZ,
         white,
     )));
-    */
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -211,6 +210,7 @@ fn main() {
         AxisType::kXY,
         magick,
     )));
+    */
 
     let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kXZ, fuzzy_metal);
     obj_list.push(floor.clone());
