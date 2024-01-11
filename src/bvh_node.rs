@@ -367,52 +367,42 @@ impl Hitable for BvhTree {
                                 match right_obj.hit(r, t_min, t_max) { // actual hit check
                                     Some(right_rec) => {
                                         let left_obj = &self.hitable_list[current_bvh_node.left];
-                                        match left_obj.bounding_box() {
-                                            Some(left_bounding_box) => {
-                                                match left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
-                                                    Some(_left_rec) => {
-                                                        match left_obj.hit(r, t_min, t_max) { // acutual hit check
-                                                            Some(left_rec) => {
-                                                                let left_t = left_rec.get_t();
-                                                                let right_t = right_rec.get_t();
-                                                                if left_t < right_t {
-                                                                    if left_t < min_hit_t {
-                                                                        return_rec = Some(left_rec);
-                                                                        min_hit_t = left_t;
-                                                                    };
-                                                                } else {
-                                                                    if right_t < min_hit_t {
-                                                                        return_rec = Some(right_rec);
-                                                                        min_hit_t = right_t;
-                                                                    };
-                                                                };
-                                                            },
-                                                            None => {
-                                                                let right_t = right_rec.get_t();
-                                                                if right_t < min_hit_t {
-                                                                    return_rec = Some(right_rec);
-                                                                    min_hit_t = right_t;
-                                                                };
-                                                            },
+                                        if let Some(left_bounding_box) = left_obj.bounding_box() {
+                                            if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
+                                                if let Some(left_rec) = left_obj.hit(r, t_min, t_max) { // acutual hit check
+                                                    let left_t = left_rec.get_t();
+                                                    let right_t = right_rec.get_t();
+                                                    if left_t < right_t {
+                                                        if left_t < min_hit_t {
+                                                            return_rec = Some(left_rec);
+                                                            min_hit_t = left_t;
                                                         };
-                                                    },
-                                                    None => {
-                                                        let right_t = right_rec.get_t();
+                                                    } else {
                                                         if right_t < min_hit_t {
                                                             return_rec = Some(right_rec);
                                                             min_hit_t = right_t;
                                                         };
-                                                    },
+                                                    };
+                                                    current_pos = current_pos - 1;
+                                                    if current_pos == 0 {
+                                                        break; // no more hit node, ealy return;
+                                                    } else {
+                                                        continue;
+                                                    }
                                                 };
-                                            },
-                                            None => {
-                                                let right_t = right_rec.get_t();
-                                                if right_t < min_hit_t {
-                                                    return_rec = Some(right_rec);
-                                                    min_hit_t = right_t;
-                                                };
-                                            },
+                                            };
                                         };
+                                        let right_t = right_rec.get_t();
+                                        if right_t < min_hit_t {
+                                            return_rec = Some(right_rec);
+                                            min_hit_t = right_t;
+                                        };
+                                        current_pos = current_pos - 1;
+                                        if current_pos == 0 {
+                                            break; // no more hit node, ealy return;
+                                        } else {
+                                            continue;
+                                        }
                                     },
                                     None => {
                                         let left_obj = &self.hitable_list[current_bvh_node.left];
