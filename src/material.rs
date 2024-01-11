@@ -275,32 +275,33 @@ impl Dielectric {
             ni_over_nt = self.ref_idx / 1.0;
             cosine = self.ref_idx * vec3_dot(&r_in.direction(), &hit_normal);
         }
+
+        let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
         let r_in_direction = r_in.direction();
-        let refracted = match refract(&r_in_direction, &outward_normal, ni_over_nt) {
+        scatterd = match refract(&r_in_direction, &outward_normal, ni_over_nt) {
             Some(refracted) => {
-                reflect_prob = schlick(cosine, self.ref_idx);
-                Some(refracted)
+                reflect_prob = schlick(cosine, self.ref_idx); // for real glass maty
+                let mut rng = rand::thread_rng();
+                let rand: f64 = rng.gen();
+                if rand < reflect_prob {
+                    Ray::new(
+                        hit_record.get_p(),
+                        reflect(&r_in_direction, &outward_normal),
+                        )
+                } else {
+                    refracted_root = true;
+                    Ray::new(hit_record.get_p(), refracted)
+                }
             }
             None => {
-                reflect_prob = 1.0;
                 inside_to_inside = true;
-                None
+                Ray::new(
+                    hit_record.get_p(),
+                    reflect(&r_in_direction, &outward_normal),
+                    )
             }
         };
-
-        let mut rng = rand::thread_rng();
-        let rand: f64 = rng.gen();
-        let mut refracted_root: bool = false;
-        if rand < reflect_prob {
-            scatterd = Ray::new(
-                hit_record.get_p(),
-                reflect(&r_in_direction, &outward_normal),
-            );
-        } else {
-            refracted_root = true;
-            scatterd = Ray::new(hit_record.get_p(), refracted.unwrap());
-        }
 
         let mut absorabance = [0.0, 0.0, 0.0];
 
