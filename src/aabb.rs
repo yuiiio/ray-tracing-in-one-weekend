@@ -25,7 +25,7 @@ impl Aabb {
         self.b_max
     }
 
-    pub fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
+    pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
@@ -64,19 +64,19 @@ mod test {
     fn aabb_hit_test() {
         let aabb_box = Aabb::new([1.0, 1.0, 1.0], [2.0, 2.0, 2.0]);
         let r = Ray::new([0.0, 0.0, 0.0], [1.5, 1.5, 1.5]);
-        let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
          };
         assert_eq!(true, result);
         let r = Ray::new([0.0, 0.0, 0.0], [1.5, 0.0, 1.5]);
-        let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
          };
         assert_eq!(false, result);
         let r = Ray::new([3.0, 3.0, 3.0], [-1.0, -1.0, -1.0]);
-        let result = match aabb_box.hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
          };

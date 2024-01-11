@@ -159,7 +159,7 @@ fn main() {
     let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
     let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
-    let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
+    let _light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
         material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
     let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));

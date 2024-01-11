@@ -362,14 +362,14 @@ impl Hitable for BvhTree {
                 let right_obj = &self.hitable_list[current_bvh_node.right];
                 match right_obj.bounding_box() {
                     Some(right_bounding_box) => {
-                        match right_bounding_box.hit(r, t_min, t_max) { // check bounding_box
+                        match right_bounding_box.aabb_hit(r, t_min, t_max) { // check bounding_box
                             Some(_right_rec) => {
                                 match right_obj.hit(r, t_min, t_max) { // actual hit check
                                     Some(right_rec) => {
                                         let left_obj = &self.hitable_list[current_bvh_node.left];
                                         match left_obj.bounding_box() {
                                             Some(left_bounding_box) => {
-                                                match left_bounding_box.hit(r, t_min, t_max) { // bounding_box
+                                                match left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
                                                     Some(_left_rec) => {
                                                         match left_obj.hit(r, t_min, t_max) { // acutual hit check
                                                             Some(left_rec) => {
@@ -418,7 +418,7 @@ impl Hitable for BvhTree {
                                         let left_obj = &self.hitable_list[current_bvh_node.left];
                                         match left_obj.bounding_box() {
                                             Some(left_bounding_box) => {
-                                                match left_bounding_box.hit(r, t_min, t_max) { // bounding_box
+                                                match left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
                                                     Some(_left_rec) => {
                                                         match left_obj.hit(r, t_min, t_max) { // acutual hit check
                                                             Some(left_rec) => {
@@ -446,7 +446,7 @@ impl Hitable for BvhTree {
                                 let left_obj = &self.hitable_list[current_bvh_node.left];
                                 match left_obj.bounding_box() {
                                     Some(left_bounding_box) => {
-                                        match left_bounding_box.hit(r, t_min, t_max) { // bounding_box
+                                        match left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
                                             Some(_left_rec) => {
                                                 match left_obj.hit(r, t_min, t_max) { // acutual hit check
                                                     Some(left_rec) => {
@@ -474,7 +474,7 @@ impl Hitable for BvhTree {
                         let left_obj = &self.hitable_list[current_bvh_node.left];
                         match left_obj.bounding_box() {
                             Some(left_bounding_box) => {
-                                match left_bounding_box.hit(r, t_min, t_max) { // bounding_box
+                                match left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
                                     Some(_left_rec) => {
                                         match left_obj.hit(r, t_min, t_max) { // acutual hit check
                                             Some(left_rec) => {
@@ -498,7 +498,7 @@ impl Hitable for BvhTree {
                     },
                 };
             } else { // this node has other nodes
-                match current_bvh_node.bvh_node_box.hit(r, t_min, t_max) {
+                match current_bvh_node.bvh_node_box.aabb_hit(r, t_min, t_max) {
                     Some(_hit_rec) => {},// if hit, next_pos_diff => 1;
                     None => {
                         next_pos_diff = bvh_pos_diff; // next_pos_diff: set skip number using current depth
