@@ -14,6 +14,8 @@ use crate::vec3::{
 pub struct Sphere {
     center: Vector3<f64>,
     radius: f64,
+    nor_radius: f64, // for fn hit(), pre compute
+    radius_sq: f64, // radius^2
     mat_ptr: MaterialHandle,
     aabb_box: Aabb,
 }
@@ -24,9 +26,13 @@ impl Sphere {
             vec3_sub_b(&center, radius),
             vec3_add_b(&center, radius),
             );
+        let nor_radius = 1.0 / radius;
+        let radius_sq = radius * radius;
         Sphere {
             center,
             radius,
+            nor_radius,
+            radius_sq,
             mat_ptr,
             aabb_box,
         }
@@ -45,14 +51,13 @@ impl Hitable for Sphere {
         let oc = vec3_sub(r.origin(), &self.center);
         let a = vec3_dot(r.direction(), r.direction());
         let b = 2.0 * vec3_dot(r.direction(), &oc);
-        let c = vec3_dot(&oc, &oc) - self.radius * self.radius;
+        let c = vec3_dot(&oc, &oc) - self.radius_sq;
         let descriminant = b * b - 4.0 * a * c;
         if descriminant >= 0.0 {
             let temp = (-b - descriminant.sqrt()) / (2.0 * a);
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
-                let c = 1.0 / self.radius;
-                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), c);
+                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
                 let (u, v) = get_sphere_uv(nnormal);
                 return Some(HitRecord::new(
                     temp,
@@ -66,8 +71,7 @@ impl Hitable for Sphere {
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
-                let c = 1.0 / self.radius;
-                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), c);
+                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
                 let (u, v) = get_sphere_uv(nnormal);
                 return Some(HitRecord::new(
                     temp,
@@ -90,7 +94,7 @@ impl Hitable for Sphere {
         match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(_rec) => {
                 let distabce_squared: f64 = vec3_squared_length(&vec3_sub(&self.center, o));
-                let cos_theta_max: f64 = (1.0 - (self.radius.powi(2) / distabce_squared)).sqrt();
+                let cos_theta_max: f64 = (1.0 - (self.radius_sq / distabce_squared)).sqrt();
                 return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
             }
             None => return 0.0,
