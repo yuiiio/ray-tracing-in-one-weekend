@@ -18,8 +18,12 @@ pub enum AxisType {
 pub struct Rect {
     x0: f64,
     x1: f64,
+    width: f64,
+    nor_width: f64,
     y0: f64,
     y1: f64,
+    height: f64,
+    nor_height: f64,
     k: f64,
     axis: AxisType,
     mat_ptr: MaterialHandle,
@@ -52,11 +56,19 @@ impl Rect {
                 [k + 0.0001, x1, y1],
                 ),
         };
+        let width = x1 - x0;
+        let height = y1 - y0;
+        let nor_width = 1.0 / (x1 - x0);
+        let nor_height = 1.0 / (y1 - y0);
         Rect {
             x0,
             x1,
+            width,
+            nor_width,
             y0,
             y1,
+            height,
+            nor_height,
             k,
             axis,
             mat_ptr,
@@ -83,8 +95,8 @@ impl Hitable for Rect {
         if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
             return None;
         }
-        let u = (x - self.x0) / (self.x1 - self.x0);
-        let v = (y - self.y0) / (self.y1 - self.y0);
+        let u = (x - self.x0) * self.nor_width;
+        let v = (y - self.y0) * self.nor_height;
         let p = r.point_at_parameter(t);
         Some(HitRecord::new(
             t,
@@ -117,19 +129,19 @@ impl Hitable for Rect {
         let rng_y: f64 = rng.gen();
         let random_point = match self.axis {
             AxisType::KXY => [
-                self.x0 + rng_x * (self.x1 - self.x0),
-                self.y0 + rng_y * (self.y1 - self.y0),
+                self.x0 + rng_x * self.width,
+                self.y0 + rng_y * self.height,
                 self.k,
             ],
             AxisType::KXZ => [
-                self.x0 + rng_x * (self.x1 - self.x0),
+                self.x0 + rng_x * self.width,
                 self.k,
-                self.y0 + rng_y * (self.y1 - self.y0),
+                self.y0 + rng_y * self.height,
             ],
             AxisType::KYZ => [
                 self.k,
-                self.x0 + rng_x * (self.x1 - self.x0),
-                self.y0 + rng_y * (self.y1 - self.y0),
+                self.x0 + rng_x * self.width,
+                self.y0 + rng_y * self.height,
             ],
         };
         vec3_sub(&random_point, o)
