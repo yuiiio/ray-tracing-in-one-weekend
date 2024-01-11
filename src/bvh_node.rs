@@ -11,6 +11,8 @@ pub struct BvhTree {
     hitable_list: HitableList,
     bvh_node_list: Vec<BvhNode>,
     aabb_box: Aabb,
+    last_node_num: usize,
+    hitable_list_num: usize,
 }
 
 #[derive(Clone)]
@@ -327,6 +329,7 @@ impl BvhTree {
 
         hitable_list.push(EmptyHitable::new()); // sould add after build_bvh// because break sort.
 
+        let hitable_list_num = hitable_list.len() - 1;
         /*
         let mut k = 1;
         for now_depth in 0..bvh_tree_depth {
@@ -340,14 +343,15 @@ impl BvhTree {
             hitable_list,
             bvh_node_list,
             aabb_box,
+            last_node_num,
+            hitable_list_num,
         }
     }
 }
 
 impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let last_node_num: usize = self.bvh_node_list.len() - 1;
-        let mut current_pos: usize = last_node_num;
+        let mut current_pos: usize = self.last_node_num;
         let mut min_hit_t: f64 = f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
         loop {
@@ -517,7 +521,7 @@ impl Hitable for BvhTree {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        let hitable_list_len = self.hitable_list.len() - 1; // last is empty_hitable, so needs avoid
+        let hitable_list_len = self.hitable_list_num; // last is empty_hitable, so needs avoid
         let mut pdf_sum: f64 = 0.0;
         for i in 0..hitable_list_len {
             pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(o, v);
@@ -526,7 +530,7 @@ impl Hitable for BvhTree {
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        let hitable_list_len = self.hitable_list.len() - 1; // last is empty_hitable, so needs avoid
+        let hitable_list_len = self.hitable_list_num; // last is empty_hitable, so needs avoid
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
         let rand_handle = (rand * hitable_list_len as f64) as usize;
