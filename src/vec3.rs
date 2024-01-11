@@ -37,6 +37,7 @@ where T: Copy + Mul<T, Output = T>
 }
 
 
+#[allow(dead_code)]
 #[inline(always)]
 pub fn vec3_div<T>(a: &Vector3<T>, b: &Vector3<T>) -> Vector3<T>
 where T: Copy + Div<T, Output = T>

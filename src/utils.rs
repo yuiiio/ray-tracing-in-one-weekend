@@ -1,3 +1,4 @@
+#[allow(dead_code)]
 pub fn clamp(num: f64, min: f64, max: f64) -> f64 {
     if num < min {
         return min;
@@ -24,6 +25,7 @@ pub fn min(a: f64, b: f64) -> f64 {
     }
 }
 
+#[allow(dead_code)]
 fn merge<T: Clone>(
     vec: &mut Vec<T>,
     stock_vec: &mut Vec<T>,
@@ -77,6 +79,7 @@ fn merge<T: Clone>(
     }
 }
 
+#[allow(dead_code)]
 pub fn merge_sort<T: Clone + std::fmt::Debug>(
     vec: &mut Vec<T>,
     stock_vec: &mut Vec<T>,
@@ -102,6 +105,7 @@ pub fn merge_sort<T: Clone + std::fmt::Debug>(
 }
 
 mod test {
+    #![allow(unused_imports)]
     use super::*;
 
     #[test]

@@ -31,14 +31,13 @@ use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatte
 use obj_loader::obj_loader;
 use pdf::{mix_cosine_pdf_generate, mix_cosine_pdf_value};
 use ray::Ray;
-use rectangle::{AxisType, Boxel, FlipNormals, Rect};
+use rectangle::{AxisType, Boxel, Rect};
 use sphere::Sphere;
 use std::f64;
-use texture::{Texture, TextureHandle, TextureList, ColorTexture, ImageTexture};
+use texture::{TextureList, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
-use triangle::Triangle;
 use vec3::{
-    vec3_add, vec3_div, vec3_dot, vec3_mul, vec3_mul_b, vec3_squared_length, vec3_sub,
+    vec3_add, vec3_mul, vec3_mul_b,
     vec3_unit_vector_f64, Vector3,
 };
 
@@ -56,9 +55,9 @@ fn color(
     let mut last_absorabance: Vector3<f64> = [0.0, 0.0, 0.0];
     let mut ray: Ray = ray;
     for _i in 0..MAX_DEPTH {
+        // TODO stop using trait-obj for hitable
         match world.hit(&ray, 0.00001, 10000.0) {
             Some(rec) => {
-                // TODO avoid trait object at material,
                 // material obj: scatter,  emitted scattering_pdf,
                 // emitted is must called.
                 // if scatter get Pdf then called scattering_pdf too.
@@ -157,13 +156,13 @@ fn main() {
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
-    let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
+    let _red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
-    let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
-    let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
+    let _green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
+    let _light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
         material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
-    let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
+    let _magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
     let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
     let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_metal_mat(Metal::new(0.0, metal_texture));
@@ -176,10 +175,10 @@ fn main() {
         0.0,
         555.0,
         555.0,
-        AxisType::kYZ,
+        AxisType::KYZ,
         green,
     )));
-    obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kYZ, red));
+    obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KYZ, red));
 
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
@@ -187,7 +186,7 @@ fn main() {
         227.0,
         332.0,
         554.0,
-        AxisType::kXZ,
+        AxisType::KXZ,
         light,
     ));
     obj_list.push(light_rect.clone());
@@ -198,7 +197,7 @@ fn main() {
         0.0,
         555.0,
         555.0,
-        AxisType::kXZ,
+        AxisType::KXZ,
         white,
     )));
     obj_list.push(FlipNormals::new(Rect::new(
@@ -207,12 +206,12 @@ fn main() {
         0.0,
         555.0,
         555.0,
-        AxisType::kXY,
+        AxisType::KXY,
         magick,
     )));
     */
 
-    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::kXZ, fuzzy_metal);
+    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KXZ, fuzzy_metal);
     obj_list.push(floor.clone());
 
     obj_list.push(Translate::new(

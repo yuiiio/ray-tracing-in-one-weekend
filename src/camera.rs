@@ -1,5 +1,5 @@
 use crate::ray::Ray;
-use crate::vec3::{cross, vec3_add, vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
+use crate::vec3::{cross, vec3_add, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
 use rand::prelude::*;
 use std::f64;
 
@@ -58,6 +58,7 @@ impl Camera {
     }
 }
 
+#[allow(dead_code)]
 fn random_in_unit_disk() -> Vector3<f64> {
     let mut rng = rand::thread_rng();
     let rand_a: f64 = rng.gen();
@@ -72,7 +73,9 @@ fn random_in_unit_disk() -> Vector3<f64> {
 }
 
 mod test {
+    #![allow(unused_imports)]
     use super::*;
+    use crate::vec3::vec3_dot;
 
     #[test]
     fn random_in_disk() {

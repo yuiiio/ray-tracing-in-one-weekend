@@ -9,9 +9,9 @@ use crate::vec3::{vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, ve
 
 #[derive(Clone)]
 pub enum AxisType {
-    kXY,
-    kXZ,
-    kYZ,
+    KXY,
+    KXZ,
+    KYZ,
 }
 
 #[derive(Clone)]
@@ -39,15 +39,15 @@ impl Rect {
     ) -> Self {
         let area: f64 = (x1 - x0) * (y1 - y0);
         let aabb_box = match axis {
-            AxisType::kXY => Aabb::new(
+            AxisType::KXY => Aabb::new(
                 [x0, y0, k - 0.0001],
                 [x1, y1, k + 0.0001],
                 ),
-            AxisType::kXZ => Aabb::new(
+            AxisType::KXZ => Aabb::new(
                 [x0, k - 0.0001, y0],
                 [x1, k + 0.0001, y1],
                 ),
-            AxisType::kYZ => Aabb::new(
+            AxisType::KYZ => Aabb::new(
                 [k - 0.0001, x0, y0],
                 [k + 0.0001, x1, y1],
                 ),
@@ -69,9 +69,9 @@ impl Rect {
 impl Hitable for Rect {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (xi, yi, zi, nnormal): (usize, usize, usize, Vector3<f64>) = match self.axis {
-            AxisType::kXY => (0, 1, 2, [0.0, 0.0, 1.0]),
-            AxisType::kXZ => (0, 2, 1, [0.0, 1.0, 0.0]),
-            AxisType::kYZ => (1, 2, 0, [1.0, 0.0, 0.0]),
+            AxisType::KXY => (0, 1, 2, [0.0, 0.0, 1.0]),
+            AxisType::KXZ => (0, 2, 1, [0.0, 1.0, 0.0]),
+            AxisType::KYZ => (1, 2, 0, [1.0, 0.0, 0.0]),
         };
 
         let t = (self.k - r.origin()[zi]) / r.direction()[zi];
@@ -116,17 +116,17 @@ impl Hitable for Rect {
         let rng_x: f64 = rng.gen();
         let rng_y: f64 = rng.gen();
         let random_point = match self.axis {
-            AxisType::kXY => [
+            AxisType::KXY => [
                 self.x0 + rng_x * (self.x1 - self.x0),
                 self.y0 + rng_y * (self.y1 - self.y0),
                 self.k,
             ],
-            AxisType::kXZ => [
+            AxisType::KXZ => [
                 self.x0 + rng_x * (self.x1 - self.x0),
                 self.k,
                 self.y0 + rng_y * (self.y1 - self.y0),
             ],
-            AxisType::kYZ => [
+            AxisType::KYZ => [
                 self.k,
                 self.x0 + rng_x * (self.x1 - self.x0),
                 self.y0 + rng_y * (self.y1 - self.y0),
@@ -177,8 +177,6 @@ impl Hitable for FlipNormals {
 
 #[derive(Clone)]
 pub struct Boxel {
-    pmin: Vector3<f64>,
-    pmax: Vector3<f64>,
     list: HitableList,
     aabb_box: Aabb,
 }
@@ -194,7 +192,7 @@ impl Boxel {
             p0[1],
             p1[1],
             p1[2],
-            AxisType::kXY,
+            AxisType::KXY,
             mat_ptr.clone(),
         ));
         list.push(FlipNormals::new(Rect::new(
@@ -203,7 +201,7 @@ impl Boxel {
             p0[1],
             p1[1],
             p0[2],
-            AxisType::kXY,
+            AxisType::KXY,
             mat_ptr.clone(),
         )));
 
@@ -213,7 +211,7 @@ impl Boxel {
             p0[2],
             p1[2],
             p1[1],
-            AxisType::kXZ,
+            AxisType::KXZ,
             mat_ptr.clone(),
         ));
         list.push(FlipNormals::new(Rect::new(
@@ -222,7 +220,7 @@ impl Boxel {
             p0[2],
             p1[2],
             p0[1],
-            AxisType::kXZ,
+            AxisType::KXZ,
             mat_ptr.clone(),
         )));
 
@@ -232,7 +230,7 @@ impl Boxel {
             p0[2],
             p1[2],
             p1[0],
-            AxisType::kYZ,
+            AxisType::KYZ,
             mat_ptr.clone(),
         ));
         list.push(FlipNormals::new(Rect::new(
@@ -241,11 +239,11 @@ impl Boxel {
             p0[2],
             p1[2],
             p0[0],
-            AxisType::kYZ,
+            AxisType::KYZ,
             mat_ptr,
         )));
         let aabb_box = Aabb::new(pmin, pmax);
-        Boxel { pmin, pmax, list, aabb_box}
+        Boxel { list, aabb_box}
     }
 }
 
