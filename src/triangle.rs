@@ -18,7 +18,8 @@ pub struct Triangle {
     mat_ptr: MaterialHandle,
     e1: Vector3<f64>,
     e2: Vector3<f64>,
-    n: Vector3<f64>,
+    n: Vector3<f64>, // cross(e2, e1) so size is not normal
+    n_norm: Vector3<f64>,
     area: f64,
     aabb_box: Aabb,
 }
@@ -47,6 +48,7 @@ impl Triangle {
         ];
         let aabb_box = Aabb::new(min, max);
 
+        let n_norm = vec3_unit_vector_f64(&n);
         Triangle {
             v0,
             v1,
@@ -55,6 +57,7 @@ impl Triangle {
             e1,
             e2,
             n,
+            n_norm,
             area,
             aabb_box,
         }
@@ -92,11 +95,10 @@ impl Hitable for Triangle {
             return None;
         }
 
-        let normal = vec3_unit_vector_f64(&self.n);
         let p: Vector3<f64> = ray.point_at_parameter(t);
         let uu = u;
         let vv = v;
-        return Some(HitRecord::new(t, uu, vv, p, normal, self.mat_ptr.clone()));
+        return Some(HitRecord::new(t, uu, vv, p, self.n_norm, self.mat_ptr.clone()));
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
