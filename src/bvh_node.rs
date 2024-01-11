@@ -431,11 +431,15 @@ impl Hitable for BvhTree {
                 match current_bvh_node.bvh_node_box.aabb_hit(r, t_min, t_max) {
                     Some(_hit_rec) => { // if hit, next_pos_diff => 1;
                         current_pos = current_pos - 1;
+                        // perfect tree so, not need check this case.
+                        /*
                         if current_pos == 0 {
                             break; // no more hit node, ealy return;
                         } else {
                             continue;
                         }
+                        */
+                        continue;
                     },
                     None => {
                         // next_pos_diff: set skip number using current depth
