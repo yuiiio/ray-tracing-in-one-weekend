@@ -31,7 +31,7 @@ use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatte
 use obj_loader::obj_loader;
 use pdf::{mix_cosine_pdf_generate, mix_cosine_pdf_value};
 use ray::Ray;
-use rectangle::{AxisType, Boxel, Rect};
+use rectangle::{AxisType, Boxel, Rect, FlipNormals};
 use sphere::Sphere;
 use std::f64;
 use texture::{TextureList, ColorTexture, ImageTexture};
@@ -137,7 +137,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 800;
     const OUTPUT_Y: usize = 800;
-    const NS: usize = 8;// x^2 / per pixel sample size;
+    const NS: usize = 4;// x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -156,19 +156,18 @@ fn main() {
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
-    let _red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
+    let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
-    let _green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
-    let _light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
+    let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
+    let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
         material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
-    let _magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
+    let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
     let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
     let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_metal_mat(Metal::new(0.0, metal_texture));
     let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
-    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -180,6 +179,7 @@ fn main() {
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KYZ, red));
 
+    /*
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -200,6 +200,7 @@ fn main() {
         AxisType::KXZ,
         white,
     )));
+    */
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -209,7 +210,6 @@ fn main() {
         AxisType::KXY,
         magick,
     )));
-    */
 
     let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KXZ, fuzzy_metal);
     obj_list.push(floor.clone());
