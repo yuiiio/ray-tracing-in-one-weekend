@@ -224,6 +224,7 @@ impl Lambertian {
 
 pub struct Dielectric {
     ref_idx: f64,
+    nor_ref_idx: f64,
     absorabance: Vector3<f64>,
 }
 
@@ -252,6 +253,7 @@ impl Dielectric {
     pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Self {
         Dielectric {
             ref_idx,
+            nor_ref_idx: 1.0 / ref_idx,
             absorabance,
         }
     }
@@ -268,11 +270,11 @@ impl Dielectric {
         if vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal).is_sign_positive() {
             outside_to_inside = true;
             outward_normal = hit_record.get_normal();
-            ni_over_nt = 1.0 / self.ref_idx;
+            ni_over_nt = self.nor_ref_idx;
             cosine = 1.0 * vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal);
         } else {
             outward_normal = vec3_mul_b(&hit_normal, -1.0);
-            ni_over_nt = self.ref_idx / 1.0;
+            ni_over_nt = self.ref_idx;// / 1.0;
             cosine = self.ref_idx * vec3_dot(&r_in.direction(), &hit_normal);
         }
 
