@@ -13,6 +13,7 @@ pub struct BvhTree {
     aabb_box: Aabb,
     last_node_num: usize,
     hitable_list_num: usize,
+    nor_hitable_list_num: f64,
 }
 
 #[derive(Clone)]
@@ -330,6 +331,7 @@ impl BvhTree {
         hitable_list.push(EmptyHitable::new()); // sould add after build_bvh// because break sort.
 
         let hitable_list_num = hitable_list.len() - 1;
+        let nor_hitable_list_num = 1.0 / (hitable_list_num as f64);
         /*
         let mut k = 1;
         for now_depth in 0..bvh_tree_depth {
@@ -345,6 +347,7 @@ impl BvhTree {
             aabb_box,
             last_node_num,
             hitable_list_num,
+            nor_hitable_list_num,
         }
     }
 }
@@ -468,7 +471,7 @@ impl Hitable for BvhTree {
         for i in 0..hitable_list_len {
             pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(o, v);
         }
-        return pdf_sum / (hitable_list_len as f64);
+        return pdf_sum * self.nor_hitable_list_num;
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {

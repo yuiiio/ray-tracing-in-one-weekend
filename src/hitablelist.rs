@@ -9,6 +9,7 @@ use crate::vec3::Vector3;
 pub struct HitableList { 
     hitable_list: Vec<Box<dyn Hitable + Send + Sync>>,
     aabb_box: Option<Aabb>,
+    nor_hitable_list_len: f64,
 }
 
 impl HitableList {
@@ -16,6 +17,7 @@ impl HitableList {
         HitableList{
             hitable_list: Vec::new(),
             aabb_box: None,
+            nor_hitable_list_len: 1.0,
         }
     }
 
@@ -36,6 +38,7 @@ impl HitableList {
         };
         self.hitable_list.push(Box::new(hitable));
         self.aabb_box = aabb_box;
+        self.nor_hitable_list_len = 1.0 / (self.hitable_list.len() as f64);
     }
 }
 
@@ -71,12 +74,11 @@ impl Hitable for HitableList {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        let weight: f64 = 1.0 / self.hitable_list.len() as f64;
         let mut sum: f64 = 0.0;
         for i in self.iter() {
-            sum += i.pdf_value(o, v) * weight;
+            sum += i.pdf_value(o, v);
         }
-        sum
+        sum * self.nor_hitable_list_len
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
