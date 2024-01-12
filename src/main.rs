@@ -61,11 +61,11 @@ fn color(
                 // material obj: scatter,  emitted scattering_pdf,
                 // emitted is must called.
                 // if scatter get Pdf then called scattering_pdf too.
-                let mat_ptr = rec.get_mat_ptr();
+                let mat_ptr = &rec.mat_ptr;
                 let last_emitted = material_list.emitted(&ray, &rec, texture_list, &mat_ptr);
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
                 if let Some(mat_rec) = material_list.scatter(&ray, &rec, texture_list, &mat_ptr) {
-                    let distance: f64 = rec.get_t();
+                    let distance: f64 = rec.t;
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
                         absorabance[0] = f64::exp(-(last_absorabance[0] * distance));
@@ -88,7 +88,7 @@ fn color(
                             continue;
                         }
                         Scatterd::CosinePdf => {
-                            let next_ray = Ray::new(rec.get_p(), mix_cosine_pdf_generate(light_list, &rec));
+                            let next_ray = Ray::new(rec.p, mix_cosine_pdf_generate(light_list, &rec));
                             let pdf_value = mix_cosine_pdf_value(light_list, &rec, &next_ray.direction());
 
                             if pdf_value.is_sign_positive() {

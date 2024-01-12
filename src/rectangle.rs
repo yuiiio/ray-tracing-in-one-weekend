@@ -107,14 +107,13 @@ impl Hitable for Rect {
         };
 
         let p = r.point_at_parameter(t);
-        Some(HitRecord::new(
+        Some(HitRecord {
             t,
-            u,
-            v,
+            uv: (u, v),
             p,
-            nnormal,
-            self.mat_ptr.clone(),
-        ))
+            normal: nnormal,
+            mat_ptr: self.mat_ptr.clone(),
+        })
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
@@ -124,8 +123,8 @@ impl Hitable for Rect {
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(rec) => {
-                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
-                let cosine = vec3_dot(v, &rec.get_normal()).abs() / vec3_length_f64(v);
+                let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
+                let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);
                 return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
@@ -171,14 +170,13 @@ impl FlipNormals {
 impl Hitable for FlipNormals {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self.shape.hit(r, t_min, t_max) {
-            Some(hit) => Some(HitRecord::new(
-                hit.get_t(),
-                hit.get_u(),
-                hit.get_v(),
-                hit.get_p(),
-                vec3_mul_b(&hit.get_normal(), -1.0),
-                hit.get_mat_ptr(),
-            )),
+            Some(hit) => Some(HitRecord {
+                t: hit.t,
+                uv: hit.uv,
+                p: hit.p,
+                normal: vec3_mul_b(&hit.normal, -1.0),
+                mat_ptr: hit.mat_ptr,
+            }),
             None => None,
         }
     }

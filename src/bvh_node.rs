@@ -369,8 +369,8 @@ impl Hitable for BvhTree {
                             if let Some(left_bounding_box) = left_obj.bounding_box() {
                                 if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
                                     if let Some(left_rec) = left_obj.hit(r, t_min, t_max) { // acutual hit check
-                                        let left_t = left_rec.get_t();
-                                        let right_t = right_rec.get_t();
+                                        let left_t = left_rec.t;
+                                        let right_t = right_rec.t;
                                         if left_t < right_t {
                                             if left_t < min_hit_t {
                                                 return_rec = Some(left_rec);
@@ -391,7 +391,7 @@ impl Hitable for BvhTree {
                                     }; // not hit left obj
                                 }; // not hit left_bounding_box
                             }; // not found left bounding_box
-                            let right_t = right_rec.get_t();
+                            let right_t = right_rec.t;
                             if right_t < min_hit_t {
                                 return_rec = Some(right_rec);
                                 min_hit_t = right_t;
@@ -409,7 +409,7 @@ impl Hitable for BvhTree {
                 if let Some(left_bounding_box) = left_obj.bounding_box() {
                     if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, t_max) { // bounding_box
                         if let Some(left_rec) = left_obj.hit(r, t_min, t_max) { // acutual hit check
-                            let left_t = left_rec.get_t();
+                            let left_t = left_rec.t;
                             if left_t < min_hit_t {
                                 return_rec = Some(left_rec);
                                 min_hit_t = left_t;

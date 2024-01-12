@@ -96,9 +96,13 @@ impl Hitable for Triangle {
         }
 
         let p: Vector3<f64> = ray.point_at_parameter(t);
-        let uu = u;
-        let vv = v;
-        return Some(HitRecord::new(t, uu, vv, p, self.n_norm, self.mat_ptr.clone()));
+        return Some(HitRecord {
+            t,
+            uv: (u, v),
+            p,
+            normal: self.n_norm,
+            mat_ptr: self.mat_ptr.clone(),
+        });
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
@@ -108,8 +112,8 @@ impl Hitable for Triangle {
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
             Some(rec) => {
-                let distance_squared = rec.get_t().powi(2) * vec3_squared_length(v);
-                let cosine = vec3_dot(v, &rec.get_normal()).abs() / vec3_length_f64(v);
+                let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
+                let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);
                 return distance_squared / (cosine * self.area);
             }
             None => return 0.0,

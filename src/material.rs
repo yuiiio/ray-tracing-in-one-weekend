@@ -160,16 +160,16 @@ impl Metal {
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
         let mut reflected = reflect(
             &vec3_unit_vector_f64(&r_in.direction()),
-            &hit_record.get_normal(),
+            &hit_record.normal,
         );
         if self.fuzz != 0.0 { // should return Pdf instadof Ray when fuzz != 0.0 ?
             reflected = vec3_add(&reflected, &vec3_mul_b(&random_in_unit_sphere(), self.fuzz));
         }
-        let scatterd = Ray::new(hit_record.get_p(), reflected);
+        let scatterd = Ray::new(hit_record.p, reflected);
         let attenuation = texture_list
-            .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p(), &self.texture);
+            .get_value(hit_record.uv, &hit_record.p, &self.texture);
         let absorabance = [0.0, 0.0, 0.0];
-        if vec3_dot(&scatterd.direction(), &hit_record.get_normal()).is_sign_positive() {
+        if vec3_dot(&scatterd.direction(), &hit_record.normal).is_sign_positive() {
             Some(MatRecord {
                 scatterd: Scatterd::Ray(scatterd),
                 attenuation,
@@ -210,7 +210,7 @@ impl Lambertian {
 
     fn scatter(&self, _r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
         let attenuation = texture_list
-            .get_value(hit_record.get_u(), hit_record.get_v(), &hit_record.get_p(), &self.texture);
+            .get_value(hit_record.uv, &hit_record.p, &self.texture);
         let absorabance = [0.0, 0.0, 0.0];
         Some(MatRecord {
             scatterd: Scatterd::CosinePdf,
@@ -219,7 +219,7 @@ impl Lambertian {
         })
     }
     fn scattering_pdf(&self, r: &Ray, _hit_record: &HitRecord) -> f64 {
-        let n = _hit_record.get_normal(); //Already normalized?
+        let n = _hit_record.normal; //Already normalized?
         let direction = vec3_unit_vector_f64(&r.direction());
         let cosine = vec3_dot(&n, &direction);
         if cosine.is_sign_positive() {
@@ -274,10 +274,10 @@ impl Dielectric {
         let reflect_prob: f64;
         let cosine: f64;
         let mut outside_to_inside: bool = false;
-        let hit_normal = hit_record.get_normal();
+        let hit_normal = hit_record.normal;
         if vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal).is_sign_positive() {
             outside_to_inside = true;
-            outward_normal = hit_record.get_normal();
+            outward_normal = hit_record.normal;
             ni_over_nt = self.nor_ref_idx;
             cosine = 1.0 * vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal);
         } else {
@@ -296,18 +296,18 @@ impl Dielectric {
                 let rand: f64 = rng.gen();
                 if rand < reflect_prob {
                     Ray::new(
-                        hit_record.get_p(),
+                        hit_record.p,
                         reflect(&r_in_direction, &outward_normal),
                         )
                 } else {
                     refracted_root = true;
-                    Ray::new(hit_record.get_p(), refracted)
+                    Ray::new(hit_record.p, refracted)
                 }
             }
             None => {
                 inside_to_inside = true;
                 Ray::new(
-                    hit_record.get_p(),
+                    hit_record.p,
                     reflect(&r_in_direction, &outward_normal),
                     )
             }
@@ -341,11 +341,10 @@ impl DiffuseLight {
     }
 
     fn emitted(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Vector3<f64> {
-        if vec3_dot(&hit_record.get_normal(), &r.direction()).is_sign_negative() {
+        if vec3_dot(&hit_record.normal, &r.direction()).is_sign_negative() {
             return texture_list.get_value(
-                hit_record.get_u(),
-                hit_record.get_v(),
-                &hit_record.get_p(),
+                hit_record.uv,
+                &hit_record.p,
                 &self.texture
                 );
         } else {

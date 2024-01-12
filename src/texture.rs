@@ -49,11 +49,11 @@ impl TextureList {
         }
     }
 
-    pub fn get_value(&self, u: f64, v: f64, p: &Vector3<f64>, texture_handle: &TextureHandle) -> Vector3<f64> {
+    pub fn get_value(&self, uv: (f64, f64), p: &Vector3<f64>, texture_handle: &TextureHandle) -> Vector3<f64> {
         let texture_pos = texture_handle.position;
         match texture_handle.texture_type {
-            Texture::ColorTexture => self.color_texture_list[texture_pos].get_value(u, v, p),
-            Texture::ImageTexture => self.image_texture_list[texture_pos].get_value(u, v, p),
+            Texture::ColorTexture => self.color_texture_list[texture_pos].get_value(),
+            Texture::ImageTexture => self.image_texture_list[texture_pos].get_value(uv, p),
         }
     }
 }
@@ -67,7 +67,7 @@ impl ColorTexture {
         ColorTexture { m_color }
     }
 
-    fn get_value(&self, _u: f64, _v: f64, _p: &Vector3<f64>) -> Vector3<f64> {
+    fn get_value(&self) -> Vector3<f64> {
         return self.m_color;
     }
 }
@@ -109,7 +109,8 @@ impl ImageTexture {
         ImageTexture { teximage }
     }
 
-    fn get_value(&self, u: f64, v: f64, _p: &Vector3<f64>) -> Vector3<f64> {
+    fn get_value(&self, uv: (f64, f64), _p: &Vector3<f64>) -> Vector3<f64> {
+        let (u, v) = (uv.0, uv.1);
         let width = self.teximage.width();
         let height = self.teximage.height();
         let x = min(width as f64 * u, width as f64 - 1.0);

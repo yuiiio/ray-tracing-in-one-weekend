@@ -28,14 +28,15 @@ impl Hitable for Translate {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let r = Ray::new(vec3_sub(r.origin(), &self.offset), *r.direction());
         match self.obj.hit(&r, t_min, t_max) {
-            Some(hit) => Some(HitRecord::new(
-                hit.get_t(),
-                hit.get_u(),
-                hit.get_v(),
-                vec3_add(&hit.get_p(), &self.offset),
-                hit.get_normal(),
-                hit.get_mat_ptr(),
-            )),
+            Some(hit) => {
+                Some(HitRecord {
+                    t: hit.t,
+                    uv: hit.uv,
+                    p: vec3_add(&hit.p, &self.offset),
+                    normal: hit.normal,
+                    mat_ptr: hit.mat_ptr,
+                })
+            },
             None => None,
         }
     }
@@ -107,14 +108,15 @@ impl Hitable for Rotate {
         let direction = self.revq.rotate(r.direction());
         let r = Ray::new(origin, direction);
         match self.obj.hit(&r, t_min, t_max) {
-            Some(hit) => Some(HitRecord::new(
-                hit.get_t(),
-                hit.get_u(),
-                hit.get_v(),
-                self.quat.rotate(&hit.get_p()),
-                self.quat.rotate(&hit.get_normal()),
-                hit.get_mat_ptr(),
-            )),
+            Some(hit) => {
+                Some(HitRecord {
+                    t: hit.t,
+                    uv: hit.uv,
+                    p: self.quat.rotate(&hit.p),
+                    normal: self.quat.rotate(&hit.normal),
+                    mat_ptr: hit.mat_ptr,
+                })
+            },
             None => None,
         }
     }

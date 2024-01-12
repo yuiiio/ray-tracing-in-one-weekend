@@ -4,56 +4,11 @@ use crate::ray::Ray;
 use crate::vec3::Vector3;
 
 pub struct HitRecord {
-    t: f64,
-    u: f64,
-    v: f64,
-    p: Vector3<f64>,
-    normal: Vector3<f64>,
-    mat_ptr: MaterialHandle,
-}
-
-impl HitRecord {
-    pub fn new(
-        t: f64,
-        u: f64,
-        v: f64,
-        p: Vector3<f64>,
-        normal: Vector3<f64>,
-        mat_ptr: MaterialHandle,
-    ) -> Self {
-        HitRecord {
-            t,
-            u,
-            v,
-            p,
-            normal,
-            mat_ptr,
-        }
-    }
-
-    pub fn get_mat_ptr(&self) -> MaterialHandle {
-        self.mat_ptr.clone()
-    }
-
-    pub fn get_t(&self) -> f64 {
-        self.t
-    }
-
-    pub fn get_u(&self) -> f64 {
-        self.u
-    }
-
-    pub fn get_v(&self) -> f64 {
-        self.v
-    }
-
-    pub fn get_p(&self) -> Vector3<f64> {
-        self.p
-    }
-
-    pub fn get_normal(&self) -> Vector3<f64> {
-        self.normal
-    }
+    pub t: f64,
+    pub uv: (f64, f64),
+    pub p: Vector3<f64>,
+    pub normal: Vector3<f64>,
+    pub mat_ptr: MaterialHandle,
 }
 
 pub trait Hitable: HitableClone {

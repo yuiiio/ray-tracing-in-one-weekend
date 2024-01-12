@@ -13,7 +13,7 @@ use crate::vec3::{
 #[derive(Clone)]
 pub struct Sphere {
     center: Vector3<f64>,
-    radius: f64,
+    //radius: f64,
     nor_radius: f64, // for fn hit(), pre compute
     radius_sq: f64, // radius^2
     mat_ptr: MaterialHandle,
@@ -32,7 +32,7 @@ impl Sphere {
         let needs_uv = mat_ptr.needs_uv;
         Sphere {
             center,
-            radius,
+            //radius,
             nor_radius,
             radius_sq,
             mat_ptr,
@@ -61,37 +61,35 @@ impl Hitable for Sphere {
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                let (u, v) = if self.needs_uv == true {
+                let uv = if self.needs_uv == true {
                     get_sphere_uv(nnormal)
                 } else {
                     (0.0, 0.0)
                 };
-                return Some(HitRecord::new(
-                    temp,
-                    u,
-                    v,
-                    point,
-                    nnormal,
-                    self.mat_ptr.clone(),
-                ));
+                return Some(HitRecord {
+                    t: temp,
+                    uv,
+                    p: point,
+                    normal: nnormal,
+                    mat_ptr: self.mat_ptr.clone(),
+                });
             }
             let temp = (-b + descriminant.sqrt()) / (2.0 * a);
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                let (u, v) = if self.needs_uv == true {
+                let uv = if self.needs_uv == true {
                     get_sphere_uv(nnormal)
                 } else {
                     (0.0, 0.0)
                 };
-                return Some(HitRecord::new(
-                    temp,
-                    u,
-                    v,
-                    point,
-                    nnormal,
-                    self.mat_ptr.clone(),
-                ));
+                return Some(HitRecord {
+                    t: temp,
+                    uv,
+                    p: point,
+                    normal: nnormal,
+                    mat_ptr: self.mat_ptr.clone(),
+                });
             }
         }
         rec
@@ -116,15 +114,15 @@ impl Hitable for Sphere {
         let uvw = Onb::build_from_w(&direction);
 
         let distabce_squared = vec3_squared_length(&direction);
-        uvw.local(&random_to_sphere(self.radius, distabce_squared))
+        uvw.local(&random_to_sphere(self.radius_sq, distabce_squared))
     }
 }
 
-fn random_to_sphere(radius: f64, distabce_squared: f64) -> Vector3<f64> {
+fn random_to_sphere(radius_sq: f64, distabce_squared: f64) -> Vector3<f64> {
     let mut rng = rand::thread_rng();
     let r1: f64 = rng.gen();
     let r2: f64 = rng.gen();
-    let cos_theta_max = (1.0 - (radius.powi(2) / distabce_squared)).sqrt();
+    let cos_theta_max = (1.0 - (radius_sq / distabce_squared)).sqrt();
     let z = 1.0 - r2 * (1.0 - cos_theta_max);
     let a = 2.0 * PI * r1;
     let b = (1.0 - z.powi(2)).sqrt();

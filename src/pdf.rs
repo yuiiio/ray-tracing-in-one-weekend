@@ -8,7 +8,7 @@ use crate::onb::Onb;
 use crate::vec3::{vec3_dot, vec3_unit_vector_f64, Vector3};
 
 pub fn cosine_pdf_value(hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
-    let n = hit_record.get_normal(); //Already normalized?
+    let n = hit_record.normal; //Already normalized?
     let direction = vec3_unit_vector_f64(direction); //just normalized
     let cosine = vec3_dot(&n, &direction);
     if cosine.is_sign_positive() {
@@ -19,7 +19,7 @@ pub fn cosine_pdf_value(hit_record: &HitRecord, direction: &Vector3<f64>) -> f64
 }
 
 pub fn cosine_pdf_generate(hit_record: &HitRecord) -> Vector3<f64> {
-    let uvw = Onb::build_from_w(&hit_record.get_normal());
+    let uvw = Onb::build_from_w(&hit_record.normal);
 
     let rcd = random_cosine_direction();
 
@@ -40,7 +40,7 @@ fn random_cosine_direction() -> Vector3<f64> {
 }
 
 pub fn mix_cosine_pdf_value(pdf0: &Arc<BvhTree>, hit_record: &HitRecord, direction: &Vector3<f64>) -> f64 {
-    let pdf0_value = pdf0.pdf_value(&hit_record.get_p(), direction);
+    let pdf0_value = pdf0.pdf_value(&hit_record.p, direction);
     let pdf1_value = cosine_pdf_value(hit_record, direction);
     return 0.5 * pdf0_value + 0.5 * pdf1_value;
 }
@@ -49,7 +49,7 @@ pub fn mix_cosine_pdf_generate(pdf0: &Arc<BvhTree>, hit_record: &HitRecord) -> V
     let mut rng = rand::thread_rng();
     let r: f64 = rng.gen();
     if r < 0.5 {
-        return pdf0.random(&hit_record.get_p());
+        return pdf0.random(&hit_record.p);
     } else {
         return cosine_pdf_generate(hit_record);
     }

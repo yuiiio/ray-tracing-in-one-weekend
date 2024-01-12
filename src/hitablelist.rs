@@ -87,7 +87,7 @@ impl Hitable for HitableList {
         let mut closer_so_far = t_max;
         for i in self.iter() {
             if let Some(temp_rec) = i.hit(r, t_min, closer_so_far) {
-                closer_so_far = temp_rec.get_t();
+                closer_so_far = temp_rec.t;
                 rec = Some(temp_rec);
             }
         }
