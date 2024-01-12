@@ -101,7 +101,7 @@ impl Hitable for Triangle {
             uv: (u, v),
             p,
             normal: self.n_norm,
-            mat_ptr: self.mat_ptr.clone(),
+            mat_ptr: &self.mat_ptr,
         });
     }
 

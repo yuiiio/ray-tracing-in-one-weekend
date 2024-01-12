@@ -112,7 +112,7 @@ impl Hitable for Rect {
             uv: (u, v),
             p,
             normal: nnormal,
-            mat_ptr: self.mat_ptr.clone(),
+            mat_ptr: &self.mat_ptr,
         })
     }
 

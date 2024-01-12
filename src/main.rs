@@ -57,15 +57,15 @@ fn color(
     for _i in 0..MAX_DEPTH {
         // TODO stop using trait-obj for hitable
         match world.hit(&ray, 0.00001, 10000.0) {
-            Some(rec) => {
+            Some(hit_rec) => {
                 // material obj: scatter,  emitted scattering_pdf,
                 // emitted is must called.
                 // if scatter get Pdf then called scattering_pdf too.
-                let mat_ptr = &rec.mat_ptr;
-                let last_emitted = material_list.emitted(&ray, &rec, texture_list, &mat_ptr);
+                let mat_ptr = &hit_rec.mat_ptr;
+                let last_emitted = material_list.emitted(&ray, &hit_rec, texture_list, &mat_ptr);
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
-                if let Some(mat_rec) = material_list.scatter(&ray, &rec, texture_list, &mat_ptr) {
-                    let distance: f64 = rec.t;
+                if let Some(mat_rec) = material_list.scatter(&ray, &hit_rec, texture_list, &mat_ptr) {
+                    let distance: f64 = hit_rec.t;
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
                         absorabance[0] = f64::exp(-(last_absorabance[0] * distance));
@@ -88,11 +88,11 @@ fn color(
                             continue;
                         }
                         Scatterd::CosinePdf => {
-                            let next_ray = Ray::new(rec.p, mix_cosine_pdf_generate(light_list, &rec));
-                            let pdf_value = mix_cosine_pdf_value(light_list, &rec, &next_ray.direction());
+                            let next_ray = Ray::new(hit_rec.p, mix_cosine_pdf_generate(light_list, &hit_rec));
+                            let pdf_value = mix_cosine_pdf_value(light_list, &hit_rec, &next_ray.direction());
 
                             if pdf_value.is_sign_positive() {
-                                let spdf_value = material_list.scattering_pdf(&next_ray, &rec, &mat_ptr);
+                                let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec, &mat_ptr);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
                                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));

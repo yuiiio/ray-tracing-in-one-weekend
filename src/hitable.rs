@@ -3,12 +3,12 @@ use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
 
-pub struct HitRecord {
+pub struct HitRecord<'a> {
     pub t: f64,
     pub uv: (f64, f64),
     pub p: Vector3<f64>,
     pub normal: Vector3<f64>,
-    pub mat_ptr: MaterialHandle,
+    pub mat_ptr: &'a MaterialHandle,
 }
 
 pub trait Hitable: HitableClone {
