@@ -5,6 +5,31 @@ use crate::hitable::{HitRecord, Hitable};
 use crate::ray::Ray;
 use crate::vec3::Vector3;
 
+/*
+hitable object:
+
+EmptyHitable
+BvhTree <=
+HitableList <=
+Rect
+FlipNormals <=
+Boxel <=
+Sphere
+Rotate <=
+Triangle
+
+: <= takes Hitable object
+so, if avoid trait object,
+hit takes &HitableList(not object, just vec).
+if BvhTree and HitableList is special sturct.
+Bvh should have Bvh node.
+hit(&list) => list[handle].hit(&list) ?can?
+or, another list should have for Bvh self ?
+
+struct Example {
+    another: Example, <= maybe need box and enum for recursive struct
+}
+*/
 #[derive(Clone)]
 pub struct HitableList { 
     hitable_list: Vec<Box<dyn Hitable + Send + Sync>>,
