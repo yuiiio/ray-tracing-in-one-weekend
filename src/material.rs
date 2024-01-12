@@ -46,6 +46,7 @@ pub enum Material {
 pub struct MaterialHandle {
     material_type: Material,
     position: usize, // each type
+    pub needs_uv: bool,
 }
 
 pub struct MaterialList {
@@ -67,18 +68,22 @@ impl MaterialList {
 
     pub fn add_metal_mat(&mut self, material: Metal) -> MaterialHandle {
         let pos = self.metal_list.len();
+        let needs_uv = material.texture.needs_uv;
         self.metal_list.push(material);
         MaterialHandle {
             material_type: Material::Metal,
             position: pos,
+            needs_uv,
         }
     }
     pub fn add_lambertian_mat(&mut self, material: Lambertian) -> MaterialHandle {
         let pos = self.lambertian_list.len();
+        let needs_uv = material.texture.needs_uv;
         self.lambertian_list.push(material);
         MaterialHandle {
             material_type: Material::Lambertian,
             position: pos,
+            needs_uv,
         }
     }
     pub fn add_dielectric_mat(&mut self, material: Dielectric) -> MaterialHandle {
@@ -87,14 +92,17 @@ impl MaterialList {
         MaterialHandle {
             material_type: Material::Dielectric,
             position: pos,
+            needs_uv: false,
         }
     }
     pub fn add_diffuselight_mat(&mut self, material: DiffuseLight) -> MaterialHandle {
         let pos = self.diffuselight_list.len();
+        let needs_uv = material.texture.needs_uv;
         self.diffuselight_list.push(material);
         MaterialHandle {
             material_type: Material::DiffuseLight,
             position: pos,
+            needs_uv,
         }
     }
 

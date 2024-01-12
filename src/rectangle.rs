@@ -29,6 +29,7 @@ pub struct Rect {
     mat_ptr: MaterialHandle,
     area: f64,
     aabb_box: Aabb,
+    needs_uv: bool,
 }
 
 impl Rect {
@@ -60,6 +61,7 @@ impl Rect {
         let height = y1 - y0;
         let nor_width = 1.0 / (x1 - x0);
         let nor_height = 1.0 / (y1 - y0);
+        let needs_uv = mat_ptr.needs_uv;
         Rect {
             x0,
             x1,
@@ -74,6 +76,7 @@ impl Rect {
             mat_ptr,
             area,
             aabb_box,
+            needs_uv,
         }
     }
 }
@@ -95,8 +98,14 @@ impl Hitable for Rect {
         if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
             return None;
         }
-        let u = (x - self.x0) * self.nor_width;
-        let v = (y - self.y0) * self.nor_height;
+
+        let (u, v) = if self.needs_uv == true {
+            ((x - self.x0) * self.nor_width,
+            (y - self.y0) * self.nor_height)
+        } else {
+            (0.0, 0.0)
+        };
+
         let p = r.point_at_parameter(t);
         Some(HitRecord::new(
             t,

@@ -11,6 +11,7 @@ pub enum Texture {
 pub struct TextureHandle {
     texture_type: Texture,
     position: usize, // each type
+    pub needs_uv: bool,
 }
 
 pub struct TextureList {
@@ -34,6 +35,7 @@ impl TextureList {
         TextureHandle {
             texture_type: Texture::ColorTexture,
             position: pos,
+            needs_uv: false,
         }
     }
 
@@ -43,6 +45,7 @@ impl TextureList {
         TextureHandle {
             texture_type: Texture::ImageTexture,
             position: pos,
+            needs_uv: true,
         }
     }
 

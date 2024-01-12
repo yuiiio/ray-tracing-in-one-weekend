@@ -18,6 +18,7 @@ pub struct Sphere {
     radius_sq: f64, // radius^2
     mat_ptr: MaterialHandle,
     aabb_box: Aabb,
+    needs_uv: bool,
 }
 
 impl Sphere {
@@ -28,6 +29,7 @@ impl Sphere {
             );
         let nor_radius = 1.0 / radius;
         let radius_sq = radius * radius;
+        let needs_uv = mat_ptr.needs_uv;
         Sphere {
             center,
             radius,
@@ -35,6 +37,7 @@ impl Sphere {
             radius_sq,
             mat_ptr,
             aabb_box,
+            needs_uv,
         }
     }
 }
@@ -58,7 +61,11 @@ impl Hitable for Sphere {
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                let (u, v) = get_sphere_uv(nnormal);
+                let (u, v) = if self.needs_uv == true {
+                    get_sphere_uv(nnormal)
+                } else {
+                    (0.0, 0.0)
+                };
                 return Some(HitRecord::new(
                     temp,
                     u,
@@ -72,7 +79,11 @@ impl Hitable for Sphere {
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                let (u, v) = get_sphere_uv(nnormal);
+                let (u, v) = if self.needs_uv == true {
+                    get_sphere_uv(nnormal)
+                } else {
+                    (0.0, 0.0)
+                };
                 return Some(HitRecord::new(
                     temp,
                     u,
