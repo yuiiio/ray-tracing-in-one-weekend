@@ -25,6 +25,10 @@ pub fn min(a: f64, b: f64) -> f64 {
     }
 }
 
+// merge 
+// left, mid, right
+// 2, 3, 1
+//
 #[allow(dead_code)]
 fn merge<T: Clone>(
     vec: &mut Vec<T>,
@@ -142,6 +146,15 @@ mod test {
                 vec.swap(left, right);
             }
         }
+
+        // 2, 2, 2, 2, 1
+        // 4(left:0, mid: 2, right: 4), 4(left:4, mid: 6, right: 8), 1(left: 8, mid: 10(over), right: 9(len))
+        // 8(left 0, mid: 4, right: 8), 1(left: 8, mid: 12(over), right: 9(len))
+        // like
+        // or
+        // 2, 2, 2, 2, 2
+        // 4, 4, 2(left: 8, mid: 10(over), 10(len))
+        // 8, 2
 
         let mut k = 1 * 2;
         while k < len {// if len = 10, k => 1, 2, 4, 8

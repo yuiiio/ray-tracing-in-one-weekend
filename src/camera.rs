@@ -79,8 +79,7 @@ mod test {
 
     #[test]
     fn random_in_disk() {
-        let i = 0;
-        for i in 0..1000 {
+        for _i in 0..1000 {
             let pos = random_in_unit_disk();
             println!("{:?}", pos);
             let result = if vec3_dot(&pos, &pos) < 1.0 { 1 } else { 0 };

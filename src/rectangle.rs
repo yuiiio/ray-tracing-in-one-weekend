@@ -81,6 +81,8 @@ impl Rect {
     }
 }
 
+// Rect hit is valid even ray direction.
+// Rect != actual Surface.
 impl Hitable for Rect {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (xi, yi, zi, nnormal): (usize, usize, usize, Vector3<f64>) = match self.axis {
