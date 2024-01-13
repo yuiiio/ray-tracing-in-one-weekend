@@ -270,7 +270,22 @@ impl Boxel {
 
 impl Hitable for Boxel {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        self.list.hit(r, t_min, t_max)
+        let mut return_rec: Option<HitRecord> = None;
+        let mut hit_min_t = t_max;
+        let mut hit_count: usize = 0; // boxel rect hit count max is 2;
+        for i in self.list.iter() {
+            if let Some(hit_rec) = i.hit(r, t_min, t_max) {
+                if hit_rec.t < hit_min_t {
+                    hit_min_t = hit_rec.t;
+                    return_rec = Some(hit_rec);
+                }
+                hit_count += 1;
+                if hit_count == 2 {
+                    break; // early return
+                }
+            }
+        }
+        return_rec
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
