@@ -76,17 +76,16 @@ fn color(
                     if last_absorabance[2] != 0.0 {
                         absorabance[2] = f64::exp(-(last_absorabance[2] * distance));
                     }
-                    let scatterd = mat_rec.get_scatterd();
-                    let attenuation = mat_rec.get_attenuation();
-                    last_absorabance = mat_rec.get_absorabance();
-                    match scatterd {
+                    let attenuation = mat_rec.attenuation;
+                    last_absorabance = mat_rec.absorabance;
+                    match mat_rec.scatterd {
                         Scatterd::Ray(next_ray) => {
                             cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                             // cur_emitted should calc before last_throughput
                             last_throughput = vec3_mul(&last_throughput, &vec3_mul(&attenuation, &absorabance));
                             ray = next_ray.clone();
                             continue;
-                        }
+                        },
                         Scatterd::CosinePdf => {
                             let next_ray = Ray::new(hit_rec.p, mix_cosine_pdf_generate(light_list, &hit_rec));
                             let pdf_value = mix_cosine_pdf_value(light_list, &hit_rec, &next_ray.direction());
@@ -103,8 +102,8 @@ fn color(
                             } else {
                                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                                 return cur_emitted;
-                            }
-                        }
+                            };
+                        },
                     };
                 };
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));

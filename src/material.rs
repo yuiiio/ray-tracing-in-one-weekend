@@ -15,23 +15,9 @@ pub enum Scatterd {
 }
 
 pub struct MatRecord {
-    scatterd: Scatterd,
-    attenuation: Vector3<f64>,
-    absorabance: Vector3<f64>,
-}
-
-impl MatRecord {
-    pub fn get_scatterd(&self) -> &Scatterd {
-        &self.scatterd
-    }
-
-    pub fn get_attenuation(&self) -> Vector3<f64> {
-        self.attenuation
-    }
-
-    pub fn get_absorabance(&self) -> Vector3<f64> {
-        self.absorabance
-    }
+    pub scatterd: Scatterd,
+    pub attenuation: Vector3<f64>,
+    pub absorabance: Vector3<f64>,
 }
 
 #[derive(Clone)]

@@ -24,32 +24,10 @@ pub struct BvhNode {
     next_pos_diff: usize,// 1 is last // (2^depth) -1
 }
 
-fn box_x_compare(a: &Vector3<f64>, b: &Vector3<f64>) -> bool {
-    if a[0] < b[0] {
-        return true;
-    } else {
-        return false;
-    }
-}
-fn box_y_compare(a: &Vector3<f64>, b: &Vector3<f64>) -> bool {
-    if a[1] < b[1] {
-        return true;
-    } else {
-        return false;
-    }
-}
-fn box_z_compare(a: &Vector3<f64>, b: &Vector3<f64>) -> bool {
-    if a[2] < b[2] {
-        return true;
-    } else {
-        return false;
-    }
-}
-
 fn dmerge(
     vec: &mut Vec<usize>,
     stock_vec: &mut Vec<usize>,
-    compare: fn(&Vector3<f64>, &Vector3<f64>) -> bool,
+    compare_axis: usize,
     center_list: &Vec<Vector3<f64>>,
     left: usize,
     mid: usize,
@@ -62,7 +40,7 @@ fn dmerge(
 
     if i < mid && j < right {
         loop {
-            if compare(&center_list[vec[i]], &center_list[vec[j]]) {
+            if center_list[vec[i]][compare_axis] < center_list[vec[j]][compare_axis] {
                 stock_vec[k] = vec[i];
                 i = i + 1;
                 if i == mid {
@@ -100,7 +78,7 @@ fn dmerge(
 
 pub fn dmerge_sort_wrap(
     vec: &mut Vec<usize>,
-    compare: fn(&Vector3<f64>, &Vector3<f64>) -> bool,
+    compare_axis: usize,
     center_list: &Vec<Vector3<f64>>,
     ) {
     let len = vec.len();
@@ -111,7 +89,7 @@ pub fn dmerge_sort_wrap(
     for i in 0..(len/2) { // first merge two element use swap.
         let left = i*2;
         let right = left+1;
-        if compare(&center_list[vec[right]], &center_list[vec[left]]) {
+        if center_list[vec[right]][compare_axis] < center_list[vec[left]][compare_axis] {
             vec.swap(left, right);
         }
     }
@@ -126,13 +104,17 @@ pub fn dmerge_sort_wrap(
             let next_block = i + (k*2);
             // right: next_block: could over len, so need check and shrink to len
             let right = if len < next_block { len } else { next_block };
-            dmerge(vec, &mut stock_vec, compare, center_list, i, i+k, right);
+            dmerge(vec, &mut stock_vec, compare_axis, center_list, i, i+k, right);
 
             i = next_block;
         }
         k = k*2;
     }
 }
+
+const AI_X: usize = 0;
+const AI_Y: usize = 1;
+const AI_Z: usize = 2;
 
 enum Axis {
     X,
@@ -216,16 +198,16 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let mut handle_z: Vec<usize> = handle.clone();
             match pre_sort_axis {
                 Axis::X => {
-                    dmerge_sort_wrap(&mut handle_y, box_y_compare, center_list);
-                    dmerge_sort_wrap(&mut handle_z, box_z_compare, center_list);
+                    dmerge_sort_wrap(&mut handle_y, AI_Y, center_list);
+                    dmerge_sort_wrap(&mut handle_z, AI_Z, center_list);
                 },
                 Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_x, box_x_compare, center_list);
-                    dmerge_sort_wrap(&mut handle_z, box_z_compare, center_list);
+                    dmerge_sort_wrap(&mut handle_x, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_z, AI_Z, center_list);
                 },
                 Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_x, box_x_compare, center_list);
-                    dmerge_sort_wrap(&mut handle_y, box_y_compare, center_list);
+                    dmerge_sort_wrap(&mut handle_x, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_y, AI_Y, center_list);
                 },
             }
             /*
@@ -321,7 +303,7 @@ impl BvhTree {
             right: 0,
             next_pos_diff: 0,
         }); // [0] dummy node; to actually node start at 1;
-        dmerge_sort_wrap(&mut handle, box_x_compare, &aabb_center_list);
+        dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
         let empty_hitable_handle: usize =  hitable_list_len;
         let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
