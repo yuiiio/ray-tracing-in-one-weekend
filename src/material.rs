@@ -218,14 +218,18 @@ impl Lambertian {
 
 pub struct Dielectric {
     ref_idx: f64,
+    ref_idx_seq: f64,
     nor_ref_idx: f64,
+    nor_ref_idx_seq: f64,
     absorabance: Vector3<f64>,
+    schlick_r0: f64,//option for realistic glass trick
+    schlick_r1: f64,
 }
 
-fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64) -> Option<Vector3<f64>> {
+fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64, ni_over_nt_seq: f64) -> Option<Vector3<f64>> {
     let uv = vec3_unit_vector_f64(&vec3_mul_b(v, -1.0));
     let dt = vec3_dot(&uv, n);
-    let discriminant = 1.0 - ni_over_nt * ni_over_nt * (1.0 - dt * dt);
+    let discriminant = 1.0 - ni_over_nt_seq * (1.0 - dt * dt);
     if discriminant.is_sign_positive() {
         let refracted = vec3_sub(
             &vec3_mul_b(&vec3_mul_b(n, -1.0), discriminant.sqrt()),
@@ -237,24 +241,33 @@ fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64) -> Option<Vector
     }
 }
 
-fn schlick(cosine: f64, ref_idx: f64) -> f64 {
-    let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
-    let r0 = r0 * r0;
-    r0 + ((1.0 - r0) * (1.0 - cosine).powi(5))
+fn schlick(cosine: f64, r0: f64, r1: f64) -> f64 {
+    r0 + (r1 * (1.0 - cosine).powi(5))
 }
 
 impl Dielectric {
     pub fn new(ref_idx: f64, absorabance: Vector3<f64>) -> Self {
+        let nor_ref_idx = 1.0 / ref_idx;
+        // for schlick
+        let r0 = (1.0 - ref_idx) / (1.0 + ref_idx);
+        let schlick_r0 = r0 * r0;
+        let schlick_r1 = 1.0 - schlick_r0;
+
         Dielectric {
             ref_idx,
-            nor_ref_idx: 1.0 / ref_idx,
+            ref_idx_seq: ref_idx * ref_idx,
+            nor_ref_idx,
+            nor_ref_idx_seq: nor_ref_idx * nor_ref_idx,
             absorabance,
+            schlick_r0,
+            schlick_r1,
         }
     }
 
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, _texture_list: &TextureList) -> Option<MatRecord> {
         let outward_normal: Vector3<f64>;
         let ni_over_nt: f64;
+        let ni_over_nt_seq: f64;
         let attenuation: Vector3<f64> = [1.0, 1.0, 1.0];
         let scatterd: Ray;
         let reflect_prob: f64;
@@ -265,19 +278,21 @@ impl Dielectric {
             outside_to_inside = true;
             outward_normal = hit_record.normal;
             ni_over_nt = self.nor_ref_idx;
+            ni_over_nt_seq = self.nor_ref_idx_seq;
             cosine = 1.0 * vec3_dot(&vec3_mul_b(&r_in.direction(), -1.0), &hit_normal);
         } else {
             outward_normal = vec3_mul_b(&hit_normal, -1.0);
             ni_over_nt = self.ref_idx;// / 1.0;
+            ni_over_nt_seq = self.ref_idx_seq;
             cosine = self.ref_idx * vec3_dot(&r_in.direction(), &hit_normal);
         }
 
         let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
         let r_in_direction = r_in.direction();
-        scatterd = match refract(&r_in_direction, &outward_normal, ni_over_nt) {
+        scatterd = match refract(&r_in_direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
             Some(refracted) => {
-                reflect_prob = schlick(cosine, self.ref_idx); // for real glass maty
+                reflect_prob = schlick(cosine, self.schlick_r0, self.schlick_r1); // for real glass maty
                 let mut rng = rand::thread_rng();
                 let rand: f64 = rng.gen();
                 if rand < reflect_prob {
