@@ -87,8 +87,8 @@ fn color(
                             continue;
                         },
                         Scatterd::CosinePdf => {
-                            let next_ray = Ray::new(hit_rec.p, mix_cosine_pdf_generate(light_list, &hit_rec));
-                            let pdf_value = mix_cosine_pdf_value(light_list, &hit_rec, &next_ray.direction());
+                            let next_ray = Ray { origin: hit_rec.p, direction: mix_cosine_pdf_generate(light_list, &hit_rec) };
+                            let pdf_value = mix_cosine_pdf_value(light_list, &hit_rec, &next_ray.direction);
 
                             if pdf_value.is_sign_positive() {
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec, &mat_ptr);
@@ -112,7 +112,7 @@ fn color(
             None => {
                 // if not hit any obj
                 // sky
-                let v = vec3_unit_vector_f64(&ray.direction());
+                let v = vec3_unit_vector_f64(&ray.direction);
                 let a = (v[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
                     &vec3_mul_b(&[0.7, 0.7, 0.5], 1.0 - a),

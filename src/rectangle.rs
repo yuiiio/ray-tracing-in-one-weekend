@@ -91,15 +91,15 @@ impl Hitable for Rect {
             AxisType::KYZ => (1, 2, 0, [1.0, 0.0, 0.0]),
         };
 
-        let t = (self.k - r.origin()[zi]) / r.direction()[zi];
+        let t = (self.k - r.origin[zi]) / r.direction[zi];
         if t < t_min || t > t_max {
             return None;
         }
-        let x = r.origin()[xi] + (r.direction()[xi] * t);
+        let x = r.origin[xi] + (r.direction[xi] * t);
         if x < self.x0 || x > self.x1 {
             return None;
         }
-        let y = r.origin()[yi] + (r.direction()[yi] * t);
+        let y = r.origin[yi] + (r.direction[yi] * t);
         if y < self.y0 || y > self.y1 {
             return None;
         }
@@ -126,7 +126,7 @@ impl Hitable for Rect {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
+        match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
             Some(rec) => {
                 let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
                 let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);

@@ -66,14 +66,14 @@ impl Triangle {
 
 impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let d = ray.direction();
+        let d = ray.direction;
         let lal = -1.0 * vec3_dot(&d, &self.n);
         if lal == 0.0 {
             return None;
         }
         let nor_lal: f64 = 1.0 / lal;
 
-        let r = vec3_sub(&ray.origin(), &self.v0);
+        let r = vec3_sub(&ray.origin, &self.v0);
         let m = cross(&d, &r);
 
         let u = nor_lal * vec3_dot(&self.e2, &m);
@@ -110,7 +110,7 @@ impl Hitable for Triangle {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
+        match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
             Some(rec) => {
                 let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
                 let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);

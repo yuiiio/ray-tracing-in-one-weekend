@@ -51,9 +51,9 @@ fn get_sphere_uv(point: Vector3<f64>) -> (f64, f64) {
 impl Hitable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let rec: Option<HitRecord> = None;
-        let oc = vec3_sub(r.origin(), &self.center);
-        let a = vec3_dot(r.direction(), r.direction());
-        let b = 2.0 * vec3_dot(r.direction(), &oc);
+        let oc = vec3_sub(&r.origin, &self.center);
+        let a = vec3_dot(&r.direction, &r.direction);
+        let b = 2.0 * vec3_dot(&r.direction, &oc);
         let c = vec3_dot(&oc, &oc) - self.radius_sq;
         let descriminant = b * b - 4.0 * a * c;
         if descriminant >= 0.0 {
@@ -100,7 +100,7 @@ impl Hitable for Sphere {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        match self.hit(&Ray::new(*o, *v), 0.00001, 10000.0) {
+        match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
             Some(_rec) => {
                 let distabce_squared: f64 = vec3_squared_length(&vec3_sub(&self.center, o));
                 let cos_theta_max: f64 = (1.0 - (self.radius_sq / distabce_squared)).sqrt();

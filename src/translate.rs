@@ -26,7 +26,7 @@ impl Translate {
 
 impl Hitable for Translate {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let r = Ray::new(vec3_sub(r.origin(), &self.offset), *r.direction());
+        let r = Ray{ origin: vec3_sub(&r.origin, &self.offset), direction: r.direction };
         match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
                 Some(HitRecord {
@@ -104,9 +104,9 @@ impl Rotate {
 
 impl Hitable for Rotate {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let origin = self.revq.rotate(r.origin());
-        let direction = self.revq.rotate(r.direction());
-        let r = Ray::new(origin, direction);
+        let origin = self.revq.rotate(&r.origin);
+        let direction = self.revq.rotate(&r.direction);
+        let r = Ray { origin, direction };
         match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
                 Some(HitRecord {
