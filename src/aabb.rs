@@ -8,23 +8,11 @@ pub struct AabbHitRecord {
 
 #[derive(Clone)]
 pub struct Aabb {
-    b_min: Vector3<f64>,
-    b_max: Vector3<f64>,
+    pub b_min: Vector3<f64>,
+    pub b_max: Vector3<f64>,
 }
 
 impl Aabb {
-    pub fn new(b_min: Vector3<f64>, b_max: Vector3<f64>) -> Self {
-        Aabb { b_min, b_max }
-    }
-
-    pub fn b_min(&self) -> Vector3<f64> {
-        self.b_min
-    }
-
-    pub fn b_max(&self) -> Vector3<f64> {
-        self.b_max
-    }
-
     pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;
@@ -62,7 +50,7 @@ mod test {
 
     #[test]
     fn aabb_hit_test() {
-        let aabb_box = Aabb::new([1.0, 1.0, 1.0], [2.0, 2.0, 2.0]);
+        let aabb_box = Aabb{ b_min: [1.0, 1.0, 1.0], b_max: [2.0, 2.0, 2.0] };
         let r = Ray{ origin: [0.0, 0.0, 0.0], direction: [1.5, 1.5, 1.5] };
         let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
@@ -85,11 +73,11 @@ mod test {
 }
 
 pub fn surrounding_box(box0: &Aabb, box1: &Aabb) -> Aabb {
-    let min = [min(box0.b_min()[0], box1.b_min()[0]),
-                min(box0.b_min()[1], box1.b_min()[1]),
-                min(box0.b_min()[2], box1.b_min()[2])];
-    let max = [max(box0.b_max()[0], box1.b_max()[0]),
-                max(box0.b_max()[1], box1.b_max()[1]),
-                max(box0.b_max()[2], box1.b_max()[2])];
-    Aabb::new(min, max)
+    let b_min = [min(box0.b_min[0], box1.b_min[0]),
+                min(box0.b_min[1], box1.b_min[1]),
+                min(box0.b_min[2], box1.b_min[2])];
+    let b_max = [max(box0.b_max[0], box1.b_max[0]),
+                max(box0.b_max[1], box1.b_max[1]),
+                max(box0.b_max[2], box1.b_max[2])];
+    Aabb {b_min, b_max}
 }

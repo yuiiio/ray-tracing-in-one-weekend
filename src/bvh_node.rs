@@ -221,18 +221,18 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             let x_max: f64 = hitable_list[handle_x[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
-                .b_max()[0]
-                - hitable_list[handle_x[0]].bounding_box().unwrap().b_min()[0];
+                .b_max[0]
+                - hitable_list[handle_x[0]].bounding_box().unwrap().b_min[0];
             let y_max: f64 = hitable_list[handle_y[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
-                .b_max()[1]
-                - hitable_list[handle_y[0]].bounding_box().unwrap().b_min()[1];
+                .b_max[1]
+                - hitable_list[handle_y[0]].bounding_box().unwrap().b_min[1];
             let z_max: f64 = hitable_list[handle_z[handle_size - 1]]
                 .bounding_box()
                 .unwrap()
-                .b_max()[2]
-                - hitable_list[handle_z[0]].bounding_box().unwrap().b_min()[2];
+                .b_max[2]
+                - hitable_list[handle_z[0]].bounding_box().unwrap().b_min[2];
 
             let sorted_axis: Axis;
             let mut selected_handle = if x_max < y_max {
@@ -281,8 +281,8 @@ impl BvhTree {
 
         let mut aabb_center_list = Vec::with_capacity(hitable_list_len);
         for i in 0..hitable_list_len {
-            let bounding_box_max = hitable_list[i].bounding_box().unwrap().b_max();
-            let bounding_box_min = hitable_list[i].bounding_box().unwrap().b_min();
+            let bounding_box_max = hitable_list[i].bounding_box().unwrap().b_max;
+            let bounding_box_min = hitable_list[i].bounding_box().unwrap().b_min;
             let center_point: Vector3<f64> = [
                 (bounding_box_max[0] + bounding_box_min[0])*0.5,
                 (bounding_box_max[1] + bounding_box_min[1])*0.5,
@@ -298,7 +298,7 @@ impl BvhTree {
                                                     // affect only bvh_node_list.capacity();
                                                     
         bvh_node_list.push(BvhNode {
-            bvh_node_box: Aabb::new([0.0, 0.0, 0.0], [0.0, 0.0, 0.0]),
+            bvh_node_box: Aabb{ b_min: [0.0, 0.0, 0.0], b_max: [0.0, 0.0, 0.0] },
             left: 0,
             right: 0,
             next_pos_diff: 0,

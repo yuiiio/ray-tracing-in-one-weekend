@@ -36,17 +36,17 @@ impl Triangle {
         let n = cross(&e2, &e1);
         let area: f64 = vec3_length_f64(&n) / 2.0;
 
-        let min = [
+        let b_min = [
             min(min(v0[0], v1[0]), v2[0]),
             min(min(v0[1], v1[1]), v2[1]),
             min(min(v0[2], v1[2]), v2[2]),
         ];
-        let max = [
+        let b_max = [
             max(max(v0[0], v1[0]), v2[0]),
             max(max(v0[1], v1[1]), v2[1]),
             max(max(v0[2], v1[2]), v2[2]),
         ];
-        let aabb_box = Aabb::new(min, max);
+        let aabb_box = Aabb {b_min, b_max};
 
         let n_norm = vec3_unit_vector_f64(&n);
         Triangle {

@@ -23,10 +23,10 @@ pub struct Sphere {
 
 impl Sphere {
     pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Self {
-        let aabb_box = Aabb::new(
-            vec3_sub_b(&center, radius),
-            vec3_add_b(&center, radius),
-            );
+        let aabb_box = Aabb {
+            b_min: vec3_sub_b(&center, radius),
+            b_max: vec3_add_b(&center, radius),
+        };
         let nor_radius = 1.0 / radius;
         let radius_sq = radius * radius;
         let needs_uv = mat_ptr.needs_uv;

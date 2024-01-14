@@ -44,18 +44,18 @@ impl Rect {
     ) -> Self {
         let area: f64 = (x1 - x0) * (y1 - y0);
         let aabb_box = match axis {
-            AxisType::KXY => Aabb::new(
-                [x0, y0, k - 0.0001],
-                [x1, y1, k + 0.0001],
-                ),
-            AxisType::KXZ => Aabb::new(
-                [x0, k - 0.0001, y0],
-                [x1, k + 0.0001, y1],
-                ),
-            AxisType::KYZ => Aabb::new(
-                [k - 0.0001, x0, y0],
-                [k + 0.0001, x1, y1],
-                ),
+            AxisType::KXY => Aabb {
+                b_min: [x0, y0, k - 0.0001],
+                b_max: [x1, y1, k + 0.0001],
+            },
+            AxisType::KXZ => Aabb {
+                b_min: [x0, k - 0.0001, y0],
+                b_max: [x1, k + 0.0001, y1],
+            },
+            AxisType::KYZ => Aabb {
+                b_min: [k - 0.0001, x0, y0],
+                b_max: [k + 0.0001, x1, y1],
+            },
         };
         let width = x1 - x0;
         let height = y1 - y0;
@@ -207,8 +207,8 @@ pub struct Boxel {
 
 impl Boxel {
     pub fn new(p0: Vector3<f64>, p1: Vector3<f64>, mat_ptr: MaterialHandle) -> Self {
-        let pmin = p0;
-        let pmax = p1;
+        let b_min = p0;
+        let b_max = p1;
         let mut list = HitableList::new();
         list.push(Rect::new(
             p0[0],
@@ -266,7 +266,7 @@ impl Boxel {
             AxisType::KYZ,
             mat_ptr,
         )));
-        let aabb_box = Aabb::new(pmin, pmax);
+        let aabb_box = Aabb{ b_min, b_max};
         Boxel { list, aabb_box}
     }
 }
