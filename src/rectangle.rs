@@ -96,8 +96,11 @@ impl Hitable for Rect {
             return None;
         }
         let x = r.origin()[xi] + (r.direction()[xi] * t);
+        if x < self.x0 || x > self.x1 {
+            return None;
+        }
         let y = r.origin()[yi] + (r.direction()[yi] * t);
-        if x < self.x0 || x > self.x1 || y < self.y0 || y > self.y1 {
+        if y < self.y0 || y > self.y1 {
             return None;
         }
 
@@ -270,6 +273,9 @@ impl Boxel {
 
 impl Hitable for Boxel {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        // TODO: first check 3 rect,
+        // if not hit, return None.
+        // if hit seconds other 3 rect.
         let mut return_rec: Option<HitRecord> = None;
         let mut hit_min_t = t_max;
         let mut hit_count: usize = 0; // boxel rect hit count max is 2;
