@@ -2,7 +2,6 @@ use rand::prelude::*;
 
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
-use crate::hitablelist::HitableList;
 use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::vec3::{vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub, Vector3};
@@ -201,7 +200,8 @@ impl Hitable for FlipNormals {
 
 #[derive(Clone)]
 pub struct Boxel {
-    list: HitableList,
+    rect: [Rect; 3],
+    flip_rect: [FlipNormals; 3],
     aabb_box: Aabb,
 }
 
@@ -209,89 +209,146 @@ impl Boxel {
     pub fn new(p0: Vector3<f64>, p1: Vector3<f64>, mat_ptr: MaterialHandle) -> Self {
         let b_min = p0;
         let b_max = p1;
-        let mut list = HitableList::new();
-        list.push(Rect::new(
-            p0[0],
-            p1[0],
-            p0[1],
-            p1[1],
-            p1[2],
-            AxisType::KXY,
-            mat_ptr.clone(),
-        ));
-        list.push(FlipNormals::new(Rect::new(
-            p0[0],
-            p1[0],
-            p0[1],
-            p1[1],
-            p0[2],
-            AxisType::KXY,
-            mat_ptr.clone(),
-        )));
-
-        list.push(Rect::new(
-            p0[0],
-            p1[0],
-            p0[2],
-            p1[2],
-            p1[1],
-            AxisType::KXZ,
-            mat_ptr.clone(),
-        ));
-        list.push(FlipNormals::new(Rect::new(
-            p0[0],
-            p1[0],
-            p0[2],
-            p1[2],
-            p0[1],
-            AxisType::KXZ,
-            mat_ptr.clone(),
-        )));
-
-        list.push(Rect::new(
-            p0[1],
-            p1[1],
-            p0[2],
-            p1[2],
-            p1[0],
-            AxisType::KYZ,
-            mat_ptr.clone(),
-        ));
-        list.push(FlipNormals::new(Rect::new(
-            p0[1],
-            p1[1],
-            p0[2],
-            p1[2],
-            p0[0],
-            AxisType::KYZ,
-            mat_ptr,
-        )));
-        let aabb_box = Aabb{ b_min, b_max};
-        Boxel { list, aabb_box}
+        let rect: [Rect; 3] = [
+            Rect::new(
+                p0[0],
+                p1[0],
+                p0[1],
+                p1[1],
+                p1[2],
+                AxisType::KXY,
+                mat_ptr.clone(),
+                ),
+                Rect::new(
+                    p0[0],
+                    p1[0],
+                    p0[2],
+                    p1[2],
+                    p1[1],
+                    AxisType::KXZ,
+                    mat_ptr.clone(),
+                    ),
+                    Rect::new(
+                        p0[1],
+                        p1[1],
+                        p0[2],
+                        p1[2],
+                        p1[0],
+                        AxisType::KYZ,
+                        mat_ptr.clone(),
+                        ),
+                    ];
+        let flip_rect: [FlipNormals; 3] = [
+            FlipNormals::new(Rect::new(
+                    p0[0],
+                    p1[0],
+                    p0[1],
+                    p1[1],
+                    p0[2],
+                    AxisType::KXY,
+                    mat_ptr.clone(),
+                    )),
+                    FlipNormals::new(Rect::new(
+                            p0[0],
+                            p1[0],
+                            p0[2],
+                            p1[2],
+                            p0[1],
+                            AxisType::KXZ,
+                            mat_ptr.clone(),
+                            )),
+                            FlipNormals::new(Rect::new(
+                                    p0[1],
+                                    p1[1],
+                                    p0[2],
+                                    p1[2],
+                                    p0[0],
+                                    AxisType::KYZ,
+                                    mat_ptr.clone(),
+                                    )),
+                            ];
+        let aabb_box = Aabb{b_min, b_max};
+        Boxel { rect, flip_rect, aabb_box }
     }
 }
 
 impl Hitable for Boxel {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        // TODO: first check 3 rect,
-        // if not hit, return None.
-        // if hit seconds other 3 rect.
-        let mut return_rec: Option<HitRecord> = None;
         let mut hit_min_t = t_max;
-        let mut hit_count: usize = 0; // boxel rect hit count max is 2;
-        for i in self.list.iter() {
-            if let Some(hit_rec) = i.hit(r, t_min, t_max) {
-                if hit_rec.t < hit_min_t {
-                    hit_min_t = hit_rec.t;
-                    return_rec = Some(hit_rec);
+        if let Some(hit_rec0) = self.rect[0].hit(r, t_min, hit_min_t) {
+            hit_min_t = hit_rec0.t;
+            if let Some(hit_rec1) = self.rect[1].hit(r, t_min, hit_min_t) {
+                return Some(hit_rec1);
+            }
+            if let Some(hit_rec2) = self.rect[2].hit(r, t_min, hit_min_t) {
+                return Some(hit_rec2);
+            }
+            if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
+                return Some(hit_rec3);
+            }
+            if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
+                return Some(hit_rec4);
+            }
+            if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
+                return Some(hit_rec5);
+            }
+            return Some(hit_rec0); // rect[0] was min hit
+        } else {
+            if let Some(hit_rec1) = self.rect[1].hit(r, t_min, hit_min_t) {
+                hit_min_t = hit_rec1.t;
+                if let Some(hit_rec2) = self.rect[2].hit(r, t_min, hit_min_t) {
+                    return Some(hit_rec2);
                 }
-                hit_count += 1;
-                if hit_count == 2 {
-                    break; // early return
+                if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
+                    return Some(hit_rec3);
+                }
+                if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
+                    return Some(hit_rec4);
+                }
+                if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
+                    return Some(hit_rec5);
+                }
+                return Some(hit_rec1); // rect[1] was min hit
+            } else {
+                if let Some(hit_rec2) = self.rect[2].hit(r, t_min, hit_min_t) {
+                    hit_min_t = hit_rec2.t;
+                    if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
+                        return Some(hit_rec3);
+                    }
+                    if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
+                        return Some(hit_rec4);
+                    }
+                    if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
+                        return Some(hit_rec5);
+                    }
+                    return Some(hit_rec2); // rect[2] was min hit
+                } else {
+                    if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
+                        hit_min_t = hit_rec3.t;
+                        if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
+                            return Some(hit_rec4);
+                        }
+                        if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
+                            return Some(hit_rec5);
+                        }
+                        return Some(hit_rec3); // flip_rect[0] was min hit
+                    } else {
+                        if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
+                            hit_min_t = hit_rec4.t;
+                            if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
+                                return Some(hit_rec5);
+                            }
+                            return Some(hit_rec4); // flip_rect[1] was min hit
+                        } else {
+                            if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
+                                return Some(hit_rec5);
+                            }
+                            return None;
+                        }
+                    }
                 }
             }
         }
-        return_rec
     }
 
     fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
@@ -299,10 +356,27 @@ impl Hitable for Boxel {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        self.list.pdf_value(o, v)
+        // TODO: we needs actual pdf hit surface, now return avg all surface
+        const DIV6: f64 = 1.0 / 6.0;
+        (
+            self.rect[0].pdf_value(o, v)
+            + self.rect[1].pdf_value(o, v)
+            + self.rect[2].pdf_value(o, v)
+            + self.flip_rect[0].pdf_value(o, v)
+            + self.flip_rect[1].pdf_value(o, v)
+            + self.flip_rect[2].pdf_value(o, v)
+         ) * DIV6
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        self.list.random(o)
+        let mut rng = rand::thread_rng();
+        let rand: f64 = rng.gen();
+        let random_handle = (rand * 3.0) as usize;
+        let rand2: f64 = rng.gen();
+        if rand2 < 0.5 {
+            return self.rect[random_handle].random(o); 
+        } else {
+            return self.flip_rect[random_handle].random(o); 
+        }
     }
 }

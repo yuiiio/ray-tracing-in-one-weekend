@@ -30,7 +30,7 @@ pub enum Material {
 
 #[derive(Clone)]
 pub struct MaterialHandle {
-    material_type: Material,
+    pub material_type: Material,
     position: usize, // each type
     pub needs_uv: bool,
 }
