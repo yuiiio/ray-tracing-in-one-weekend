@@ -63,6 +63,8 @@ fn color(
                 // if scatter get Pdf then called scattering_pdf too.
                 let mat_ptr = &hit_rec.mat_ptr;
                 let last_emitted = material_list.emitted(&ray, &hit_rec, texture_list, &mat_ptr);
+                // cur_emitted should calc before last_throughput
+                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
                 if let Some(mat_rec) = material_list.scatter(&ray, &hit_rec, texture_list, &mat_ptr) {
                     let distance: f64 = hit_rec.t;
@@ -80,8 +82,6 @@ fn color(
                     last_absorabance = mat_rec.absorabance;
                     match mat_rec.scatterd {
                         Scatterd::Ray(next_ray) => {
-                            cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
-                            // cur_emitted should calc before last_throughput
                             last_throughput = vec3_mul(&last_throughput, &vec3_mul(&attenuation, &absorabance));
                             ray = next_ray.clone();
                             continue;
@@ -94,19 +94,15 @@ fn color(
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec, &mat_ptr);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
-                                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
-                                // cur_emitted should calc before last_throughput
                                 last_throughput = vec3_mul(&last_throughput, &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value));
                                 ray = next_ray;
                                 continue;
                             } else {
-                                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                                 return cur_emitted;
                             };
                         },
                     };
                 };
-                cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             },
             None => {
