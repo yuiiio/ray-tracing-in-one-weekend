@@ -99,11 +99,16 @@ impl Hitable for HitableList {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        let mut sum: f64 = 0.0;
-        for i in self.iter() {
-            sum += i.pdf_value(o, v);
-        }
-        sum * self.nor_hitable_list_len
+        if let Some(ref aabb_box) = self.aabb_box {
+            if let Some(_aabb_hit) = aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
+                let mut sum: f64 = 0.0;
+                for i in self.iter() {
+                    sum += i.pdf_value(o, v);
+                }
+                return sum * self.nor_hitable_list_len;
+            };
+        };
+        return 0.0;
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {

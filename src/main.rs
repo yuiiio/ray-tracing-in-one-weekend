@@ -3,6 +3,7 @@ use std::fs::File;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
+use rand::prelude::*;
 
 mod aabb;
 mod bvh_node;
@@ -29,7 +30,7 @@ use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatterd};
 use obj_loader::obj_loader;
-use pdf::{mix_cosine_pdf_generate, mix_cosine_pdf_value};
+use pdf::{cosine_pdf_generate, cosine_pdf_value};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, Rect, FlipNormals};
 use sphere::Sphere;
@@ -46,7 +47,7 @@ const MAX_DEPTH: usize = 20;
 fn color(
     ray: Ray,
     world: &Arc<BvhTree>,
-    light_list: &Arc<BvhTree>,
+    light_list: &Arc<HitableList>,
     texture_list: &TextureList,
     material_list: &MaterialList,
 ) -> Vector3<f64> {
@@ -87,8 +88,18 @@ fn color(
                             continue;
                         },
                         Scatterd::CosinePdf => {
-                            let next_ray = Ray { origin: hit_rec.p, direction: mix_cosine_pdf_generate(light_list, &hit_rec) };
-                            let pdf_value = mix_cosine_pdf_value(light_list, &hit_rec, &next_ray.direction);
+                            let mut rng = rand::thread_rng();
+                            let rand: f64 = rng.gen();
+                            let next_ray = if rand < 0.5 {
+                                Ray{ origin: hit_rec.p, direction: light_list.random(&hit_rec.p) }
+                            } else {
+                                Ray{ origin: hit_rec.p, direction: cosine_pdf_generate(&hit_rec.normal) }
+                            };
+
+                            let light_list_pdf = light_list.pdf_value(&hit_rec.p, &next_ray.direction);
+                            let cosine_pdf = cosine_pdf_value(&hit_rec.normal, &next_ray.direction);
+
+                            let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;
 
                             if pdf_value.is_sign_positive() {
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec, &mat_ptr);
@@ -274,13 +285,6 @@ fn main() {
     light_list.push(glass_sphere);
     //light_list.push(bunny);
     //light_list.push(glass_box);
-
-    let now3 = SystemTime::now();
-    let light_list = BvhTree::new(light_list);
-    println!(
-        "BVH-3 Build Time elapsed: {}",
-        now3.elapsed().unwrap().as_secs_f64()
-    );
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
