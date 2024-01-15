@@ -357,15 +357,20 @@ impl Hitable for Boxel {
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
-        const DIV6: f64 = 1.0 / 6.0;
-        (
-            self.rect[0].pdf_value(o, v)
-            + self.rect[1].pdf_value(o, v)
-            + self.rect[2].pdf_value(o, v)
-            + self.flip_rect[0].pdf_value(o, v)
-            + self.flip_rect[1].pdf_value(o, v)
-            + self.flip_rect[2].pdf_value(o, v)
-         ) * DIV6
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0)  {
+
+            const DIV6: f64 = 1.0 / 6.0;
+            return (
+                self.rect[0].pdf_value(o, v)
+                + self.rect[1].pdf_value(o, v)
+                + self.rect[2].pdf_value(o, v)
+                + self.flip_rect[0].pdf_value(o, v)
+                + self.flip_rect[1].pdf_value(o, v)
+                + self.flip_rect[2].pdf_value(o, v)
+                ) * DIV6
+        } else {
+            return 0.0;
+        }
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {

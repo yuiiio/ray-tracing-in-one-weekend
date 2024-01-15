@@ -126,11 +126,16 @@ impl Hitable for Rotate {
     }
 
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        let ro = self.revq.rotate(o);
-        let p = vec3_add(o, v);
-        let rp = self.revq.rotate(&p);
-        let rv = vec3_sub(&rp, &ro);
-        self.obj.pdf_value(&ro, &rv)
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0)  {
+
+            let ro = self.revq.rotate(o);
+            let p = vec3_add(o, v);
+            let rp = self.revq.rotate(&p);
+            let rv = vec3_sub(&rp, &ro);
+            return self.obj.pdf_value(&ro, &rv)
+        } else {
+            return 0.0
+        }
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let ro = self.revq.rotate(o);
