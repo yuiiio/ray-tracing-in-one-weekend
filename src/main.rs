@@ -38,7 +38,7 @@ use texture::{TextureList, ColorTexture, ImageTexture};
 use translate::{Rotate, Translate};
 use vec3::{
     vec3_add, vec3_mul, vec3_mul_b,
-    vec3_unit_vector_f64, Vector3,
+    Vector3,
 };
 
 const MAX_DEPTH: usize = 20;
@@ -112,15 +112,15 @@ fn color(
             None => {
                 // if not hit any obj
                 // sky
+                /*
                 let v = vec3_unit_vector_f64(&ray.direction);
                 let a = (v[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
                     &vec3_mul_b(&[0.7, 0.7, 0.5], 1.0 - a),
                     &vec3_mul_b(&[0.5, 0.7, 1.0], a),
                 );
-                /*
-                let last_emitted = [0.0, 0.0, 0.0];
                 */
+                let last_emitted = [0.0, 0.0, 0.0];
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
@@ -150,7 +150,7 @@ fn main() {
     let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
     let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
-    let light_texture = texture_list.add_color_texture(ColorTexture::new([1.0, 1.0, 1.0]));
+    let light_texture = texture_list.add_color_texture(ColorTexture::new([10.0, 10.0, 10.0]));
     let magick_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.png").unwrap().into_rgba8()));
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
@@ -158,14 +158,14 @@ fn main() {
     let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
     let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
-    let _light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
+    let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
         material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
     let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
     let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
     let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_metal_mat(Metal::new(0.0, metal_texture));
-    let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
+    let _fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
@@ -178,7 +178,6 @@ fn main() {
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KYZ, red));
 
-    /*
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -197,9 +196,9 @@ fn main() {
         555.0,
         555.0,
         AxisType::KXZ,
-        white,
+        white.clone(),
     )));
-    */
+
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -210,7 +209,7 @@ fn main() {
         magick,
     )));
 
-    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KXZ, fuzzy_metal);
+    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KXZ, white.clone());
     obj_list.push(floor.clone());
 
     obj_list.push(Translate::new(
@@ -273,8 +272,8 @@ fn main() {
         now2.elapsed().unwrap().as_secs_f64()
     );
 
-    //light_list.push(light_rect);
-    light_list.push(floor);
+    light_list.push(light_rect);
+    //light_list.push(floor);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
     //light_list.push(bunny);
