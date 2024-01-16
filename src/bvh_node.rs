@@ -344,11 +344,11 @@ impl Hitable for BvhTree {
             let bvh_pos_diff = current_bvh_node.next_pos_diff;
             if bvh_pos_diff == 1 { // this node has actual item
                 let right_obj = &self.hitable_list[current_bvh_node.right];
-                if let Some(right_bounding_box) = right_obj.bounding_box() {
+                if let Some(ref right_bounding_box) = right_obj.bounding_box() {
                     if let Some(_right_rec) = right_bounding_box.aabb_hit(r, t_min, min_hit_t) { // check bounding_box
                         if let Some(right_rec) = right_obj.hit(r, t_min, min_hit_t) { // actual hit check
                             let left_obj = &self.hitable_list[current_bvh_node.left];
-                            if let Some(left_bounding_box) = left_obj.bounding_box() {
+                            if let Some(ref left_bounding_box) = left_obj.bounding_box() {
                                 if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, right_rec.t) { // bounding_box
                                     if let Some(left_rec) = left_obj.hit(r, t_min, right_rec.t) { // acutual hit check
                                         let left_t = left_rec.t;
@@ -376,7 +376,7 @@ impl Hitable for BvhTree {
                     }; // not hit right_bounding_box
                 }; // not found right_bounding_box
                 let left_obj = &self.hitable_list[current_bvh_node.left];
-                if let Some(left_bounding_box) = left_obj.bounding_box() {
+                if let Some(ref left_bounding_box) = left_obj.bounding_box() {
                     if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, min_hit_t) { // bounding_box
                         if let Some(left_rec) = left_obj.hit(r, t_min, min_hit_t) { // acutual hit check
                             let left_t = left_rec.t;
