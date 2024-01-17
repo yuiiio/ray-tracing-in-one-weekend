@@ -6,7 +6,7 @@ use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::utils::{max, min};
 use crate::vec3::{
-    cross, vec3_add, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub,
+    cross, vec3_add, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_sub,
     vec3_unit_vector_f64, Vector3,
 };
 
@@ -113,8 +113,8 @@ impl Hitable for Triangle {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0)  {
             match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
                 Some(rec) => {
-                    let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
-                    let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);
+                    let distance_squared = rec.t.powi(2);
+                    let cosine = vec3_dot(v, &rec.normal).abs();
                     return distance_squared / (cosine * self.area);
                 }
                 None => return 0.0,

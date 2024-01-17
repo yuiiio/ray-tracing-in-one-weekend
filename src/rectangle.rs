@@ -4,7 +4,7 @@ use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
 use crate::ray::Ray;
-use crate::vec3::{vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, vec3_sub, Vector3};
+use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, Vector3, vec3_unit_vector_f64};
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -127,8 +127,8 @@ impl Hitable for Rect {
     fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
         match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
             Some(rec) => {
-                let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
-                let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);
+                let distance_squared = rec.t.powi(2);
+                let cosine = vec3_dot(v, &rec.normal).abs();
                 return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
@@ -156,7 +156,8 @@ impl Hitable for Rect {
                 self.y0 + rng_y * self.height,
             ],
         };
-        vec3_sub(&random_point, o)
+        //TODO: need all rewrite
+        vec3_unit_vector_f64(&vec3_sub(&random_point, o))
     }
 }
 

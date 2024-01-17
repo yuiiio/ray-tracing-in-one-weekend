@@ -2,12 +2,10 @@ use rand::prelude::*;
 use std::f64::consts::PI;
 
 use crate::onb::Onb;
-use crate::vec3::{vec3_dot, vec3_unit_vector_f64, Vector3};
+use crate::vec3::{vec3_dot, Vector3};
 
 pub fn cosine_pdf_value(hit_rec_normal: &Vector3<f64>, direction: &Vector3<f64>) -> f64 {
-    let n = hit_rec_normal; //Already normalized?
-    let direction = vec3_unit_vector_f64(direction); //just normalized
-    let cosine = vec3_dot(&n, &direction);
+    let cosine = vec3_dot(&hit_rec_normal, &direction);
     if cosine.is_sign_positive() {
         return cosine / PI;
     } else {
