@@ -101,7 +101,7 @@ fn color(
                             //let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;
                             let pdf_sum = light_list_pdf + cosine_pdf;
 
-                            if pdf_sum.is_sign_positive() {
+                            if pdf_sum > 0.0 {
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 //let nor_pdf_value = 1.0 / pdf_value;
