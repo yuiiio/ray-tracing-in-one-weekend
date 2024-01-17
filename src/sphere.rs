@@ -55,7 +55,7 @@ impl Hitable for Sphere {
         let b = vec3_dot(&r.direction, &oc);
         let c = vec3_squared_length(&oc) - self.radius_sq;
         let descriminant = b.powi(2) - c;
-        if descriminant >= 0.0 {
+        if descriminant.is_sign_positive() {
             let temp = -b - descriminant.sqrt();
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
