@@ -56,7 +56,7 @@ fn color(
     let mut last_absorabance: Vector3<f64> = [0.0, 0.0, 0.0];
     let mut ray: Ray = ray;
     for _i in 0..MAX_DEPTH {
-        // TODO stop using trait-obj for hitable
+        //println!("ray direction length: {}", vec3::vec3_length_f64(&ray.direction));
         match world.hit(&ray, 0.00001, 10000.0) {
             Some(hit_rec) => {
                 // material obj: scatter,  emitted scattering_pdf,
