@@ -59,7 +59,7 @@ pub fn qmul_q2_xyz(q1: &Qotation, v2: &[f64; 3]) -> Qotation {
                                 (v1[0] * v2[1]) - (v1[1] * v2[0]), ];
     Qotation {
         w: - inner,
-        xyz: vec3_add(&vec3_mul_b(&v2, w1), &cross),
+        xyz: vec3_add(&vec3_mul_b(v2, w1), &cross),
     }
 }
 

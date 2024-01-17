@@ -129,9 +129,6 @@ impl Hitable for Triangle {
         let rng_i: f64 = rng.gen();
         let rng_j: f64 = rng.gen();
 
-        let rng_i = rng_i;
-        let rng_j = rng_j;
-
         let max: f64;
         let min: f64;
         if rng_i < rng_j {

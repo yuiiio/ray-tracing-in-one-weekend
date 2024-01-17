@@ -92,9 +92,9 @@ impl MaterialList {
         }
     }
 
-    pub fn scatter(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList, mat_handle: &MaterialHandle) -> Option<MatRecord> {
-        let mat_pos = mat_handle.position;
-        match mat_handle.material_type {
+    pub fn scatter(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
+        let mat_pos = hit_record.mat_ptr.position;
+        match hit_record.mat_ptr.material_type {
             Material::Metal => self.metal_list[mat_pos].scatter(r, hit_record, texture_list),
             Material::Lambertian => self.lambertian_list[mat_pos].scatter(r, hit_record, texture_list),
             Material::Dielectric => self.dielectric_list[mat_pos].scatter(r, hit_record, texture_list),
@@ -102,9 +102,9 @@ impl MaterialList {
         }
     }
 
-    pub fn emitted(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList, mat_handle: &MaterialHandle) -> Vector3<f64> {
-        let mat_pos = mat_handle.position;
-        match mat_handle.material_type {
+    pub fn emitted(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Vector3<f64> {
+        let mat_pos = hit_record.mat_ptr.position;
+        match hit_record.mat_ptr.material_type {
             Material::Metal => [0.0, 0.0, 0.0], //self.metal_list[mat_pos].emitted(r, hit_record, texture_list),
             Material::Lambertian => [0.0, 0.0, 0.0], // self.lambertian_list[mat_pos].emitted(r, hit_record, texture_list),
             Material::Dielectric => [0.0, 0.0, 0.0], // self.dielectric_list[mat_pos].emitted(r, hit_record, texture_list),
@@ -112,11 +112,11 @@ impl MaterialList {
         }
     }
 
-    pub fn scattering_pdf(&self, r: &Ray, hit_record: &HitRecord, mat_handle: &MaterialHandle) -> f64 {
-        let mat_pos = mat_handle.position;
+    pub fn scattering_pdf(&self, r: &Ray, hit_record: &HitRecord) -> f64 {
+        let mat_pos = hit_record.mat_ptr.position;
         //should naver call on metal, Dielectric, DiffuseLight doesn't have pdf
         //scatter dpesn't return Pdf type.
-        match mat_handle.material_type {
+        match hit_record.mat_ptr.material_type {
             Material::Metal => 0.0, //self.metal_list[mat_pos].scattering_pdf(r, hit_record),
             Material::Lambertian => self.lambertian_list[mat_pos].scattering_pdf(r, hit_record),
             Material::Dielectric => 0.0, //self.dielectric_list[mat_pos].scattering_pdf(r, hit_record),

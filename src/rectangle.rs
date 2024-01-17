@@ -8,9 +8,9 @@ use crate::vec3::{vec3_dot, vec3_length_f64, vec3_mul_b, vec3_squared_length, ve
 
 #[derive(Clone)]
 pub enum AxisType {
-    KXY,
-    KXZ,
-    KYZ,
+    Kxy,
+    Kxz,
+    Kyz,
 }
 
 #[derive(Clone)]
@@ -43,15 +43,15 @@ impl Rect {
     ) -> Self {
         let area: f64 = (x1 - x0) * (y1 - y0);
         let aabb_box = match axis {
-            AxisType::KXY => Aabb {
+            AxisType::Kxy => Aabb {
                 b_min: [x0, y0, k - 0.0001],
                 b_max: [x1, y1, k + 0.0001],
             },
-            AxisType::KXZ => Aabb {
+            AxisType::Kxz => Aabb {
                 b_min: [x0, k - 0.0001, y0],
                 b_max: [x1, k + 0.0001, y1],
             },
-            AxisType::KYZ => Aabb {
+            AxisType::Kyz => Aabb {
                 b_min: [k - 0.0001, x0, y0],
                 b_max: [k + 0.0001, x1, y1],
             },
@@ -85,9 +85,9 @@ impl Rect {
 impl Hitable for Rect {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (xi, yi, zi, nnormal): (usize, usize, usize, Vector3<f64>) = match self.axis {
-            AxisType::KXY => (0, 1, 2, [0.0, 0.0, 1.0]),
-            AxisType::KXZ => (0, 2, 1, [0.0, 1.0, 0.0]),
-            AxisType::KYZ => (1, 2, 0, [1.0, 0.0, 0.0]),
+            AxisType::Kxy => (0, 1, 2, [0.0, 0.0, 1.0]),
+            AxisType::Kxz => (0, 2, 1, [0.0, 1.0, 0.0]),
+            AxisType::Kyz => (1, 2, 0, [1.0, 0.0, 0.0]),
         };
 
         let t = (self.k - r.origin[zi]) / r.direction[zi];
@@ -140,17 +140,17 @@ impl Hitable for Rect {
         let rng_x: f64 = rng.gen();
         let rng_y: f64 = rng.gen();
         let random_point = match self.axis {
-            AxisType::KXY => [
+            AxisType::Kxy => [
                 self.x0 + rng_x * self.width,
                 self.y0 + rng_y * self.height,
                 self.k,
             ],
-            AxisType::KXZ => [
+            AxisType::Kxz => [
                 self.x0 + rng_x * self.width,
                 self.k,
                 self.y0 + rng_y * self.height,
             ],
-            AxisType::KYZ => [
+            AxisType::Kyz => [
                 self.k,
                 self.x0 + rng_x * self.width,
                 self.y0 + rng_y * self.height,
@@ -216,7 +216,7 @@ impl Boxel {
                 p0[1],
                 p1[1],
                 p1[2],
-                AxisType::KXY,
+                AxisType::Kxy,
                 mat_ptr.clone(),
                 ),
                 Rect::new(
@@ -225,7 +225,7 @@ impl Boxel {
                     p0[2],
                     p1[2],
                     p1[1],
-                    AxisType::KXZ,
+                    AxisType::Kxz,
                     mat_ptr.clone(),
                     ),
                     Rect::new(
@@ -234,7 +234,7 @@ impl Boxel {
                         p0[2],
                         p1[2],
                         p1[0],
-                        AxisType::KYZ,
+                        AxisType::Kyz,
                         mat_ptr.clone(),
                         ),
                     ];
@@ -245,7 +245,7 @@ impl Boxel {
                     p0[1],
                     p1[1],
                     p0[2],
-                    AxisType::KXY,
+                    AxisType::Kxy,
                     mat_ptr.clone(),
                     )),
                     FlipNormals::new(Rect::new(
@@ -254,7 +254,7 @@ impl Boxel {
                             p0[2],
                             p1[2],
                             p0[1],
-                            AxisType::KXZ,
+                            AxisType::Kxz,
                             mat_ptr.clone(),
                             )),
                             FlipNormals::new(Rect::new(
@@ -263,7 +263,7 @@ impl Boxel {
                                     p0[2],
                                     p1[2],
                                     p0[0],
-                                    AxisType::KYZ,
+                                    AxisType::Kyz,
                                     mat_ptr.clone(),
                                     )),
                             ];

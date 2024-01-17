@@ -62,12 +62,11 @@ fn color(
                 // material obj: scatter,  emitted scattering_pdf,
                 // emitted is must called.
                 // if scatter get Pdf then called scattering_pdf too.
-                let mat_ptr = &hit_rec.mat_ptr;
-                let last_emitted = material_list.emitted(&ray, &hit_rec, texture_list, &mat_ptr);
+                let last_emitted = material_list.emitted(&ray, &hit_rec, texture_list);
                 // cur_emitted should calc before last_throughput
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 // mat_rec attenuation, absorabance scatterd(::Ray, ::Pdf)
-                if let Some(mat_rec) = material_list.scatter(&ray, &hit_rec, texture_list, &mat_ptr) {
+                if let Some(mat_rec) = material_list.scatter(&ray, &hit_rec, texture_list) {
                     let distance: f64 = hit_rec.t;
                     let mut absorabance: Vector3<f64> = [1.0, 1.0, 1.0];
                     if last_absorabance[0] != 0.0 {
@@ -102,7 +101,7 @@ fn color(
                             let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;
 
                             if pdf_value.is_sign_positive() {
-                                let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec, &mat_ptr);
+                                let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
                                 last_throughput = vec3_mul(&last_throughput, &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value));
@@ -180,10 +179,10 @@ fn main() {
         0.0,
         555.0,
         555.0,
-        AxisType::KYZ,
+        AxisType::Kyz,
         green,
     )));
-    obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KYZ, red));
+    obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kyz, red));
 
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
@@ -191,7 +190,7 @@ fn main() {
         227.0,
         332.0,
         554.0,
-        AxisType::KXZ,
+        AxisType::Kxz,
         light,
     ));
     obj_list.push(light_rect.clone());
@@ -202,7 +201,7 @@ fn main() {
         0.0,
         555.0,
         555.0,
-        AxisType::KXZ,
+        AxisType::Kxz,
         white.clone(),
     )));
 
@@ -212,11 +211,11 @@ fn main() {
         0.0,
         555.0,
         555.0,
-        AxisType::KXY,
+        AxisType::Kxy,
         magick,
     )));
 
-    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::KXZ, white.clone());
+    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxz, white.clone());
     obj_list.push(floor.clone());
 
     obj_list.push(Translate::new(
