@@ -110,8 +110,7 @@ fn color(
                                 ray = next_ray;
                                 continue;
                             } else {
-                                return [1.0, 1.0, 1.0]; //cur_emitted; // I negative pdf_value is
-                                                        //wrong
+                                return cur_emitted;
                             };
                         },
                     };

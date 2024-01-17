@@ -128,12 +128,8 @@ impl Hitable for Rect {
         match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
             Some(rec) => {
                 let distance_squared = rec.t.powi(2) * vec3_squared_length(v);
-                let cosine = vec3_dot(v, &rec.normal).abs();
-                if cosine == 0.0 {
-                    return 0.0;
-                } else {
-                    return (distance_squared * vec3_length_f64(v)) / (cosine * self.area);
-                }
+                let cosine = vec3_dot(v, &rec.normal).abs() / vec3_length_f64(v);
+                return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
         }
