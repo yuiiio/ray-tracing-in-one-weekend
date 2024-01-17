@@ -52,11 +52,11 @@ impl Hitable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let rec: Option<HitRecord> = None;
         let oc = vec3_sub(&r.origin, &self.center);
-        let b = 2.0 * vec3_dot(&r.direction, &oc);
-        let c = vec3_dot(&oc, &oc) - self.radius_sq;
-        let descriminant = b * b - 4.0 * c;
+        let b = vec3_dot(&r.direction, &oc);
+        let c = vec3_squared_length(&oc) - self.radius_sq;
+        let descriminant = b.powi(2) - c;
         if descriminant >= 0.0 {
-            let temp = (-b - descriminant.sqrt()) / 2.0;
+            let temp = -b - descriminant.sqrt();
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
@@ -73,7 +73,7 @@ impl Hitable for Sphere {
                     mat_ptr: &self.mat_ptr,
                 });
             }
-            let temp = (-b + descriminant.sqrt()) / 2.0;
+            let temp = -b + descriminant.sqrt();
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
