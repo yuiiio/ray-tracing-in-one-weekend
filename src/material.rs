@@ -149,7 +149,9 @@ impl Metal {
             &hit_record.normal,
         );
         if self.fuzz != 0.0 { // should return Pdf instadof Ray when fuzz != 0.0 ?
-            reflected = vec3_add(&reflected, &vec3_mul_b(&random_in_unit_sphere(), self.fuzz));
+            reflected = vec3_unit_vector_f64(
+                &vec3_add(&reflected, &vec3_mul_b(&random_in_unit_sphere(), self.fuzz))
+                );
         }
         let scatterd = Ray{ origin: hit_record.p, direction: reflected };
         let attenuation = texture_list
