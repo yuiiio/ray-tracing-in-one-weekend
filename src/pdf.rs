@@ -15,6 +15,7 @@ pub fn cosine_pdf_value(hit_rec_normal: &Vector3<f64>, direction: &Vector3<f64>)
     };
 }
 
+// should return normalized vector
 pub fn cosine_pdf_generate(hit_rec_normal: &Vector3<f64>) -> Vector3<f64> {
     let uvw = Onb::build_from_w(&hit_rec_normal);
 

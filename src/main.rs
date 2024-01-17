@@ -93,7 +93,7 @@ fn color(
                                 Ray{ origin: hit_rec.p, direction: light_list.random(&hit_rec.p) }
                             } else {
                                 Ray{ origin: hit_rec.p, direction: cosine_pdf_generate(&hit_rec.normal) }
-                            };
+                            }; // next_ray direction should normalized value.
 
                             let light_list_pdf = light_list.pdf_value(&hit_rec.p, &next_ray.direction);
                             let cosine_pdf = cosine_pdf_value(&hit_rec.normal, &next_ray.direction);
@@ -238,7 +238,7 @@ fn main() {
     );
     obj_list.push(metal_box.clone());
 
-    let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass);
+    let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass.clone());
     obj_list.push(glass_sphere.clone());
 
     let bunny_list = obj_loader(&mut File::open("./dragon.obj").unwrap(), red_glass);
@@ -258,13 +258,13 @@ fn main() {
     obj_list.push(translated_bunny_bvh.clone());
 
     /*
-    let glass_box = obj_loader(&mut File::open("./box.obj").unwrap());
+    let glass_box = obj_loader(&mut File::open("./box.obj").unwrap(), glass);
 
     let glass_box = Translate::new(
         Box::new(Rotate::new(
             Box::new(glass_box),
             //Box::new(Boxel::new([0.0, 0.0, 0.0], [100.0, 100.0, 100.0], glass)),
-            [1.0, 1.0, 0.0],
+            &[1.0, 1.0, 0.0],
             45.0,
         )),
         [200.0, 300.0, 100.0],

@@ -133,5 +133,5 @@ fn random_to_sphere(radius_sq: f64, distabce_squared: f64) -> Vector3<f64> {
     let b = (1.0 - z.powi(2)).sqrt();
     let x = a.cos() * b;
     let y = a.sin() * b;
-    [x, y, z]
+    [x, y, z] // return should normalized direction
 }

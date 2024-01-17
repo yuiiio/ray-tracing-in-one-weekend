@@ -148,6 +148,6 @@ impl Hitable for Triangle {
             &vec3_mul_b(&self.v2, w),
         );
 
-        vec3_sub(&random_point, o)
+        vec3_unit_vector_f64(&vec3_sub(&random_point, o)) // random should return normalized vec
     }
 }
