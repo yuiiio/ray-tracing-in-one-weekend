@@ -83,7 +83,7 @@ fn color(
                     match mat_rec.scatterd {
                         Scatterd::Ray(next_ray) => {
                             last_throughput = vec3_mul(&last_throughput, &vec3_mul(&attenuation, &absorabance));
-                            ray = next_ray.clone();
+                            ray = next_ray;
                             continue;
                         },
                         Scatterd::CosinePdf => {
