@@ -98,12 +98,14 @@ fn color(
                             let light_list_pdf = light_list.pdf_value(&hit_rec.p, &next_ray.direction);
                             let cosine_pdf = cosine_pdf_value(&hit_rec.normal, &next_ray.direction);
 
-                            let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;
+                            //let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;
+                            let pdf_sum = light_list_pdf + cosine_pdf;
 
-                            if pdf_value.is_sign_positive() {
+                            if pdf_sum.is_sign_positive() {
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
-                                let nor_pdf_value = 1.0 / pdf_value;
+                                //let nor_pdf_value = 1.0 / pdf_value;
+                                let nor_pdf_value = 2.0 / pdf_sum; // 1/(x/2) = 2/x
                                 last_throughput = vec3_mul(&last_throughput, &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value));
                                 ray = next_ray;
                                 continue;
