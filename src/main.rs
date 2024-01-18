@@ -148,7 +148,7 @@ fn main() {
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
-    let imgbuf = Arc::new(Mutex::new(vec![[[0.0, 0.0, 0.0]; NY]; NX]));
+    let imgbuf = Mutex::new(vec![[[0.0, 0.0, 0.0]; NY]; NX]);
     const NT: usize = 128; // use thread(+1)
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
@@ -309,9 +309,10 @@ fn main() {
     let texture_list_borrowed = &texture_list;
     let material_list_borrowed = &material_list;
 
+    let imgbuf_arc = Arc::new(&imgbuf);
     thread::scope(|s| {
         for j in 0..AX {
-            let imgbuf_clone = Arc::clone(&imgbuf);
+            let imgbuf_clone = Arc::clone(&imgbuf_arc);
             s.spawn(move || {
                 let mut img_box: Vec<[[f64; 3]; NY]> = Vec::with_capacity(axa[j]);
                 for in_j in 0..axa[j] {
@@ -346,9 +347,9 @@ fn main() {
 
     let mut output_img = RgbaImage::new(OUTPUT_X as u32, OUTPUT_Y as u32);
     const SPP_DIV: f64 = 1.0 / (NS as u32).pow(2) as f64; 
+    let imgbuf = imgbuf.into_inner().unwrap();
     for x in 0..OUTPUT_X {
         for y in 0..OUTPUT_Y {
-            let imgbuf = imgbuf.lock().unwrap();
             let mut accum_pixel: [f64; 3] = [0.0; 3];
             for i in 0..NS {
                 for j in 0..NS {
