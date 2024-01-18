@@ -1,6 +1,8 @@
 use image::{open, Rgba, RgbaImage};
 use std::fs::File;
 use std::sync::{Arc, Mutex};
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering::Relaxed;
 use std::thread;
 use std::time::SystemTime;
 use rand::prelude::*;
@@ -149,7 +151,9 @@ fn main() {
     const NY: usize = OUTPUT_Y * NS;
 
     let imgbuf = Mutex::new(vec![[[0.0, 0.0, 0.0]; NY]; NX]);
-    const NT: usize = 128; // use thread(+1)
+    const N_TASK: usize = 128; // task number ( expect larger than real cpu threads )
+    let cpu_threads: usize = thread::available_parallelism().unwrap().get();
+
     let mut obj_list = HitableList::new();
     let mut light_list = HitableList::new();
     let mut material_list = MaterialList::new();
@@ -295,7 +299,7 @@ fn main() {
         NX as f64 / NY as f64,
     );
 
-    const ALIGHN_X: usize = NX / NT; //small
+    const ALIGHN_X: usize = NX / N_TASK; //small
     const AX: usize = NX / ALIGHN_X; //large
     let mut axa: [usize; AX] = [ALIGHN_X; AX];
     const FIZZ: usize = NX % ALIGHN_X;
@@ -310,9 +314,17 @@ fn main() {
     let material_list_borrowed = &material_list;
 
     let imgbuf_arc = Arc::new(&imgbuf);
+
+    let main_thread = &thread::current();
+    let avaiable_thread = &AtomicUsize::new(cpu_threads);
     thread::scope(|s| {
         for j in 0..AX {
             let imgbuf_clone = Arc::clone(&imgbuf_arc);
+            let current_avaiable_thread = avaiable_thread.load(Relaxed);
+            if current_avaiable_thread == 0 {
+                thread::park();
+            }
+            avaiable_thread.fetch_sub(1, Relaxed);
             s.spawn(move || {
                 let mut img_box: Vec<[[f64; 3]; NY]> = Vec::with_capacity(axa[j]);
                 for in_j in 0..axa[j] {
@@ -336,6 +348,9 @@ fn main() {
                 for x in 0..axa[j] {
                     imgbuf[(ALIGHN_X * j) + x] = img_box[x];
                 }
+                drop(imgbuf); // explicit drop mutex lock
+                avaiable_thread.fetch_add(1, Relaxed);
+                main_thread.unpark();
             });
         }
     });
