@@ -46,8 +46,8 @@ const MAX_DEPTH: usize = 20;
 
 fn color(
     ray: Ray,
-    world: &Arc<BvhTree>,
-    light_list: &Arc<HitableList>,
+    world: &BvhTree,
+    light_list: &HitableList,
     texture_list: &TextureList,
     material_list: &MaterialList,
 ) -> Vector3<f64> {
@@ -295,13 +295,6 @@ fn main() {
         NX as f64 / NY as f64,
     );
 
-    let cam = Arc::new(cam);
-    let obj_bvh = Arc::new(obj_bvh);
-    let light_list = Arc::new(light_list);
-    let texture_list = Arc::new(texture_list);
-    let material_list = Arc::new(material_list);
-    let mut handles = vec![];
-
     const ALIGHN_X: usize = NX / NT; //small
     const AX: usize = NX / ALIGHN_X; //large
     let mut axa: [usize; AX] = [ALIGHN_X; AX];
@@ -309,47 +302,42 @@ fn main() {
     if FIZZ != 0 {
         axa[AX - 1] = FIZZ;
     }
-    let axa = Arc::new(axa);
 
-    for j in 0..AX {
-        //let img_box: Vec<[[u8; 4]; NY]> = Vec::with_capacity(axa[j]);
-        let imgbuf_clone = Arc::clone(&imgbuf);
-        let cam = Arc::clone(&cam);
-        let obj_bvh = Arc::clone(&obj_bvh);
-        let light_list = Arc::clone(&light_list);
-        let texture_list = Arc::clone(&texture_list);
-        let material_list = Arc::clone(&material_list);
-        let axa = Arc::clone(&axa);
-        let handle = thread::spawn(move || {
-            let mut img_box: Vec<[[f64; 3]; NY]> = Vec::with_capacity(axa[j]);
-            for in_j in 0..axa[j] {
-                let mut img_line: [[f64; 3]; NY] = [[0.0; 3]; NY];
-                for i in 0..NY {
-                    let u: f64 = (((j * ALIGHN_X) + in_j) as f64) / NX as f64;
-                    let v: f64 = (i as f64) / NY as f64;
-                    let r = cam.get_ray(u, v);
-                    let col = color(
-                        r,
-                        &obj_bvh,
-                        &light_list,
-                        &texture_list,
-                        &material_list,
-                        );
-                    img_line[i] = col;
+    let cam_borrowed = &cam;
+    let obj_bvh_borrowed = &obj_bvh;
+    let light_list_borrowed = &light_list;
+    let texture_list_borrowed = &texture_list;
+    let material_list_borrowed = &material_list;
+
+    thread::scope(|s| {
+        for j in 0..AX {
+            let imgbuf_clone = Arc::clone(&imgbuf);
+            s.spawn(move || {
+                let mut img_box: Vec<[[f64; 3]; NY]> = Vec::with_capacity(axa[j]);
+                for in_j in 0..axa[j] {
+                    let mut img_line: [[f64; 3]; NY] = [[0.0; 3]; NY];
+                    for i in 0..NY {
+                        let u: f64 = (((j * ALIGHN_X) + in_j) as f64) / NX as f64;
+                        let v: f64 = (i as f64) / NY as f64;
+                        let r = cam_borrowed.get_ray(u, v);
+                        let col = color(
+                            r,
+                            obj_bvh_borrowed,
+                            light_list_borrowed,
+                            texture_list_borrowed,
+                            material_list_borrowed,
+                            );
+                        img_line[i] = col;
+                    }
+                    img_box.push(img_line);
                 }
-                img_box.push(img_line);
-            }
-            let mut imgbuf = imgbuf_clone.lock().unwrap();
-            for x in 0..axa[j] {
-                imgbuf[(ALIGHN_X * j) + x] = img_box[x];
-            }
-        });
-        handles.push(handle);
-    }
-
-    for handle in handles {
-        handle.join().unwrap();
-    }
+                let mut imgbuf = imgbuf_clone.lock().unwrap();
+                for x in 0..axa[j] {
+                    imgbuf[(ALIGHN_X * j) + x] = img_box[x];
+                }
+            });
+        }
+    });
 
     println!(
         "Total Time elapsed: {}",
