@@ -124,11 +124,11 @@ impl Hitable for Rect {
         Some(&self.aabb_box)
     }
 
-    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        match self.hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
+        match self.hit(ray, 0.00001, 10000.0) {
             Some(rec) => {
                 let distance_squared = rec.t.powi(2);
-                let cosine = vec3_dot(v, &rec.normal).abs();
+                let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
                 return distance_squared / (cosine * self.area);
             }
             None => return 0.0,
@@ -190,8 +190,8 @@ impl Hitable for FlipNormals {
         Some(&self.shape.bounding_box().unwrap())
     }
 
-    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        self.shape.pdf_value(o, v)
+    fn pdf_value(&self, ray: &Ray) -> f64 {
+        self.shape.pdf_value(ray)
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
@@ -356,18 +356,18 @@ impl Hitable for Boxel {
         Some(&self.aabb_box)
     }
 
-    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0)  {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 
             const DIV6: f64 = 1.0 / 6.0;
             return (
-                self.rect[0].pdf_value(o, v)
-                + self.rect[1].pdf_value(o, v)
-                + self.rect[2].pdf_value(o, v)
-                + self.flip_rect[0].pdf_value(o, v)
-                + self.flip_rect[1].pdf_value(o, v)
-                + self.flip_rect[2].pdf_value(o, v)
+                self.rect[0].pdf_value(ray)
+                + self.rect[1].pdf_value(ray)
+                + self.rect[2].pdf_value(ray)
+                + self.flip_rect[0].pdf_value(ray)
+                + self.flip_rect[1].pdf_value(ray)
+                + self.flip_rect[2].pdf_value(ray)
                 ) * DIV6
         } else {
             return 0.0;

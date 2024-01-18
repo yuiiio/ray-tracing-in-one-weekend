@@ -45,9 +45,9 @@ impl Hitable for Translate {
         self.aabb_box.as_ref()
     }
 
-    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        let on = vec3_sub(o, &self.offset);
-        self.obj.pdf_value(&on, v) // this use self->obj's pdf_value func
+    fn pdf_value(&self, ray: &Ray) -> f64 {
+        let on = vec3_sub(&ray.origin, &self.offset);
+        self.obj.pdf_value(&Ray{origin: on, direction: ray.direction}) // this use self->obj's pdf_value func
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let on = vec3_sub(o, &self.offset);
@@ -125,14 +125,14 @@ impl Hitable for Rotate {
         Some(&self.aabb_box)
     }
 
-    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0)  {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 
-            let ro = self.revq.rotate(o);
-            let p = vec3_add(o, v);
+            let ro = self.revq.rotate(&ray.origin);
+            let p = vec3_add(&ray.origin, &ray.direction);
             let rp = self.revq.rotate(&p);
             let rv = vec3_sub(&rp, &ro);
-            return self.obj.pdf_value(&ro, &rv)
+            return self.obj.pdf_value(&Ray{origin: ro, direction: rv})
         } else {
             return 0.0
         }

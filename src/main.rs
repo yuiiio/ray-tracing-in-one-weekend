@@ -97,7 +97,7 @@ fn color(
                                 Ray{ origin: hit_rec.p, direction: cosine_pdf_generate(&hit_rec.normal) }
                             }; // next_ray direction should normalized value.
 
-                            let light_list_pdf = light_list.pdf_value(&hit_rec.p, &next_ray.direction);
+                            let light_list_pdf = light_list.pdf_value(&next_ray);
                             let cosine_pdf = cosine_pdf_value(&hit_rec.normal, &next_ray.direction);
 
                             //let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;

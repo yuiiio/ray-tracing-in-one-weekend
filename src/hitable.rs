@@ -14,7 +14,7 @@ pub struct HitRecord<'a> {
 pub trait Hitable: HitableClone {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
     fn bounding_box(&self) -> Option<&Aabb>;
-    fn pdf_value(&self, _o: &Vector3<f64>, _v: &Vector3<f64>) -> f64 {
+    fn pdf_value(&self, _r: &Ray) -> f64 {
         return 0.0;
     }
     fn random(&self, _o: &Vector3<f64>) -> Vector3<f64> { // should return normalized vector

@@ -433,12 +433,12 @@ impl Hitable for BvhTree {
         Some(&self.aabb_box)
     }
 
-    fn pdf_value(&self, o: &Vector3<f64>, v: &Vector3<f64>) -> f64 {
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(&Ray{ origin: *o, direction: *v }, 0.00001, 10000.0) {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             let hitable_list_len = self.hitable_list_num; // last is empty_hitable, so needs avoid
             let mut pdf_sum: f64 = 0.0;
             for i in 0..hitable_list_len {
-                pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(o, v);
+                pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(ray);
             }
             return pdf_sum * self.nor_hitable_list_num;
         } else {
