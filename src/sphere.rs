@@ -52,28 +52,34 @@ impl Hitable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let rec: Option<HitRecord> = None;
         let oc = vec3_sub(&r.origin, &self.center);
-        let b = vec3_dot(&r.direction, &oc);
-        let c = vec3_squared_length(&oc) - self.radius_sq;
-        let descriminant = b.powi(2) - c;
+        let b = vec3_dot(&r.direction, &oc);// -oc~0~oc
+        let c = vec3_squared_length(&oc) - self.radius_sq;// oc^2 - r^2
+        let descriminant = b.powi(2) - c;// (0~oc)^2 - (oc^2 - r^2)
         if descriminant.is_sign_positive() {
-            let temp = -b - descriminant.sqrt();
-            if temp < t_max && temp > t_min {
-                let point = r.point_at_parameter(temp);
-                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                let uv = if self.needs_uv == true {
-                    get_sphere_uv(nnormal)
-                } else {
-                    (0.0, 0.0)
-                };
-                return Some(HitRecord {
-                    t: temp,
-                    uv,
-                    p: point,
-                    normal: nnormal,
-                    mat_ptr: &self.mat_ptr,
-                });
+            let desc_sqrt = descriminant.sqrt();
+            let temp = -b - desc_sqrt;
+            if temp < t_max {
+                if temp > t_min {
+                    let point = r.point_at_parameter(temp);
+                    let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
+                    let uv = if self.needs_uv == true {
+                        get_sphere_uv(nnormal)
+                    } else {
+                        (0.0, 0.0)
+                    };
+                    return Some(HitRecord {
+                        t: temp,
+                        uv,
+                        p: point,
+                        normal: nnormal,
+                        mat_ptr: &self.mat_ptr,
+                    });
+                }
+            } else {
+                // t_max < (-b - desc_sqrt) < (-b + desc_sqrt)
+                return None;
             }
-            let temp = -b + descriminant.sqrt();
+            let temp = -b + desc_sqrt;
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
