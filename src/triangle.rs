@@ -67,7 +67,7 @@ impl Triangle {
 impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let d = ray.direction;
-        let lal = -1.0 * vec3_dot(&d, &self.n);
+        let lal = vec3_dot(&d, &self.n);
         if lal == 0.0 {
             return None;
         }
@@ -76,13 +76,15 @@ impl Hitable for Triangle {
         let r = vec3_sub(&ray.origin, &self.v0);
         let m = cross(&d, &r);
 
-        let u = nor_lal * vec3_dot(&self.e2, &m);
-        if u.is_sign_negative() || u > 1.0 {
+        let v = nor_lal * vec3_dot(&self.e1, &m);
+        if v.is_sign_negative() || v > 1.0 {
             return None;
         }
 
-        let v = nor_lal * -1.0 * vec3_dot(&self.e1, &m);
-        if v.is_sign_negative() || v > 1.0 {
+        let nor_lal = -1.0 * nor_lal;
+
+        let u = nor_lal * vec3_dot(&self.e2, &m);
+        if u.is_sign_negative() || u > 1.0 {
             return None;
         }
 
