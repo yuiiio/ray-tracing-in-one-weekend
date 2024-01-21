@@ -41,7 +41,7 @@ impl Hitable for Translate {
         }
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         self.aabb_box.as_ref()
     }
 
@@ -121,7 +121,7 @@ impl Hitable for Rotate {
         }
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         Some(&self.aabb_box)
     }
 
@@ -132,10 +132,9 @@ impl Hitable for Rotate {
             let p = vec3_add(&ray.origin, &ray.direction);
             let rp = self.revq.rotate(&p);
             let rv = vec3_sub(&rp, &ro);
-            return self.obj.pdf_value(&Ray{origin: ro, direction: rv})
-        } else {
-            return 0.0
+            return self.obj.pdf_value(&Ray{origin: ro, direction: rv});
         }
+        0.0
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let ro = self.revq.rotate(o);

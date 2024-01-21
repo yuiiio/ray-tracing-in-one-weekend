@@ -9,12 +9,11 @@ pub struct Onb {
 impl Onb {
     pub fn build_from_w(n: &Vector3<f64>) -> Self {
         let w = vec3_unit_vector_f64(n);
-        let a: Vector3<f64>;
-        if w[0].abs() > 0.9 {
-            a = [0.0, 1.0, 0.0]
+        let a = if w[0].abs() > 0.9 {
+            [0.0, 1.0, 0.0]
         } else {
-            a = [1.0, 0.0, 0.0]
-        }
+            [1.0, 0.0, 0.0]
+        };
         let v = vec3_unit_vector_f64(&cross(&w, &a));
         let u = cross(&w, &v);
         Onb { u, v, w }

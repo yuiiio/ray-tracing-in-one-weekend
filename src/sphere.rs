@@ -62,7 +62,7 @@ impl Hitable for Sphere {
                 if temp > t_min {
                     let point = r.point_at_parameter(temp);
                     let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                    let uv = if self.needs_uv == true {
+                    let uv = if self.needs_uv {
                         get_sphere_uv(nnormal)
                     } else {
                         (0.0, 0.0)
@@ -83,7 +83,7 @@ impl Hitable for Sphere {
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
                 let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
-                let uv = if self.needs_uv == true {
+                let uv = if self.needs_uv {
                     get_sphere_uv(nnormal)
                 } else {
                     (0.0, 0.0)
@@ -100,26 +100,22 @@ impl Hitable for Sphere {
         rec
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 
-            match self.hit(ray, 0.00001, 10000.0) {
-                Some(_rec) => {
-                    let distabce_squared: f64 = vec3_squared_length(&vec3_sub(&self.center, &ray.origin));
-                    let cos_theta_max: f64 = (1.0 - (self.radius_sq / distabce_squared)).sqrt();
-                    // if cos_theta_max == 1,0 return 0.0
-                    // but, never happen (radius_sq > 0.0)
-                    return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
-                },
-                None => return 0.0,
+            if let Some(_rec) = self.hit(ray, 0.00001, 10000.0) {
+                let distabce_squared: f64 = vec3_squared_length(&vec3_sub(&self.center, &ray.origin));
+                let cos_theta_max: f64 = (1.0 - (self.radius_sq / distabce_squared)).sqrt();
+                // if cos_theta_max == 1,0 return 0.0
+                // but, never happen (radius_sq > 0.0)
+                return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
             }
-        } else {
-            return 0.0;
         }
+        0.0
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let direction = vec3_sub(&self.center, o);

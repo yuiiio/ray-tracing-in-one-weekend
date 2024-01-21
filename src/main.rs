@@ -138,8 +138,7 @@ fn color(
     }
     // when nest >= dephs
     let last_emitted = [0.5, 0.5, 0.5];
-    cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
-    return cur_emitted;
+    vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted))
 }
 
 fn main() {

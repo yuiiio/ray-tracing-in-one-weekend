@@ -98,32 +98,28 @@ impl Hitable for Triangle {
         }
 
         let p: Vector3<f64> = ray.point_at_parameter(t);
-        return Some(HitRecord {
+        Some(HitRecord {
             t,
             uv: (u, v),
             p,
             normal: self.n_norm,
             mat_ptr: &self.mat_ptr,
-        });
+        })
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
-        return Some(&self.aabb_box);
+    fn bounding_box(&self) -> Option<&Aabb> {
+        Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
-            match self.hit(ray, 0.00001, 10000.0) {
-                Some(rec) => {
-                    let distance_squared = rec.t.powi(2);
-                    let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-                    return distance_squared / (cosine * self.area);
-                }
-                None => return 0.0,
+            if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
+                let distance_squared = rec.t.powi(2);
+                let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
+                return distance_squared / (cosine * self.area);
             }
-        } else {
-            return 0.0;
         }
+        0.0
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {

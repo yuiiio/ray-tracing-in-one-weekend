@@ -133,7 +133,7 @@ pub struct Metal {
 fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     vec3_add(
         &vec3_mul_b(&vec3_mul_b(n, vec3_dot(&vec3_mul_b(v, -1.0), n)), 2.0),
-        &v,
+        v,
     )
 }
 
@@ -211,10 +211,10 @@ impl Lambertian {
         let direction = vec3_unit_vector_f64(&r.direction);
         let cosine = vec3_dot(&n, &direction);
         if cosine.is_sign_positive() {
-            return cosine / PI;
+            cosine / PI
         } else {
-            return 0.0;
-        };
+            0.0
+        }
     }
 }
 
@@ -271,7 +271,6 @@ impl Dielectric {
         let ni_over_nt: f64;
         let ni_over_nt_seq: f64;
         let attenuation: Vector3<f64> = [1.0, 1.0, 1.0];
-        let scatterd: Ray;
         let reflect_prob: f64;
         let cosine: f64;
         let mut outside_to_inside: bool = false;
@@ -292,7 +291,7 @@ impl Dielectric {
         let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
         let r_in_direction = r_in.direction;
-        scatterd = match refract(&r_in_direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
+        let scatterd: Ray = match refract(&r_in_direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
             Some(refracted) => {
                 reflect_prob = schlick(cosine, self.schlick_r0, self.schlick_r1); // for real glass maty
                 let mut rng = rand::thread_rng();
@@ -345,13 +344,13 @@ impl DiffuseLight {
 
     fn emitted(&self, r: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Vector3<f64> {
         if vec3_dot(&hit_record.normal, &r.direction).is_sign_negative() {
-            return texture_list.get_value(
+            texture_list.get_value(
                 hit_record.uv,
                 &hit_record.p,
                 &self.texture
-                );
+                )
         } else {
-            return [0.0, 0.0, 0.0];
+            [0.0, 0.0, 0.0]
         }
     }
 }

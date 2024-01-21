@@ -68,7 +68,7 @@ impl ColorTexture {
     }
 
     fn get_value(&self) -> Vector3<f64> {
-        return self.m_color;
+        self.m_color
     }
 }
 

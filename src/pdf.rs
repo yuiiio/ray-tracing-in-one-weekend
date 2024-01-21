@@ -5,17 +5,17 @@ use crate::onb::Onb;
 use crate::vec3::{vec3_dot, Vector3};
 
 pub fn cosine_pdf_value(hit_rec_normal: &Vector3<f64>, direction: &Vector3<f64>) -> f64 {
-    let cosine = vec3_dot(&hit_rec_normal, &direction);
+    let cosine = vec3_dot(hit_rec_normal, direction);
     if cosine.is_sign_positive() {
-        return cosine / PI;
+        cosine / PI
     } else {
-        return 0.0;
-    };
+        0.0
+    }
 }
 
 // should return normalized vector
 pub fn cosine_pdf_generate(hit_rec_normal: &Vector3<f64>) -> Vector3<f64> {
-    let uvw = Onb::build_from_w(&hit_rec_normal);
+    let uvw = Onb::build_from_w(hit_rec_normal);
 
     let rcd = random_cosine_direction();
 

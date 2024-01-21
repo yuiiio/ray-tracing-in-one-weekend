@@ -44,14 +44,14 @@ pub fn obj_loader(file: &mut File, material_handle: MaterialHandle) -> HitableLi
     for s in face_line {
         let attr: Vec<&str> = s.split(" ").skip(1).collect(); //remove "f" at front
 
-        let first: Vec<&str> = attr.get(0).unwrap().split("/").collect();
-        let i0: usize = first.get(0).unwrap().parse().unwrap();
+        let first: Vec<&str> = attr.first().unwrap().split("/").collect();
+        let i0: usize = first.first().unwrap().parse().unwrap();
 
         let second: Vec<&str> = attr.get(1).unwrap().split("/").collect();
-        let i1: usize = second.get(0).unwrap().parse().unwrap();
+        let i1: usize = second.first().unwrap().parse().unwrap();
 
         let third: Vec<&str> = attr.get(2).unwrap().split("/").collect();
-        let i2: usize = third.get(0).unwrap().parse().unwrap();
+        let i2: usize = third.first().unwrap().parse().unwrap();
 
         let v0 = vertex[i0 - 1];
         let v1 = vertex[i1 - 1];
@@ -61,5 +61,5 @@ pub fn obj_loader(file: &mut File, material_handle: MaterialHandle) -> HitableLi
         hitablelist.push(triangle);
     }
 
-    return hitablelist;
+    hitablelist
 }

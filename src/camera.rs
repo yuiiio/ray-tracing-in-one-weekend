@@ -69,7 +69,7 @@ fn random_in_unit_disk() -> Vector3<f64> {
     let x: f64 = seeta.cos() * sqrt_a;
     let y: f64 = seeta.sin() * sqrt_a;
 
-    return [x, y, 0.0];
+    [x, y, 0.0]
 }
 
 mod test {

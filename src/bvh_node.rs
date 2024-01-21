@@ -42,32 +42,32 @@ fn dmerge(
         loop {
             if center_list[vec[i]][compare_axis] < center_list[vec[j]][compare_axis] {
                 stock_vec[k] = vec[i];
-                i = i + 1;
+                i += 1;
                 if i == mid {
-                    k = k + 1;
+                    k += 1;
                     break;
                 }
             } else {
                 stock_vec[k] = vec[j];
-                j = j + 1;
+                j += 1;
                 if j == right {
-                    k = k + 1;
+                    k += 1;
                     break;
                 }
             }
-            k = k + 1;
+            k += 1;
         }
     }
 
     if i == mid {
         for m in k..length {
             stock_vec[m] = vec[j];
-            j = j + 1;
+            j += 1;
         }
     } else {
         for m in k..length {
             stock_vec[m] = vec[i];
-            i = i + 1;
+            i += 1;
         }
     }
 
@@ -178,8 +178,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             } else {
                 //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
-                let left_handle = build_bvh(hitable_list, &vec![handle[0]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
-                let right_handle = build_bvh(hitable_list, &vec![handle[1]], &pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+                let left_handle = build_bvh(hitable_list, &vec![handle[0]], pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+                let right_handle = build_bvh(hitable_list, &vec![handle[1]], pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                                   , &bvh_node_list[right_handle].bvh_node_box),
@@ -344,11 +344,11 @@ impl Hitable for BvhTree {
             let bvh_pos_diff = current_bvh_node.next_pos_diff;
             if bvh_pos_diff == 1 { // this node has actual item
                 let right_obj = &self.hitable_list[current_bvh_node.right];
-                if let Some(ref right_bounding_box) = right_obj.bounding_box() {
+                if let Some(right_bounding_box) = right_obj.bounding_box() {
                     if let Some(_right_rec) = right_bounding_box.aabb_hit(r, t_min, min_hit_t) { // check bounding_box
                         if let Some(right_rec) = right_obj.hit(r, t_min, min_hit_t) { // actual hit check
                             let left_obj = &self.hitable_list[current_bvh_node.left];
-                            if let Some(ref left_bounding_box) = left_obj.bounding_box() {
+                            if let Some(left_bounding_box) = left_obj.bounding_box() {
                                 if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, right_rec.t) { // bounding_box
                                     if let Some(left_rec) = left_obj.hit(r, t_min, right_rec.t) { // acutual hit check
                                         let left_t = left_rec.t;
@@ -366,7 +366,7 @@ impl Hitable for BvhTree {
                             let right_t = right_rec.t;
                             return_rec = Some(right_rec);
                             min_hit_t = right_t;
-                            current_pos = current_pos - 1;
+                            current_pos -= 1;
                             if current_pos == 0 {
                                 break; // no more hit node, ealy return;
                             } else {
@@ -376,13 +376,13 @@ impl Hitable for BvhTree {
                     }; // not hit right_bounding_box
                 }; // not found right_bounding_box
                 let left_obj = &self.hitable_list[current_bvh_node.left];
-                if let Some(ref left_bounding_box) = left_obj.bounding_box() {
+                if let Some(left_bounding_box) = left_obj.bounding_box() {
                     if let Some(_left_rec) = left_bounding_box.aabb_hit(r, t_min, min_hit_t) { // bounding_box
                         if let Some(left_rec) = left_obj.hit(r, t_min, min_hit_t) { // acutual hit check
                             let left_t = left_rec.t;
                             return_rec = Some(left_rec);
                             min_hit_t = left_t;
-                            current_pos = current_pos - 1;
+                            current_pos -= 1;
                             if current_pos == 0 {
                                 break; // no more hit node, ealy return;
                             } else {
@@ -392,7 +392,7 @@ impl Hitable for BvhTree {
                     };
                 };
                 // nothing update
-                current_pos = current_pos - 1;
+                current_pos -= 1;
                 if current_pos == 0 {
                     break; // no more hit node, ealy return;
                 } else {
@@ -401,7 +401,7 @@ impl Hitable for BvhTree {
             } else { // this node has other nodes
                 match current_bvh_node.bvh_node_box.aabb_hit(r, t_min, min_hit_t) {
                     Some(_hit_rec) => { // if hit, next_pos_diff => 1;
-                        current_pos = current_pos - 1;
+                        current_pos -= 1;
                         // perfect tree so, not need check this case.
                         /*
                         if current_pos == 0 {
@@ -426,10 +426,10 @@ impl Hitable for BvhTree {
                };
             };
         }
-        return return_rec
+        return_rec
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         Some(&self.aabb_box)
     }
 
@@ -440,9 +440,9 @@ impl Hitable for BvhTree {
             for i in 0..hitable_list_len {
                 pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(ray);
             }
-            return pdf_sum * self.nor_hitable_list_num;
+            pdf_sum * self.nor_hitable_list_num
         } else {
-            return 0.0;
+            0.0
         }
     }
 
@@ -451,6 +451,6 @@ impl Hitable for BvhTree {
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
         let rand_handle = (rand * hitable_list_len as f64) as usize;
-        return self.hitable_list[rand_handle].random(o);
+        self.hitable_list[rand_handle].random(o)
     }
 }

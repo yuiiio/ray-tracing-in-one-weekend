@@ -5,31 +5,6 @@ use crate::hitable::{HitRecord, Hitable};
 use crate::ray::Ray;
 use crate::vec3::Vector3;
 
-/*
-hitable object:
-
-EmptyHitable
-BvhTree <=
-HitableList <=
-Rect
-FlipNormals <=
-Boxel <=
-Sphere
-Rotate <=
-Triangle
-
-: <= takes Hitable object
-so, if avoid trait object,
-hit takes &HitableList(not object, just vec).
-if BvhTree and HitableList is special sturct.
-Bvh should have Bvh node.
-hit(&list) => list[handle].hit(&list) ?can?
-or, another list should have for Bvh self ?
-
-struct Example {
-    another: Example, <= maybe need box and enum for recursive struct
-}
-*/
 #[derive(Clone)]
 pub struct HitableList { 
     hitable_list: Vec<Box<dyn Hitable + Send + Sync>>,
@@ -94,7 +69,7 @@ impl Hitable for HitableList {
         rec
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         self.aabb_box.as_ref()
     }
 
@@ -106,9 +81,9 @@ impl Hitable for HitableList {
                     sum += i.pdf_value(ray);
                 }
                 return sum * self.nor_hitable_list_len;
-            };
-        };
-        return 0.0;
+            }
+        }
+        0.0
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {

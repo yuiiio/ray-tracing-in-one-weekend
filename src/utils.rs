@@ -48,20 +48,20 @@ fn merge<T: Clone>(
         loop {
             if compare(&vec[i], &vec[j]) {
                 stock_vec[k] = vec[i].clone();
-                i = i + 1;
+                i += 1;
                 if i == mid {
-                    k = k + 1;
+                    k += 1;
                     break;
                 }
             } else {
                 stock_vec[k] = vec[j].clone();
-                j = j + 1;
+                j += 1;
                 if j == right {
-                    k = k + 1;
+                    k += 1;
                     break;
                 }
             }
-            k = k + 1;
+            k += 1;
         }
     }
 
@@ -69,12 +69,12 @@ fn merge<T: Clone>(
                   // so mid(>j)~right move to stock_vec
         for m in k..length {
             stock_vec[m] = vec[j].clone(); 
-            j = j + 1;
+            j += 1;
         }
     } else {
         for m in k..length {
             stock_vec[m] = vec[i].clone();
-            i = i + 1;
+            i += 1;
         }
     }
 

@@ -103,7 +103,7 @@ impl Hitable for Rect {
             return None;
         }
 
-        let (u, v) = if self.needs_uv == true {
+        let (u, v) = if self.needs_uv {
             ((x - self.x0) * self.nor_width,
             (y - self.y0) * self.nor_height)
         } else {
@@ -120,19 +120,17 @@ impl Hitable for Rect {
         })
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         Some(&self.aabb_box)
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        match self.hit(ray, 0.00001, 10000.0) {
-            Some(rec) => {
-                let distance_squared = rec.t.powi(2);
-                let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-                return distance_squared / (cosine * self.area);
-            }
-            None => return 0.0,
+        if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
+            let distance_squared = rec.t.powi(2);
+            let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
+            return distance_squared / (cosine * self.area);
         }
+        0.0
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
@@ -186,7 +184,7 @@ impl Hitable for FlipNormals {
         }
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         Some(&self.shape.bounding_box().unwrap())
     }
 
@@ -352,7 +350,7 @@ impl Hitable for Boxel {
         }
     }
 
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         Some(&self.aabb_box)
     }
 
@@ -361,16 +359,15 @@ impl Hitable for Boxel {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 
             const DIV6: f64 = 1.0 / 6.0;
-            return (
-                self.rect[0].pdf_value(ray)
-                + self.rect[1].pdf_value(ray)
-                + self.rect[2].pdf_value(ray)
-                + self.flip_rect[0].pdf_value(ray)
-                + self.flip_rect[1].pdf_value(ray)
-                + self.flip_rect[2].pdf_value(ray)
-                ) * DIV6
+            ( self.rect[0].pdf_value(ray)
+              + self.rect[1].pdf_value(ray)
+              + self.rect[2].pdf_value(ray)
+              + self.flip_rect[0].pdf_value(ray)
+              + self.flip_rect[1].pdf_value(ray)
+              + self.flip_rect[2].pdf_value(ray)
+            ) * DIV6
         } else {
-            return 0.0;
+            0.0
         }
     }
 
@@ -380,9 +377,9 @@ impl Hitable for Boxel {
         let random_handle = (rand * 3.0) as usize;
         let rand2: f64 = rng.gen();
         if rand2 < 0.5 {
-            return self.rect[random_handle].random(o); 
+            self.rect[random_handle].random(o)
         } else {
-            return self.flip_rect[random_handle].random(o); 
+            self.flip_rect[random_handle].random(o)
         }
     }
 }
