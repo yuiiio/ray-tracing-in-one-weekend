@@ -136,7 +136,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                // so need more checks depth in 2 => arm.
             //assert_eq!(bvh_depth, 1);
             let new_node = BvhNode {
-                bvh_node_box: (hitable_list[handle[0]].bounding_box().unwrap()).clone(),
+                bvh_node_box: (hitable_list[handle[0]].bounding_box()).clone(),
                 left: handle[0],
                 right: handle[0], // right == left, but should skip with flag
                 next_pos_diff,
@@ -149,8 +149,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
         2 => {
             if bvh_depth == 1 {
                 let new_node = BvhNode {
-                    bvh_node_box: surrounding_box(hitable_list[handle[0]].bounding_box().unwrap()
-                                                  , hitable_list[handle[1]].bounding_box().unwrap()),
+                    bvh_node_box: surrounding_box(hitable_list[handle[0]].bounding_box()
+                                                  , hitable_list[handle[1]].bounding_box()),
                     left: handle[0],
                     right: handle[1],
                     next_pos_diff,
@@ -207,19 +207,16 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
             */
             let x_max: f64 = hitable_list[handle_x[handle_size - 1]]
                 .bounding_box()
-                .unwrap()
                 .b_max[0]
-                - hitable_list[handle_x[0]].bounding_box().unwrap().b_min[0];
+                - hitable_list[handle_x[0]].bounding_box().b_min[0];
             let y_max: f64 = hitable_list[handle_y[handle_size - 1]]
                 .bounding_box()
-                .unwrap()
                 .b_max[1]
-                - hitable_list[handle_y[0]].bounding_box().unwrap().b_min[1];
+                - hitable_list[handle_y[0]].bounding_box().b_min[1];
             let z_max: f64 = hitable_list[handle_z[handle_size - 1]]
                 .bounding_box()
-                .unwrap()
                 .b_max[2]
-                - hitable_list[handle_z[0]].bounding_box().unwrap().b_min[2];
+                - hitable_list[handle_z[0]].bounding_box().b_min[2];
 
             let sorted_axis: Axis;
             let selected_handle = if x_max < y_max {
@@ -267,8 +264,8 @@ impl BvhTree {
 
         let mut aabb_center_list = Vec::with_capacity(hitable_list_len);
         for i in 0..hitable_list_len {
-            let bounding_box_max = hitable_list[i].bounding_box().unwrap().b_max;
-            let bounding_box_min = hitable_list[i].bounding_box().unwrap().b_min;
+            let bounding_box_max = hitable_list[i].bounding_box().b_max;
+            let bounding_box_min = hitable_list[i].bounding_box().b_min;
             let center_point: Vector3<f64> = [
                 (bounding_box_max[0] + bounding_box_min[0])*0.5,
                 (bounding_box_max[1] + bounding_box_min[1])*0.5,
@@ -327,10 +324,10 @@ impl Hitable for BvhTree {
             if bvh_pos_diff == 1 { // this node has actual item
                 let right_obj = &self.hitable_list[current_bvh_node.right];
                 if !current_bvh_node.only_have_left_obj { // ! so need check both
-                    if let Some(_right_aabb_hit) = right_obj.bounding_box().unwrap().aabb_hit(r, t_min, min_hit_t) { // check bounding_box
+                    if let Some(_right_aabb_hit) = right_obj.bounding_box().aabb_hit(r, t_min, min_hit_t) { // check bounding_box
                         if let Some(right_rec) = right_obj.hit(r, t_min, min_hit_t) { // actual hit check
                             let left_obj = &self.hitable_list[current_bvh_node.left];
-                            if let Some(_left_aabb_hit) = left_obj.bounding_box().unwrap().aabb_hit(r, t_min, right_rec.t) { // bounding_box
+                            if let Some(_left_aabb_hit) = left_obj.bounding_box().aabb_hit(r, t_min, right_rec.t) { // bounding_box
                                 if let Some(left_rec) = left_obj.hit(r, t_min, right_rec.t) { // acutual hit check
                                     let left_t = left_rec.t;
                                     return_rec = Some(left_rec);
@@ -357,7 +354,7 @@ impl Hitable for BvhTree {
                 };
                 // not need check right
                 let left_obj = &self.hitable_list[current_bvh_node.left];
-                if let Some(_left_aabb_hit) = left_obj.bounding_box().unwrap().aabb_hit(r, t_min, min_hit_t) { // bounding_box
+                if let Some(_left_aabb_hit) = left_obj.bounding_box().aabb_hit(r, t_min, min_hit_t) { // bounding_box
                     if let Some(left_rec) = left_obj.hit(r, t_min, min_hit_t) { // acutual hit check
                         let left_t = left_rec.t;
                         return_rec = Some(left_rec);
@@ -408,8 +405,8 @@ impl Hitable for BvhTree {
         return_rec
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        Some(&self.aabb_box)
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {

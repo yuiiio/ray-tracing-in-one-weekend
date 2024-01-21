@@ -100,8 +100,8 @@ impl Hitable for Sphere {
         rec
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        Some(&self.aabb_box)
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {

@@ -8,17 +8,14 @@ use crate::vec3::{vec3_add, vec3_sub, Vector3};
 pub struct Translate {
     obj: Box<dyn Hitable + Send + Sync>,
     offset: Vector3<f64>,
-    aabb_box: Option<Aabb>,
+    aabb_box: Aabb,
 }
 
 impl Translate {
     pub fn new(obj: Box<dyn Hitable + Send + Sync>, offset: Vector3<f64>) -> Self {
-        let aabb_box = match obj.bounding_box() {
-            Some(aabb) => Some(Aabb {
-                b_min: vec3_add(&aabb.b_min, &offset),
-                b_max: vec3_add(&aabb.b_max, &offset),
-            }),
-            None => None,
+        let aabb_box = Aabb {
+            b_min: vec3_add(&obj.bounding_box().b_min, &offset),
+            b_max: vec3_add(&obj.bounding_box().b_max, &offset),
         };
         Translate { obj, offset, aabb_box }
     }
@@ -41,8 +38,8 @@ impl Hitable for Translate {
         }
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        self.aabb_box.as_ref()
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
@@ -69,7 +66,7 @@ impl Rotate {
         let revq = Rotation::new(-angle, axis);
 
         // let found boundingbox to enough include rotate-obj
-        let bbox = obj.bounding_box().unwrap();
+        let bbox = obj.bounding_box();
         let mut b_min = [std::f64::MAX; 3];
         let mut b_max = [-std::f64::MAX; 3];
         for i in [1, 0].iter() {
@@ -121,8 +118,8 @@ impl Hitable for Rotate {
         }
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        Some(&self.aabb_box)
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {

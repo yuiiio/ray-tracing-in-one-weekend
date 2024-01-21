@@ -13,7 +13,7 @@ pub struct HitRecord<'a> {
 
 pub trait Hitable: HitableClone {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
-    fn bounding_box(&self) -> Option<&Aabb>;
+    fn bounding_box(&self) -> &Aabb;
     fn pdf_value(&self, _r: &Ray) -> f64 {
         0.0
     }

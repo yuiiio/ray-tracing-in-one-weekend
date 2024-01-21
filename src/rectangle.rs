@@ -120,8 +120,8 @@ impl Hitable for Rect {
         })
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        Some(&self.aabb_box)
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
@@ -184,8 +184,8 @@ impl Hitable for FlipNormals {
         }
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        Some(&self.shape.bounding_box().unwrap())
+    fn bounding_box(&self) -> &Aabb {
+        self.shape.bounding_box()
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
@@ -350,8 +350,8 @@ impl Hitable for Boxel {
         }
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        Some(&self.aabb_box)
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {

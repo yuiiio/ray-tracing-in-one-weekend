@@ -8,7 +8,7 @@ use crate::vec3::Vector3;
 #[derive(Clone)]
 pub struct HitableList { 
     hitable_list: Vec<Box<dyn Hitable + Send + Sync>>,
-    aabb_box: Option<Aabb>,
+    aabb_box: Aabb,
     nor_hitable_list_len: f64,
 }
 
@@ -16,28 +16,19 @@ impl HitableList {
     pub fn new() -> Self {
         HitableList{
             hitable_list: Vec::new(),
-            aabb_box: None,
+            aabb_box: Aabb{ b_min:[0.0, 0.0, 0.0], b_max:[0.0, 0.0, 0.0] },
             nor_hitable_list_len: 1.0,
         }
     }
 
     pub fn push<H: Hitable + 'static + Send + Sync>(&mut self, hitable: H) {
-        let aabb_box: Option<Aabb> = match self.aabb_box.clone() {
-            Some(self_aabb_box) => {
-                match hitable.bounding_box() {
-                    Some(hitable_aabb_box) => Some(surrounding_box(&self_aabb_box, hitable_aabb_box)),
-                    None => Some(self_aabb_box),
-                }
-            },
-            None => {
-                match hitable.bounding_box() {
-                    Some(hitable_aabb_box) => Some(hitable_aabb_box.clone()),
-                    None => None,
-                }
-            },
-        };
+        self.aabb_box =
+            if self.hitable_list.len() == 0 {
+                hitable.bounding_box().clone()
+            } else {
+                surrounding_box(&self.aabb_box, hitable.bounding_box())
+            };
         self.hitable_list.push(Box::new(hitable));
-        self.aabb_box = aabb_box;
         self.nor_hitable_list_len = 1.0 / (self.hitable_list.len() as f64);
     }
 }
@@ -69,19 +60,17 @@ impl Hitable for HitableList {
         rec
     }
 
-    fn bounding_box(&self) -> Option<&Aabb> {
-        self.aabb_box.as_ref()
+    fn bounding_box(&self) -> &Aabb {
+        &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(ref aabb_box) = self.aabb_box {
-            if let Some(_aabb_hit) = aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
-                let mut sum: f64 = 0.0;
-                for i in self.iter() {
-                    sum += i.pdf_value(ray);
-                }
-                return sum * self.nor_hitable_list_len;
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
+            let mut sum: f64 = 0.0;
+            for i in self.iter() {
+                sum += i.pdf_value(ray);
             }
+            return sum * self.nor_hitable_list_len;
         }
         0.0
     }
