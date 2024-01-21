@@ -13,6 +13,27 @@ pub struct Aabb {
 }
 
 impl Aabb {
+    pub fn aabb_hit_with_cache(&self, r: &Ray, r_dir_div: &Vector3<f64>, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
+        let mut tmin = t_min;
+        let mut tmax = t_max;
+        for i in 0..3 {
+            let inv_d = r_dir_div[i];
+            let mut t0 = (self.b_min[i] - r.origin[i]) * inv_d;
+            let mut t1 = (self.b_max[i] - r.origin[i]) * inv_d;
+
+            if inv_d.is_sign_negative() {
+                swap(&mut t0, &mut t1);
+            }
+
+            tmin = max(t0, tmin);
+            tmax = min(t1, tmax);
+            if tmax < tmin {
+                return None
+            }
+        }
+        Some(AabbHitRecord{})
+    }
+
     pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;

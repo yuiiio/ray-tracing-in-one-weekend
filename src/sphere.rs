@@ -106,7 +106,6 @@ impl Hitable for Sphere {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
-
             if let Some(_rec) = self.hit(ray, 0.00001, 10000.0) {
                 let distabce_squared: f64 = vec3_squared_length(&vec3_sub(&self.center, &ray.origin));
                 let cos_theta_max: f64 = (1.0 - (self.radius_sq / distabce_squared)).sqrt();
