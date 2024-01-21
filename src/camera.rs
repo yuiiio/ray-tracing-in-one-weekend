@@ -45,16 +45,18 @@ impl Camera {
     }
 
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
-        Ray {
-            origin: self.origin,
-            direction: vec3_unit_vector_f64(&vec3_sub(
-                &vec3_add(
-                    &vec3_add(&self.lower_left_corner, &vec3_mul_b(&self.horizontal, s)),
-                    &vec3_mul_b(&self.vertical, t),
-                    ),
-                    &self.origin,
-                    )),
-        }
+        Ray::new(
+            self.origin,
+            vec3_unit_vector_f64(
+                &vec3_sub(
+                    &vec3_add(
+                        &vec3_add(&self.lower_left_corner, &vec3_mul_b(&self.horizontal, s)),
+                        &vec3_mul_b(&self.vertical, t),
+                        ),
+                        &self.origin,
+                        )
+                )
+            )
     }
 }
 

@@ -13,11 +13,11 @@ pub struct Aabb {
 }
 
 impl Aabb {
-    pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
+    pub fn aabb_hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
-            let inv_d = 1.0 / r.direction[i];
+            let inv_d = r.get_inv_direction(i);
             let mut t0 = (self.b_min[i] - r.origin[i]) * inv_d;
             let mut t1 = (self.b_max[i] - r.origin[i]) * inv_d;
 
@@ -51,20 +51,20 @@ mod test {
     #[test]
     fn aabb_hit_test() {
         let aabb_box = Aabb{ b_min: [1.0, 1.0, 1.0], b_max: [2.0, 2.0, 2.0] };
-        let r = Ray{ origin: [0.0, 0.0, 0.0], direction: [1.5, 1.5, 1.5] };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let mut r = Ray::new([0.0, 0.0, 0.0],[1.5, 1.5, 1.5]);
+        let result = match aabb_box.aabb_hit(&mut r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
          };
         assert_eq!(true, result);
-        let r = Ray{ origin: [0.0, 0.0, 0.0], direction: [1.5, 0.0, 1.5] };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let mut r = Ray::new([0.0, 0.0, 0.0], [1.5, 0.0, 1.5]);
+        let result = match aabb_box.aabb_hit(&mut r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
          };
         assert_eq!(false, result);
-        let r = Ray{ origin: [3.0, 3.0, 3.0], direction: [-1.0, -1.0, -1.0] };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let mut r = Ray::new([3.0, 3.0, 3.0], [-1.0, -1.0, -1.0]);
+        let result = match aabb_box.aabb_hit(&mut r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
          };

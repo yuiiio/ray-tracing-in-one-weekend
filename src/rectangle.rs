@@ -83,14 +83,14 @@ impl Rect {
 // Rect hit is valid even ray direction.
 // Rect != actual Surface.
 impl Hitable for Rect {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (xi, yi, zi, nnormal): (usize, usize, usize, Vector3<f64>) = match self.axis {
             AxisType::Kxy => (0, 1, 2, [0.0, 0.0, 1.0]),
             AxisType::Kxz => (0, 2, 1, [0.0, 1.0, 0.0]),
             AxisType::Kyz => (1, 2, 0, [1.0, 0.0, 0.0]),
         };
 
-        let t = (self.k - r.origin[zi]) / r.direction[zi];
+        let t = (self.k - r.origin[zi]) * r.get_inv_direction(zi);
         if t < t_min || t > t_max {
             return None;
         }
@@ -124,7 +124,7 @@ impl Hitable for Rect {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &Ray) -> f64 {
+    fn pdf_value(&self, ray: &mut Ray) -> f64 {
         if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
             let distance_squared = rec.t.powi(2);
             let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
@@ -171,7 +171,7 @@ impl FlipNormals {
 }
 
 impl Hitable for FlipNormals {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         match self.shape.hit(r, t_min, t_max) {
             Some(hit) => Some(HitRecord {
                 t: hit.t,
@@ -188,7 +188,7 @@ impl Hitable for FlipNormals {
         self.shape.bounding_box()
     }
 
-    fn pdf_value(&self, ray: &Ray) -> f64 {
+    fn pdf_value(&self, ray: &mut Ray) -> f64 {
         self.shape.pdf_value(ray)
     }
 
@@ -272,7 +272,7 @@ impl Boxel {
 }
 
 impl Hitable for Boxel {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit_min_t = t_max;
         if let Some(hit_rec0) = self.rect[0].hit(r, t_min, hit_min_t) {
             hit_min_t = hit_rec0.t;
@@ -354,7 +354,7 @@ impl Hitable for Boxel {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &Ray) -> f64 {
+    fn pdf_value(&self, ray: &mut Ray) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 

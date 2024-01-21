@@ -314,7 +314,7 @@ impl BvhTree {
 }
 
 impl Hitable for BvhTree {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut current_pos: usize = self.last_node_num;
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
@@ -409,7 +409,7 @@ impl Hitable for BvhTree {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &Ray) -> f64 {
+    fn pdf_value(&self, ray: &mut Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             let hitable_list_len = self.hitable_list.len();
             let mut pdf_sum: f64 = 0.0;

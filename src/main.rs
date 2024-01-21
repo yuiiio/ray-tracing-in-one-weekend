@@ -59,7 +59,7 @@ fn color(
     let mut ray: Ray = ray;
     for _i in 0..MAX_DEPTH {
         //println!("ray direction length: {}", vec3::vec3_length_f64(&ray.direction));
-        match world.hit(&ray, 0.00001, 10000.0) {
+        match world.hit(&mut ray, 0.00001, 10000.0) {
             Some(hit_rec) => {
                 // material obj: scatter,  emitted scattering_pdf,
                 // emitted is must called.
@@ -91,13 +91,13 @@ fn color(
                         Scatterd::CosinePdf => {
                             let mut rng = rand::thread_rng();
                             let rand: f64 = rng.gen();
-                            let next_ray = if rand < 0.5 {
-                                Ray{ origin: hit_rec.p, direction: light_list.random(&hit_rec.p) }
+                            let mut next_ray = if rand < 0.5 {
+                                Ray::new(hit_rec.p, light_list.random(&hit_rec.p))
                             } else {
-                                Ray{ origin: hit_rec.p, direction: cosine_pdf_generate(&hit_rec.normal) }
+                                Ray::new(hit_rec.p, cosine_pdf_generate(&hit_rec.normal))
                             }; // next_ray direction should normalized value.
 
-                            let light_list_pdf = light_list.pdf_value(&next_ray);
+                            let light_list_pdf = light_list.pdf_value(&mut next_ray);
                             let cosine_pdf = cosine_pdf_value(&hit_rec.normal, &next_ray.direction);
 
                             //let pdf_value = (light_list_pdf + cosine_pdf) * 0.5;
