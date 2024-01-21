@@ -145,7 +145,7 @@ impl Hitable for EmptyHitable {
 //              7             14       <=  diff 7 (2^3 - 1)
 //           3     6      10      13   <=  diff 3 (2^2 - 1)
 //          1 2   4 5    8  9    11 12 <=  diff 1 (2^1 - 1)
-fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, empty_hitable_handle: usize, center_list: &Vec<Vector3<f64>>) -> usize {
+fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, empty_hitable_handle: usize, center_list: &Vec<Vector3<f64>>) -> usize {
     let handle_size = handle.len();
     let next_pos_diff = 2usize.pow(bvh_depth as u32) - 1;
     match handle_size {
@@ -193,23 +193,25 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
             };
         },
         _ => {
-            let mut handle_x: Vec<usize> = handle.clone();
-            let mut handle_y: Vec<usize> = handle.clone();
-            let mut handle_z: Vec<usize> = handle.clone();
-            match pre_sort_axis {
+            let mut handle_2: Vec<usize> = handle.to_owned();
+            let mut handle_3: Vec<usize> = handle.to_owned();
+            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis {
                 Axis::X => {
-                    dmerge_sort_wrap(&mut handle_y, AI_Y, center_list);
-                    dmerge_sort_wrap(&mut handle_z, AI_Z, center_list);
+                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
+                    (handle, &handle_2, &handle_3)
                 },
                 Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_x, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_z, AI_Z, center_list);
+                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
+                    (&handle_2, handle, &handle_3)
                 },
                 Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_x, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_y, AI_Y, center_list);
+                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
+                    (&handle_2, &handle_3, handle)
                 },
-            }
+            };
             /*
             let x_max: f64 = center_list[handle_x[handle_size - 1]][0]
                 - center_list[handle_x[0]][0];
@@ -235,7 +237,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                 - hitable_list[handle_z[0]].bounding_box().unwrap().b_min[2];
 
             let sorted_axis: Axis;
-            let mut selected_handle = if x_max < y_max {
+            let selected_handle = if x_max < y_max {
                 if y_max < z_max {
                     sorted_axis = Axis::Z;
                     handle_z
@@ -252,8 +254,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &Vec<usize>, pre_sort_axis: &Ax
                     handle_x
                 }
             };
-            let a = selected_handle.split_off(handle_size / 2);
-            let b = selected_handle;
+
+            let (a, b) = selected_handle.split_at(handle_size / 2);
 
             let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
             let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
