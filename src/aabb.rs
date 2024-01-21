@@ -31,7 +31,7 @@ impl Aabb {
                 return None
             }
         }
-        return Some(AabbHitRecord{})
+        Some(AabbHitRecord{})
     }
 }
 

@@ -25,10 +25,10 @@ pub struct BvhNode {
 }
 
 fn dmerge(
-    vec: &mut Vec<usize>,
-    stock_vec: &mut Vec<usize>,
+    vec: &mut [usize],
+    stock_vec: &mut [usize],
     compare_axis: usize,
-    center_list: &Vec<Vector3<f64>>,
+    center_list: &[Vector3<f64>],
     left: usize,
     mid: usize,
     right: usize,
@@ -77,9 +77,9 @@ fn dmerge(
 }
 
 pub fn dmerge_sort_wrap(
-    vec: &mut Vec<usize>,
+    vec: &mut [usize],
     compare_axis: usize,
-    center_list: &Vec<Vector3<f64>>,
+    center_list: &[Vector3<f64>],
     ) {
     let len = vec.len();
     // stock_vec is temporary memory for merge sort.
@@ -94,7 +94,7 @@ pub fn dmerge_sort_wrap(
         }
     }
 
-    let mut k = 1 * 2;
+    let mut k = 2;//1 * 2;
     while k < len {// if len = 10, k => 1, 2, 4, 8
         let mut i = 0;
         while i < len { // k=1: i => 0, 2, 4, 6
@@ -108,7 +108,7 @@ pub fn dmerge_sort_wrap(
 
             i = next_block;
         }
-        k = k*2;
+        k *= 2;
     }
 }
 
@@ -134,7 +134,7 @@ impl Hitable for EmptyHitable {
     fn hit(&self, _r: &Ray, _t_min: f64, _t_max: f64) -> Option<HitRecord> {
         None
     }
-    fn bounding_box<'a>(&'a self) -> Option<&'a Aabb> {
+    fn bounding_box(&self) -> Option<&Aabb> {
         None
     }
 }
@@ -161,7 +161,7 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            return pos;
+            pos
         },
         2 => {
             if bvh_depth == 1 {
@@ -174,12 +174,12 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                 };
                 let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
-                return pos;
+                pos
             } else {
                 //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
-                let left_handle = build_bvh(hitable_list, &vec![handle[0]], pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
-                let right_handle = build_bvh(hitable_list, &vec![handle[1]], pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+                let left_handle = build_bvh(hitable_list, &[handle[0]], pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+                let right_handle = build_bvh(hitable_list, &[handle[1]], pre_sort_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                                   , &bvh_node_list[right_handle].bvh_node_box),
@@ -189,8 +189,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                 };
                 let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
-                return pos;
-            };
+                pos
+            }
         },
         _ => {
             let mut handle_2: Vec<usize> = handle.to_owned();
@@ -245,20 +245,18 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                     sorted_axis = Axis::Y;
                     handle_y
                 }
+            } else if x_max < z_max {
+                sorted_axis = Axis::Z;
+                handle_z
             } else {
-                if x_max < z_max {
-                    sorted_axis = Axis::Z;
-                    handle_z
-                } else {
-                    sorted_axis = Axis::X;
-                    handle_x
-                }
+                sorted_axis = Axis::X;
+                handle_x
             };
 
             let (a, b) = selected_handle.split_at(handle_size / 2);
 
-            let left_handle = build_bvh(hitable_list, &a, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
-            let right_handle = build_bvh(hitable_list, &b, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+            let left_handle = build_bvh(hitable_list, a, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
+            let right_handle = build_bvh(hitable_list, b, &sorted_axis, bvh_node_list, bvh_depth - 1, empty_hitable_handle, center_list);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                               , &bvh_node_list[right_handle].bvh_node_box),
@@ -268,9 +266,9 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            return pos;
+            pos
         },
-    };
+    }
 }
 
 impl BvhTree {
@@ -356,7 +354,7 @@ impl Hitable for BvhTree {
                                         let left_t = left_rec.t;
                                         return_rec = Some(left_rec);
                                         min_hit_t = left_t;
-                                        current_pos = current_pos - 1;
+                                        current_pos -= 1;
                                         if current_pos == 0 {
                                             break; // no more hit node, ealy return;
                                         } else {
@@ -418,7 +416,7 @@ impl Hitable for BvhTree {
                         // next_pos_diff: set skip number using current depth
                         // (2^depth) -1
                         // println!("(skip) next_pos_diff: {}, current_pos: {}, top_depth: {}", next_pos_diff, current_pos, top_depth);
-                        current_pos = current_pos - bvh_pos_diff;
+                        current_pos -= bvh_pos_diff;
                         if current_pos == 0 {
                             break; // no more hit node, ealy return;
                         } else {
@@ -440,7 +438,7 @@ impl Hitable for BvhTree {
             let hitable_list_len = self.hitable_list_num; // last is empty_hitable, so needs avoid
             let mut pdf_sum: f64 = 0.0;
             for i in 0..hitable_list_len {
-                pdf_sum = pdf_sum + self.hitable_list[i].pdf_value(ray);
+                pdf_sum += self.hitable_list[i].pdf_value(ray);
             }
             pdf_sum * self.nor_hitable_list_num
         } else {
