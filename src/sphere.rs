@@ -49,7 +49,7 @@ fn get_sphere_uv(point: Vector3<f64>) -> (f64, f64) {
 }
 
 impl Hitable for Sphere {
-    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let rec: Option<HitRecord> = None;
         let oc = vec3_sub(&r.origin, &self.center);
         let b = vec3_dot(&r.direction, &oc);// -oc~0~oc
@@ -104,7 +104,7 @@ impl Hitable for Sphere {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &mut Ray) -> f64 {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 
             if let Some(_rec) = self.hit(ray, 0.00001, 10000.0) {

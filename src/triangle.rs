@@ -65,7 +65,7 @@ impl Triangle {
 }
 
 impl Hitable for Triangle {
-    fn hit(&self, ray: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let d = ray.direction;
         let lal = vec3_dot(&d, &self.n);
         if lal == 0.0 {
@@ -111,7 +111,7 @@ impl Hitable for Triangle {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &mut Ray) -> f64 {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
             if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
                 let distance_squared = rec.t.powi(2);

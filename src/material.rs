@@ -153,7 +153,7 @@ impl Metal {
                 &vec3_add(&reflected, &vec3_mul_b(&random_in_unit_sphere(), self.fuzz))
                 );
         }
-        let scatterd = Ray::new(hit_record.p, reflected);
+        let scatterd = Ray{ origin: hit_record.p, direction: reflected };
         let attenuation = texture_list
             .get_value(hit_record.uv, &hit_record.p, &self.texture);
         let absorabance = [0.0, 0.0, 0.0];
@@ -289,25 +289,29 @@ impl Dielectric {
 
         let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
-        let scatterd_dir = match refract(&r_in.direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
+        let scatterd: Ray = match refract(&r_in.direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
             Some(refracted) => {
                 reflect_prob = schlick(cosine, self.schlick_r0, self.schlick_r1); // for real glass maty
                 let mut rng = rand::thread_rng();
                 let rand: f64 = rng.gen();
                 if rand < reflect_prob {
-                    reflect(&r_in.direction, &outward_normal)
+                    Ray {
+                        origin: hit_record.p,
+                        direction: reflect(&r_in.direction, &outward_normal),
+                    }
                 } else {
                     refracted_root = true;
-                    refracted
+                    Ray { origin: hit_record.p, direction: refracted }
                 }
             }
             None => {
                 inside_to_inside = true;
-                reflect(&r_in.direction, &outward_normal)
+                Ray {
+                    origin: hit_record.p,
+                    direction: reflect(&r_in.direction, &outward_normal),
+                }
             }
         };
-
-        let scatterd = Ray::new(hit_record.p, scatterd_dir);
 
         let mut absorabance = [0.0, 0.0, 0.0];
 

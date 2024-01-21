@@ -22,9 +22,9 @@ impl Translate {
 }
 
 impl Hitable for Translate {
-    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut r = Ray::new(vec3_sub(&r.origin, &self.offset), r.direction);
-        match self.obj.hit(&mut r, t_min, t_max) {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let r = Ray{ origin: vec3_sub(&r.origin, &self.offset), direction: r.direction };
+        match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
                 Some(HitRecord {
                     t: hit.t,
@@ -42,9 +42,9 @@ impl Hitable for Translate {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &mut Ray) -> f64 {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
         let on = vec3_sub(&ray.origin, &self.offset);
-        self.obj.pdf_value(&mut Ray::new(on, ray.direction)) // this use self->obj's pdf_value func
+        self.obj.pdf_value(&Ray{origin: on, direction: ray.direction}) // this use self->obj's pdf_value func
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let on = vec3_sub(o, &self.offset);
@@ -100,11 +100,11 @@ impl Rotate {
 }
 
 impl Hitable for Rotate {
-    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let origin = self.revq.rotate(&r.origin);
         let direction = self.revq.rotate(&r.direction);
-        let mut r = Ray::new(origin, direction);
-        match self.obj.hit(&mut r, t_min, t_max) {
+        let r = Ray { origin, direction };
+        match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
                 Some(HitRecord {
                     t: hit.t,
@@ -122,14 +122,14 @@ impl Hitable for Rotate {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &mut Ray) -> f64 {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
 
             let ro = self.revq.rotate(&ray.origin);
             let p = vec3_add(&ray.origin, &ray.direction);
             let rp = self.revq.rotate(&p);
             let rv = vec3_sub(&rp, &ro);
-            return self.obj.pdf_value(&mut Ray::new(ro, rv));
+            return self.obj.pdf_value(&Ray{origin: ro, direction: rv});
         }
         0.0
     }

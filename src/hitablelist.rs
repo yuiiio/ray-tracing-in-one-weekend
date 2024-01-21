@@ -48,7 +48,7 @@ impl ::std::ops::DerefMut for HitableList {
 }
 
 impl Hitable for HitableList {
-    fn hit(&self, r: &mut Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut rec: Option<HitRecord> = None;
         let mut closer_so_far = t_max;
         for i in self.iter() {
@@ -64,7 +64,7 @@ impl Hitable for HitableList {
         &self.aabb_box
     }
 
-    fn pdf_value(&self, ray: &mut Ray) -> f64 {
+    fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             let mut sum: f64 = 0.0;
             for i in self.iter() {
