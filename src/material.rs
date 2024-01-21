@@ -145,7 +145,7 @@ impl Metal {
 
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
         let mut reflected = reflect(
-            &vec3_unit_vector_f64(&r_in.direction),
+            &r_in.direction,
             &hit_record.normal,
         );
         if self.fuzz != 0.0 { // should return Pdf instadof Ray when fuzz != 0.0 ?
@@ -207,9 +207,8 @@ impl Lambertian {
         })
     }
     fn scattering_pdf(&self, r: &Ray, _hit_record: &HitRecord) -> f64 {
-        let n = _hit_record.normal; //Already normalized?
-        let direction = vec3_unit_vector_f64(&r.direction);
-        let cosine = vec3_dot(&n, &direction);
+        let n = _hit_record.normal;
+        let cosine = vec3_dot(&n, &r.direction);
         if cosine.is_sign_positive() {
             cosine / PI
         } else {
@@ -229,7 +228,7 @@ pub struct Dielectric {
 }
 
 fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64, ni_over_nt_seq: f64) -> Option<Vector3<f64>> {
-    let uv = vec3_unit_vector_f64(&vec3_mul_b(v, -1.0));
+    let uv = vec3_mul_b(v, -1.0);
     let dt = vec3_dot(&uv, n);
     let discriminant = 1.0 - ni_over_nt_seq * (1.0 - dt * dt);
     if discriminant.is_sign_positive() {
@@ -290,8 +289,7 @@ impl Dielectric {
 
         let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
-        let r_in_direction = r_in.direction;
-        let scatterd: Ray = match refract(&r_in_direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
+        let scatterd: Ray = match refract(&r_in.direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
             Some(refracted) => {
                 reflect_prob = schlick(cosine, self.schlick_r0, self.schlick_r1); // for real glass maty
                 let mut rng = rand::thread_rng();
@@ -299,7 +297,7 @@ impl Dielectric {
                 if rand < reflect_prob {
                     Ray {
                         origin: hit_record.p,
-                        direction: reflect(&r_in_direction, &outward_normal),
+                        direction: reflect(&r_in.direction, &outward_normal),
                     }
                 } else {
                     refracted_root = true;
@@ -310,7 +308,7 @@ impl Dielectric {
                 inside_to_inside = true;
                 Ray {
                     origin: hit_record.p,
-                    direction: reflect(&r_in_direction, &outward_normal),
+                    direction: reflect(&r_in.direction, &outward_normal),
                 }
             }
         };
