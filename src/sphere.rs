@@ -118,10 +118,10 @@ impl Hitable for Sphere {
         0.0
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        let direction = vec3_sub(&self.center, o);
-        let uvw = Onb::build_from_w(&direction);
+        let co = vec3_sub(&self.center, o);
+        let uvw = Onb::build_from_w(&co);
 
-        let distabce_squared = vec3_squared_length(&direction);
+        let distabce_squared = vec3_squared_length(&co);
         uvw.local(&random_to_sphere(self.radius_sq, distabce_squared))
     }
 }
