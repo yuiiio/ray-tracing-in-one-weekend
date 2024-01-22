@@ -7,7 +7,7 @@ use crate::material::MaterialHandle;
 use crate::onb::Onb;
 use crate::ray::Ray;
 use crate::vec3::{
-    vec3_add_b, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_sub_b, Vector3, vec3_unit_vector_f64,
+    vec3_add_b, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_sub_b, Vector3,
 };
 
 #[derive(Clone)]
@@ -118,10 +118,12 @@ impl Hitable for Sphere {
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let co = vec3_sub(&self.center, o);
-        let norm_co = vec3_unit_vector_f64(&co);
+        let distabce_squared = vec3_squared_length(&co);
+        let nor_dist = 1.0 / distabce_squared.sqrt();
+
+        let norm_co = vec3_mul_b(&co, nor_dist);
         let uvw = Onb::build_from_w(&norm_co);
 
-        let distabce_squared = vec3_squared_length(&co);
         uvw.local(&random_to_sphere(self.radius_sq, distabce_squared))
     }
 }
