@@ -132,7 +132,14 @@ pub struct Metal {
 
 fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     vec3_add(
-        &vec3_mul_b(&vec3_mul_b(n, vec3_dot(&v, n)), -2.0),
+        &vec3_mul_b(&vec3_mul_b(n, vec3_dot(v, n)), -2.0),
+        v,
+    )
+}
+
+fn reflect_with_dt_n(v: &Vector3<f64>, dt_n: &Vector3<f64>) -> Vector3<f64> {
+    vec3_add(
+        &vec3_mul_b(dt_n, -2.0),
         v,
     )
 }
@@ -227,17 +234,23 @@ pub struct Dielectric {
     schlick_r1: f64,
 }
 
-fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64, ni_over_nt_seq: f64) -> Option<Vector3<f64>> {
-    let dt = vec3_dot(&v, n);
+enum Refract {
+    Refracted((Vector3<f64>, Vector3<f64>)),
+    DtN(Vector3<f64>),
+}
+
+fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64, ni_over_nt_seq: f64) -> Refract {
+    let dt = vec3_dot(v, n);
     let discriminant = 1.0 - ni_over_nt_seq * (1.0 - dt * dt);
+    let dt_n = vec3_mul_b(n, dt);
     if discriminant.is_sign_positive() {
         let refracted = vec3_sub(
-            &vec3_mul_b(&n, -1.0 * discriminant.sqrt()),
-            &vec3_mul_b(&vec3_sub(&vec3_mul_b(n, dt), &v), ni_over_nt),
+            &vec3_mul_b(n, -1.0 * discriminant.sqrt()),
+            &vec3_mul_b(&vec3_sub(&dt_n, v), ni_over_nt),
         );
-        Some(refracted)
+        Refract::Refracted((refracted, dt_n))
     } else {
-        None
+        Refract::DtN(dt_n)
     }
 }
 
@@ -288,25 +301,25 @@ impl Dielectric {
         let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
         let scatterd: Ray = match refract(&r_in.direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
-            Some(refracted) => {
+            Refract::Refracted(refracted) => {
                 reflect_prob = schlick(cosine, self.schlick_r0, self.schlick_r1); // for real glass maty
                 let mut rng = rand::thread_rng();
                 let rand: f64 = rng.gen();
                 if rand < reflect_prob {
                     Ray {
                         origin: hit_record.p,
-                        direction: reflect(&r_in.direction, &outward_normal),
+                        direction: reflect_with_dt_n(&r_in.direction, &refracted.1), // dt_n
                     }
                 } else {
                     refracted_root = true;
-                    Ray { origin: hit_record.p, direction: refracted }
+                    Ray { origin: hit_record.p, direction: refracted.0 } // refracted
                 }
             }
-            None => {
+            Refract::DtN(dt_n) => {
                 inside_to_inside = true;
                 Ray {
                     origin: hit_record.p,
-                    direction: reflect(&r_in.direction, &outward_normal),
+                    direction: reflect_with_dt_n(&r_in.direction, &dt_n),
                 }
             }
         };

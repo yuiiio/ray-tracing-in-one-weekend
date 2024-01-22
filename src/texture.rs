@@ -114,7 +114,7 @@ impl ImageTexture {
         for i in 0..height {
             let mut line: Vec<Vector3<f64>> = Vec::with_capacity(width as usize);
             for j in 0..width {
-                let pixel = teximage.get_pixel(j as u32, i as u32);
+                let pixel = teximage.get_pixel(j, i);
                 line.push([
                           pixel[0] as f64 / 255.99,
                           pixel[1] as f64 / 255.99,
