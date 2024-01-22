@@ -132,7 +132,7 @@ pub struct Metal {
 
 fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     vec3_add(
-        &vec3_mul_b(&vec3_mul_b(n, vec3_dot(&vec3_mul_b(v, -1.0), n)), 2.0),
+        &vec3_mul_b(&vec3_mul_b(n, vec3_dot(&v, n)), -2.0),
         v,
     )
 }
@@ -228,13 +228,12 @@ pub struct Dielectric {
 }
 
 fn refract(v: &Vector3<f64>, n: &Vector3<f64>, ni_over_nt: f64, ni_over_nt_seq: f64) -> Option<Vector3<f64>> {
-    let uv = vec3_mul_b(v, -1.0);
-    let dt = vec3_dot(&uv, n);
+    let dt = vec3_dot(&v, n);
     let discriminant = 1.0 - ni_over_nt_seq * (1.0 - dt * dt);
     if discriminant.is_sign_positive() {
         let refracted = vec3_sub(
-            &vec3_mul_b(&vec3_mul_b(n, -1.0), discriminant.sqrt()),
-            &vec3_mul_b(&vec3_sub(&uv, &vec3_mul_b(n, dt)), ni_over_nt),
+            &vec3_mul_b(&n, -1.0 * discriminant.sqrt()),
+            &vec3_mul_b(&vec3_sub(&vec3_mul_b(n, dt), &v), ni_over_nt),
         );
         Some(refracted)
     } else {
@@ -271,21 +270,20 @@ impl Dielectric {
         let ni_over_nt_seq: f64;
         let attenuation: Vector3<f64> = [1.0, 1.0, 1.0];
         let reflect_prob: f64;
-        let cosine: f64;
+        let cosine: f64 = vec3_dot(&r_in.direction, &hit_record.normal);
         let mut outside_to_inside: bool = false;
-        let hit_normal = hit_record.normal;
-        if vec3_dot(&vec3_mul_b(&r_in.direction, -1.0), &hit_normal).is_sign_positive() {
+        let cosine = if cosine.is_sign_negative() {
             outside_to_inside = true;
             outward_normal = hit_record.normal;
             ni_over_nt = self.nor_ref_idx;
             ni_over_nt_seq = self.nor_ref_idx_seq;
-            cosine = 1.0 * vec3_dot(&vec3_mul_b(&r_in.direction, -1.0), &hit_normal);
+            -cosine
         } else {
-            outward_normal = vec3_mul_b(&hit_normal, -1.0);
+            outward_normal = vec3_mul_b(&hit_record.normal, -1.0);
             ni_over_nt = self.ref_idx;// / 1.0;
             ni_over_nt_seq = self.ref_idx_seq;
-            cosine = self.ref_idx * vec3_dot(&r_in.direction, &hit_normal);
-        }
+            self.ref_idx * cosine
+        };
 
         let mut refracted_root: bool = false;
         let mut inside_to_inside: bool = false;
