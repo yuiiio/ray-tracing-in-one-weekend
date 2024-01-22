@@ -31,8 +31,8 @@ pub fn min(a: f64, b: f64) -> f64 {
 //
 #[allow(dead_code)]
 fn merge<T: Clone>(
-    vec: &mut Vec<T>,
-    stock_vec: &mut Vec<T>,
+    vec: &mut [T],
+    stock_vec: &mut [T],
     compare: fn(&T, &T) -> bool,
     left: usize,
     mid: usize,
@@ -85,8 +85,8 @@ fn merge<T: Clone>(
 
 #[allow(dead_code)]
 pub fn merge_sort<T: Clone + std::fmt::Debug>(
-    vec: &mut Vec<T>,
-    stock_vec: &mut Vec<T>,
+    vec: &mut [T],
+    stock_vec: &mut [T],
     compare: fn(&T, &T) -> bool,
     left: usize,
     right: usize,

@@ -21,9 +21,17 @@ impl HitableList {
         }
     }
 
+    pub fn with_capacity(size: usize) -> Self {
+        HitableList{
+            hitable_list: Vec::with_capacity(size),
+            aabb_box: Aabb{ b_min:[0.0, 0.0, 0.0], b_max:[0.0, 0.0, 0.0] },
+            nor_hitable_list_len: 1.0,
+        }
+    }
+
     pub fn push<H: Hitable + 'static + Send + Sync>(&mut self, hitable: H) {
         self.aabb_box =
-            if self.hitable_list.len() == 0 {
+            if self.hitable_list.is_empty() {
                 hitable.bounding_box().clone()
             } else {
                 surrounding_box(&self.aabb_box, hitable.bounding_box())

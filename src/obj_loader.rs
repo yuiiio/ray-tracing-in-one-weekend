@@ -19,11 +19,11 @@ pub fn obj_loader(file: &mut File, material_handle: MaterialHandle) -> HitableLi
     let mut vertex: Vec<Vector3<f64>> = Vec::with_capacity(vertex_line.len());
 
     for s in vertex_line {
-        let attr: Vec<&str> = s.split(" ").skip(1).collect(); //remove "v" at front
+        let attr: Vec<&str> = s.split(&" ").skip(1).collect(); //remove "v" at front
 
-        let x: f64 = attr.get(0).unwrap().parse().unwrap();
-        let y: f64 = attr.get(1).unwrap().parse().unwrap();
-        let z: f64 = attr.get(2).unwrap().parse().unwrap();
+        let x: f64 = attr[0].parse().unwrap();
+        let y: f64 = attr[1].parse().unwrap();
+        let z: f64 = attr[2].parse().unwrap();
 
         //scale
         let x = x * 200.0;
@@ -39,19 +39,19 @@ pub fn obj_loader(file: &mut File, material_handle: MaterialHandle) -> HitableLi
         .filter(|s| s.get(0..1).unwrap() == "f")
         .collect();
 
-    let mut hitablelist = HitableList::new();
+    let mut hitablelist = HitableList::with_capacity(face_line.len());
 
     for s in face_line {
-        let attr: Vec<&str> = s.split(" ").skip(1).collect(); //remove "f" at front
+        let attr: Vec<&str> = s.split(&" ").skip(1).collect(); //remove "f" at front
 
-        let first: Vec<&str> = attr.first().unwrap().split("/").collect();
-        let i0: usize = first.first().unwrap().parse().unwrap();
+        let first: Vec<&str> = attr[0].split(&"/").collect();
+        let i0: usize = first[0].parse().unwrap();
 
-        let second: Vec<&str> = attr.get(1).unwrap().split("/").collect();
-        let i1: usize = second.first().unwrap().parse().unwrap();
+        let second: Vec<&str> = attr[1].split(&"/").collect();
+        let i1: usize = second[0].parse().unwrap();
 
-        let third: Vec<&str> = attr.get(2).unwrap().split("/").collect();
-        let i2: usize = third.first().unwrap().parse().unwrap();
+        let third: Vec<&str> = attr[2].split(&"/").collect();
+        let i2: usize = third[0].parse().unwrap();
 
         let v0 = vertex[i0 - 1];
         let v1 = vertex[i1 - 1];
