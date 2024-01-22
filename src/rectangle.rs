@@ -274,80 +274,24 @@ impl Boxel {
 impl Hitable for Boxel {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit_min_t = t_max;
-        if let Some(hit_rec0) = self.rect[0].hit(r, t_min, hit_min_t) {
-            hit_min_t = hit_rec0.t;
-            if let Some(hit_rec1) = self.rect[1].hit(r, t_min, hit_min_t) {
-                return Some(hit_rec1);
+        let mut hit_count: usize = 0;
+        let mut rec: Option<HitRecord> = None;
+        for i in 0..3 {
+            if let Some(hit_rec) = self.rect[i].hit(r, t_min, hit_min_t) {
+                hit_min_t = hit_rec.t;
+                hit_count += 1;
+                rec = Some(hit_rec);
             }
-            if let Some(hit_rec2) = self.rect[2].hit(r, t_min, hit_min_t) {
-                return Some(hit_rec2);
+            if let Some(hit_rec) = self.flip_rect[i].hit(r, t_min, hit_min_t) {
+                hit_min_t = hit_rec.t;
+                hit_count += 1;
+                rec = Some(hit_rec);
             }
-            if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
-                return Some(hit_rec3);
-            }
-            if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
-                return Some(hit_rec4);
-            }
-            if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
-                return Some(hit_rec5);
-            }
-            return Some(hit_rec0); // rect[0] was min hit
-        } else {
-            if let Some(hit_rec1) = self.rect[1].hit(r, t_min, hit_min_t) {
-                hit_min_t = hit_rec1.t;
-                if let Some(hit_rec2) = self.rect[2].hit(r, t_min, hit_min_t) {
-                    return Some(hit_rec2);
-                }
-                if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
-                    return Some(hit_rec3);
-                }
-                if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
-                    return Some(hit_rec4);
-                }
-                if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
-                    return Some(hit_rec5);
-                }
-                return Some(hit_rec1); // rect[1] was min hit
-            } else {
-                if let Some(hit_rec2) = self.rect[2].hit(r, t_min, hit_min_t) {
-                    hit_min_t = hit_rec2.t;
-                    if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
-                        return Some(hit_rec3);
-                    }
-                    if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
-                        return Some(hit_rec4);
-                    }
-                    if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
-                        return Some(hit_rec5);
-                    }
-                    return Some(hit_rec2); // rect[2] was min hit
-                } else {
-                    if let Some(hit_rec3) = self.flip_rect[0].hit(r, t_min, hit_min_t) {
-                        hit_min_t = hit_rec3.t;
-                        if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
-                            return Some(hit_rec4);
-                        }
-                        if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
-                            return Some(hit_rec5);
-                        }
-                        return Some(hit_rec3); // flip_rect[0] was min hit
-                    } else {
-                        if let Some(hit_rec4) = self.flip_rect[1].hit(r, t_min, hit_min_t) {
-                            hit_min_t = hit_rec4.t;
-                            if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
-                                return Some(hit_rec5);
-                            }
-                            return Some(hit_rec4); // flip_rect[1] was min hit
-                        } else {
-                            if let Some(hit_rec5) = self.flip_rect[2].hit(r, t_min, hit_min_t) {
-                                return Some(hit_rec5);
-                            }
-                            return None;
-                        }
-                    }
-                }
+            if hit_count == 2 {
+                break;
             }
         }
+        rec
     }
 
     fn bounding_box(&self) -> &Aabb {

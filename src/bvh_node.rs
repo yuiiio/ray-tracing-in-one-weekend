@@ -330,9 +330,8 @@ impl Hitable for BvhTree {
                             let left_obj = &self.hitable_list[current_bvh_node.left];
                             if let Some(_left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, right_rec.t) { // bounding_box
                                 if let Some(left_rec) = left_obj.hit(r, t_min, right_rec.t) { // acutual hit check
-                                    let left_t = left_rec.t;
+                                    min_hit_t = left_rec.t;
                                     return_rec = Some(left_rec);
-                                    min_hit_t = left_t;
                                     current_pos -= 1;
                                     if current_pos == 0 {
                                         break; // no more hit node, ealy return;
@@ -341,9 +340,8 @@ impl Hitable for BvhTree {
                                     }
                                 }; // not hit left obj or right_t < left_t
                             }; // not hit left_bounding_box
-                            let right_t = right_rec.t;
+                            min_hit_t = right_rec.t;
                             return_rec = Some(right_rec);
-                            min_hit_t = right_t;
                             current_pos -= 1;
                             if current_pos == 0 {
                                 break; // no more hit node, ealy return;
@@ -357,9 +355,8 @@ impl Hitable for BvhTree {
                 let left_obj = &self.hitable_list[current_bvh_node.left];
                 if let Some(_left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // bounding_box
                     if let Some(left_rec) = left_obj.hit(r, t_min, min_hit_t) { // acutual hit check
-                        let left_t = left_rec.t;
+                        min_hit_t = left_rec.t;
                         return_rec = Some(left_rec);
-                        min_hit_t = left_t;
                         current_pos -= 1;
                         if current_pos == 0 {
                             break; // no more hit node, ealy return;
