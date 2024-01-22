@@ -150,7 +150,7 @@ fn main() {
     const NY: usize = OUTPUT_Y * NS;
 
     let imgbuf = Mutex::new(vec![[[0.0, 0.0, 0.0]; NY]; NX]);
-    const N_TASK: usize = 128; // task number ( expect larger than real cpu threads )
+    const N_TASK: usize = 1024; // task number ( expect larger than real cpu threads )
     let cpu_threads: usize = thread::available_parallelism().unwrap().get();
 
     let mut obj_list = HitableList::new();
