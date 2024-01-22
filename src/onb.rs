@@ -7,8 +7,8 @@ pub struct Onb {
 }
 
 impl Onb {
-    pub fn build_from_w(n: &Vector3<f64>) -> Self {
-        let w = vec3_unit_vector_f64(n);
+    // build_from_w should take normalized vec
+    pub fn build_from_w(w: &Vector3<f64>) -> Self {
         let a = if w[0].abs() > 0.9 {
             [0.0, 1.0, 0.0]
         } else {
@@ -16,7 +16,7 @@ impl Onb {
         };
         let v = vec3_unit_vector_f64(&cross(&w, &a));
         let u = cross(&w, &v);
-        Onb { u, v, w }
+        Onb { u, v, w: *w }
     }
 
     pub fn local(&self, a: &Vector3<f64>) -> Vector3<f64> {
