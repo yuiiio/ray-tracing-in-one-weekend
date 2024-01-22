@@ -101,25 +101,35 @@ impl CheckerTexture {
 */
 
 pub struct ImageTexture {
-    teximage: RgbaImage,
+    teximage: Vec<Vec<Vector3<f64>>>,
+    width: f64, // usize as f64 for uv calc
+    height: f64,
 }
 
 impl ImageTexture {
     pub fn new(teximage: RgbaImage) -> Self {
-        ImageTexture { teximage }
+        let width = teximage.width();
+        let height = teximage.height();
+        let mut pixels: Vec<Vec<Vector3<f64>>> = Vec::with_capacity(height as usize);
+        for i in 0..height {
+            let mut line: Vec<Vector3<f64>> = Vec::with_capacity(width as usize);
+            for j in 0..width {
+                let pixel = teximage.get_pixel(j as u32, i as u32);
+                line.push([
+                          pixel[0] as f64 / 255.99,
+                          pixel[1] as f64 / 255.99,
+                          pixel[2] as f64 / 255.99,
+                ])
+            }
+            pixels.push(line);
+        }
+        ImageTexture { teximage: pixels, width: width as f64, height: height as f64 }
     }
 
     fn get_value(&self, uv: (f64, f64), _p: &Vector3<f64>) -> Vector3<f64> {
         let (u, v) = (uv.0, uv.1);
-        let width = self.teximage.width();
-        let height = self.teximage.height();
-        let x = min(width as f64 * u, width as f64 - 1.0);
-        let y = min(height as f64 * (1.0 - v), height as f64 - 1.0);
-        let pixel = self.teximage.get_pixel(x as u32, y as u32);
-        [
-            pixel[0] as f64 / 255.99,
-            pixel[1] as f64 / 255.99,
-            pixel[2] as f64 / 255.99,
-        ]
+        let x = min(self.width * u, self.width - 1.0);
+        let y = min(self.height * (1.0 - v), self.height - 1.0);
+        self.teximage[y as usize][x as usize]
     }
 }
