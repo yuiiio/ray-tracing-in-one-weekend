@@ -9,12 +9,20 @@ pub struct Onb {
 impl Onb {
     // build_from_w should take normalized vec
     pub fn build_from_w(w: &Vector3<f64>) -> Self {
-        let a = if w[0].abs() > 0.9 {
-            [0.0, 1.0, 0.0]
+        let wa_cross = if w[0].abs() > 0.9 {
+            [
+                -w[2],
+                0.0,
+                w[0],
+            ]
         } else {
-            [1.0, 0.0, 0.0]
+            [   
+                0.0,
+                w[2],
+                -w[1],
+            ]
         };
-        let v = vec3_unit_vector_f64(&cross(&w, &a));
+        let v = vec3_unit_vector_f64(&wa_cross);
         let u = cross(&w, &v);
         Onb { u, v, w: *w }
     }
