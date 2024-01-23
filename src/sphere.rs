@@ -73,7 +73,7 @@ impl Hitable for Sphere {
                         p: point,
                         normal: nnormal,
                         mat_ptr: &self.mat_ptr,
-                        onb: None, // normal is not static so have calc cost
+                        onb_uv: None, // normal is not static so have calc cost
                     });
                 }
             } else {
@@ -95,7 +95,7 @@ impl Hitable for Sphere {
                     p: point,
                     normal: nnormal,
                     mat_ptr: &self.mat_ptr,
-                    onb: None,
+                    onb_uv: None,
                 });
             }
         }

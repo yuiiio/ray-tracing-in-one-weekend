@@ -31,7 +31,7 @@ pub struct Rect {
     aabb_box: Aabb,
     needs_uv: bool,
     normal: Vector3<f64>,
-    onb: Onb,
+    onb_uv: (Vector3<f64>, Vector3<f64>),
 }
 
 impl Rect {
@@ -73,6 +73,7 @@ impl Rect {
         let nor_width = 1.0 / (x1 - x0);
         let nor_height = 1.0 / (y1 - y0);
         let needs_uv = mat_ptr.needs_uv;
+        let onb = Onb::build_from_w(&normal);
         Rect {
             x0,
             x1,
@@ -89,7 +90,7 @@ impl Rect {
             aabb_box,
             needs_uv,
             normal,
-            onb: Onb::build_from_w(&normal),
+            onb_uv: (onb.u, onb.v),
         }
     }
 }
@@ -131,7 +132,7 @@ impl Hitable for Rect {
             p,
             normal: self.normal,
             mat_ptr: &self.mat_ptr,
-            onb: Some(&self.onb),
+            onb_uv: Some(&self.onb_uv),
         })
     }
 
@@ -178,16 +179,17 @@ impl Hitable for Rect {
 pub struct FlipNormals {
     shape: Rect,
     normal: Vector3<f64>,
-    onb: Onb,
+    onb_uv: (Vector3<f64>, Vector3<f64>),
 }
 
 impl FlipNormals {
     pub fn new(shape: Rect) -> Self {
         let normal = vec3_mul_b(&shape.normal, -1.0);
+        let onb = Onb::build_from_w(&normal);
         FlipNormals{
             shape,
             normal,
-            onb: Onb::build_from_w(&normal),
+            onb_uv: (onb.u, onb.v),
         }
     }
 }
@@ -201,7 +203,7 @@ impl Hitable for FlipNormals {
                 p: hit.p,
                 normal: self.normal,
                 mat_ptr: hit.mat_ptr,
-                onb: Some(&self.onb),
+                onb_uv: Some(&self.onb_uv),
             }),
             None => None,
         }

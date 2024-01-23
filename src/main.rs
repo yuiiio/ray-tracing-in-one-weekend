@@ -95,9 +95,13 @@ fn color(
                             let next_ray = if rand < 0.5 {
                                 Ray{ origin: hit_rec.p, direction: light_list.random(&hit_rec.p) }
                             } else {
-                                let direction = match hit_rec.onb {
-                                    Some(onb) => cosine_pdf_generate(onb),
-                                    None => cosine_pdf_generate(&Onb::build_from_w(&hit_rec.normal)),
+                                let direction = match hit_rec.onb_uv {
+                                    Some(onb_uv) => {
+                                        cosine_pdf_generate(&Onb{u: onb_uv.0, v: onb_uv.1, w: hit_rec.normal})
+                                    },
+                                    None => {
+                                        cosine_pdf_generate(&Onb::build_from_w(&hit_rec.normal))
+                                    },
                                 };
                                 Ray{ origin: hit_rec.p, direction }
                             }; // next_ray direction should normalized value.

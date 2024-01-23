@@ -32,7 +32,7 @@ impl Hitable for Translate {
                     p: vec3_add(&hit.p, &self.offset),
                     normal: hit.normal,
                     mat_ptr: hit.mat_ptr,
-                    onb: hit.onb,
+                    onb_uv: hit.onb_uv,
                 })
             },
             None => None,
@@ -114,7 +114,7 @@ impl Hitable for Rotate {
                     p: self.quat.rotate(&hit.p),
                     normal,
                     mat_ptr: hit.mat_ptr,
-                    onb: None,
+                    onb_uv: None,
                 })
             },
             None => None,

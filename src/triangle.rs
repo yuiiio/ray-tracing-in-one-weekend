@@ -23,7 +23,7 @@ pub struct Triangle {
     n_norm: Vector3<f64>,
     area: f64,
     aabb_box: Aabb,
-    onb: Onb,
+    onb_uv: (Vector3<f64>, Vector3<f64>),
 }
 
 impl Triangle {
@@ -51,6 +51,7 @@ impl Triangle {
         let aabb_box = Aabb {b_min, b_max};
 
         let n_norm = vec3_unit_vector_f64(&n);
+        let onb = Onb::build_from_w(&n_norm);
         Triangle {
             v0,
             v1,
@@ -62,7 +63,7 @@ impl Triangle {
             n_norm,
             area,
             aabb_box,
-            onb: Onb::build_from_w(&n_norm),
+            onb_uv: (onb.u, onb.v),
         }
     }
 }
@@ -107,7 +108,7 @@ impl Hitable for Triangle {
             p,
             normal: self.n_norm,
             mat_ptr: &self.mat_ptr,
-            onb: Some(&self.onb),
+            onb_uv: Some(&self.onb_uv),
         })
     }
 
