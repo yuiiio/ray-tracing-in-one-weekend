@@ -43,6 +43,7 @@ use vec3::{
     vec3_add, vec3_mul, vec3_mul_b,
     Vector3,
 };
+use onb::Onb;
 
 const MAX_DEPTH: usize = 20;
 
@@ -94,7 +95,11 @@ fn color(
                             let next_ray = if rand < 0.5 {
                                 Ray{ origin: hit_rec.p, direction: light_list.random(&hit_rec.p) }
                             } else {
-                                Ray{ origin: hit_rec.p, direction: cosine_pdf_generate(&hit_rec.normal) }
+                                let direction = match hit_rec.onb {
+                                    Some(onb) => cosine_pdf_generate(onb),
+                                    None => cosine_pdf_generate(&Onb::build_from_w(&hit_rec.normal)),
+                                };
+                                Ray{ origin: hit_rec.p, direction }
                             }; // next_ray direction should normalized value.
 
                             let light_list_pdf = light_list.pdf_value(&next_ray);

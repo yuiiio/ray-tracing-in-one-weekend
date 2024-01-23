@@ -1,9 +1,10 @@
 use crate::vec3::{vec3_add, vec3_mul_b, Vector3};
 
+#[derive(Clone)]
 pub struct Onb {
-    u: Vector3<f64>,
-    v: Vector3<f64>,
-    w: Vector3<f64>,
+    pub u: Vector3<f64>,
+    pub v: Vector3<f64>,
+    pub w: Vector3<f64>,
 }
 
 impl Onb {

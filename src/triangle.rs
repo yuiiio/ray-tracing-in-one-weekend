@@ -9,6 +9,7 @@ use crate::vec3::{
     cross, vec3_add, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_sub,
     vec3_unit_vector_f64, Vector3,
 };
+use crate::onb::Onb;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -22,6 +23,7 @@ pub struct Triangle {
     n_norm: Vector3<f64>,
     area: f64,
     aabb_box: Aabb,
+    onb: Onb,
 }
 
 impl Triangle {
@@ -60,6 +62,7 @@ impl Triangle {
             n_norm,
             area,
             aabb_box,
+            onb: Onb::build_from_w(&n_norm),
         }
     }
 }
@@ -104,6 +107,7 @@ impl Hitable for Triangle {
             p,
             normal: self.n_norm,
             mat_ptr: &self.mat_ptr,
+            onb: Some(&self.onb),
         })
     }
 

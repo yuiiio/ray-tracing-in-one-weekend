@@ -5,6 +5,7 @@ use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, Vector3, vec3_unit_vector_f64};
+use crate::onb::Onb;
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -29,6 +30,8 @@ pub struct Rect {
     area: f64,
     aabb_box: Aabb,
     needs_uv: bool,
+    normal: Vector3<f64>,
+    onb: Onb,
 }
 
 impl Rect {
@@ -42,19 +45,28 @@ impl Rect {
         mat_ptr: MaterialHandle,
     ) -> Self {
         let area: f64 = (x1 - x0) * (y1 - y0);
-        let aabb_box = match axis {
-            AxisType::Kxy => Aabb {
+        let (aabb_box, normal) = match axis {
+            AxisType::Kxy => (
+                Aabb {
                 b_min: [x0, y0, k - 0.0001],
                 b_max: [x1, y1, k + 0.0001],
-            },
-            AxisType::Kxz => Aabb {
+                }, 
+                [0.0, 0.0, 1.0] 
+            ),
+            AxisType::Kxz => (
+                Aabb {
                 b_min: [x0, k - 0.0001, y0],
                 b_max: [x1, k + 0.0001, y1],
-            },
-            AxisType::Kyz => Aabb {
+                },
+                [0.0, 1.0, 0.0]
+            ),
+            AxisType::Kyz => (
+                Aabb {
                 b_min: [k - 0.0001, x0, y0],
                 b_max: [k + 0.0001, x1, y1],
-            },
+                },
+                [1.0, 0.0, 0.0]
+            ),
         };
         let width = x1 - x0;
         let height = y1 - y0;
@@ -76,6 +88,8 @@ impl Rect {
             area,
             aabb_box,
             needs_uv,
+            normal,
+            onb: Onb::build_from_w(&normal),
         }
     }
 }
@@ -84,10 +98,10 @@ impl Rect {
 // Rect != actual Surface.
 impl Hitable for Rect {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let (xi, yi, zi, nnormal): (usize, usize, usize, Vector3<f64>) = match self.axis {
-            AxisType::Kxy => (0, 1, 2, [0.0, 0.0, 1.0]),
-            AxisType::Kxz => (0, 2, 1, [0.0, 1.0, 0.0]),
-            AxisType::Kyz => (1, 2, 0, [1.0, 0.0, 0.0]),
+        let (xi, yi, zi): (usize, usize, usize) = match self.axis {
+            AxisType::Kxy => (0, 1, 2),
+            AxisType::Kxz => (0, 2, 1),
+            AxisType::Kyz => (1, 2, 0),
         };
 
         let t = (self.k - r.origin[zi]) / r.direction[zi];
@@ -115,8 +129,9 @@ impl Hitable for Rect {
             t,
             uv: (u, v),
             p,
-            normal: nnormal,
+            normal: self.normal,
             mat_ptr: &self.mat_ptr,
+            onb: Some(&self.onb),
         })
     }
 
@@ -162,11 +177,18 @@ impl Hitable for Rect {
 #[derive(Clone)]
 pub struct FlipNormals {
     shape: Rect,
+    normal: Vector3<f64>,
+    onb: Onb,
 }
 
 impl FlipNormals {
     pub fn new(shape: Rect) -> Self {
-        FlipNormals { shape }
+        let normal = vec3_mul_b(&shape.normal, -1.0);
+        FlipNormals{
+            shape,
+            normal,
+            onb: Onb::build_from_w(&normal),
+        }
     }
 }
 
@@ -177,8 +199,9 @@ impl Hitable for FlipNormals {
                 t: hit.t,
                 uv: hit.uv,
                 p: hit.p,
-                normal: vec3_mul_b(&hit.normal, -1.0),
+                normal: self.normal,
                 mat_ptr: hit.mat_ptr,
+                onb: Some(&self.onb),
             }),
             None => None,
         }

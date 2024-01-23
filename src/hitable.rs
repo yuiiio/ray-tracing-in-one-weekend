@@ -2,6 +2,7 @@ use crate::aabb::Aabb;
 use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
+use crate::onb::Onb;
 
 pub struct HitRecord<'a> {
     pub t: f64,
@@ -9,6 +10,7 @@ pub struct HitRecord<'a> {
     pub p: Vector3<f64>,
     pub normal: Vector3<f64>,
     pub mat_ptr: &'a MaterialHandle,
+    pub onb: Option<&'a Onb>,
 }
 
 pub trait Hitable: HitableClone {

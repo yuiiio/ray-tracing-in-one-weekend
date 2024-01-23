@@ -17,7 +17,7 @@ impl Translate {
             b_min: vec3_add(&obj.bounding_box().b_min, &offset),
             b_max: vec3_add(&obj.bounding_box().b_max, &offset),
         };
-        Translate { obj, offset, aabb_box }
+        Translate { obj, offset, aabb_box, }
     }
 }
 
@@ -32,6 +32,7 @@ impl Hitable for Translate {
                     p: vec3_add(&hit.p, &self.offset),
                     normal: hit.normal,
                     mat_ptr: hit.mat_ptr,
+                    onb: hit.onb,
                 })
             },
             None => None,
@@ -106,12 +107,14 @@ impl Hitable for Rotate {
         let r = Ray { origin, direction };
         match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
+                let normal = self.quat.rotate(&hit.normal);
                 Some(HitRecord {
                     t: hit.t,
                     uv: hit.uv,
                     p: self.quat.rotate(&hit.p),
-                    normal: self.quat.rotate(&hit.normal),
+                    normal,
                     mat_ptr: hit.mat_ptr,
+                    onb: None,
                 })
             },
             None => None,
