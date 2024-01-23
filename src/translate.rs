@@ -51,6 +51,10 @@ impl Hitable for Translate {
         let on = vec3_sub(o, &self.offset);
         self.obj.random(&on)
     }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        self.obj.rotate_onb(quat);
+    }
 }
 
 #[derive(Clone)]
@@ -62,7 +66,7 @@ pub struct Rotate {
 }
 
 impl Rotate {
-    pub fn new(obj: Box<dyn Hitable + Send + Sync>, axis: &Vector3<f64>, angle: f64) -> Self {
+    pub fn new(mut obj: Box<dyn Hitable + Send + Sync>, axis: &Vector3<f64>, angle: f64) -> Self {
         let quat = Rotation::new(angle, axis);
         let revq = Rotation::new(-angle, axis);
 
@@ -91,6 +95,8 @@ impl Rotate {
         }
         let aabb_box = Aabb{b_min, b_max};
 
+        obj.rotate_onb(&quat); // rotate obj's normal and onb
+
         Rotate {
             obj,
             quat,
@@ -107,14 +113,18 @@ impl Hitable for Rotate {
         let r = Ray { origin, direction };
         match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
-                let normal = self.quat.rotate(&hit.normal);
+                let normal = match hit.onb_uv {
+                    Some(_onb_uv) => hit.normal, // norm and onb is static(eg. rect, triangle)
+                                                // already rotated
+                    None => self.quat.rotate(&hit.normal), // norm and onb is not static(eg. sphere)
+                };
                 Some(HitRecord {
                     t: hit.t,
                     uv: hit.uv,
                     p: self.quat.rotate(&hit.p),
                     normal,
                     mat_ptr: hit.mat_ptr,
-                    onb_uv: None,
+                    onb_uv: hit.onb_uv,
                 })
             },
             None => None,
@@ -142,5 +152,9 @@ impl Hitable for Rotate {
         let rp = vec3_add(&ro, &rv);
         let p = self.quat.rotate(&rp);
         vec3_sub(&p, o)
+    }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        self.obj.rotate_onb(quat);
     }
 }

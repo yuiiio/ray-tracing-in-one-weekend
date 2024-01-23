@@ -9,6 +9,7 @@ use crate::ray::Ray;
 use crate::vec3::{
     vec3_add_b, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_sub_b, Vector3,
 };
+use crate::quotation::Rotation;
 
 #[derive(Clone)]
 pub struct Sphere {
@@ -128,6 +129,8 @@ impl Hitable for Sphere {
 
         uvw.local(&random_to_sphere(self.radius_sq, distabce_squared))
     }
+
+    fn rotate_onb(&mut self, _quat: &Rotation) -> () {}
 }
 
 fn random_to_sphere(radius_sq: f64, distabce_squared: f64) -> Vector3<f64> {

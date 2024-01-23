@@ -5,6 +5,7 @@ use crate::hitable::{HitRecord, Hitable};
 use crate::hitablelist::HitableList;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
+use crate::quotation::Rotation;
 
 #[derive(Clone)]
 pub struct BvhTree {
@@ -426,5 +427,9 @@ impl Hitable for BvhTree {
         let rand: f64 = rng.gen();
         let rand_handle = (rand * hitable_list_len as f64) as usize;
         self.hitable_list[rand_handle].random(o)
+    }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        self.hitable_list.rotate_onb(quat);
     }
 }

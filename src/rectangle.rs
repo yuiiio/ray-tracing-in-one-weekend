@@ -6,6 +6,7 @@ use crate::material::MaterialHandle;
 use crate::ray::Ray;
 use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, Vector3, vec3_unit_vector_f64};
 use crate::onb::Onb;
+use crate::quotation::Rotation;
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -173,6 +174,12 @@ impl Hitable for Rect {
         //TODO: need all rewrite
         vec3_unit_vector_f64(&vec3_sub(&random_point, o))
     }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        self.normal = quat.rotate(&self.normal);
+        let onb = Onb::build_from_w(&self.normal);
+        self.onb_uv = (onb.u, onb.v);
+    }
 }
 
 #[derive(Clone)]
@@ -219,6 +226,10 @@ impl Hitable for FlipNormals {
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         self.shape.random(o)
+    }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        self.shape.rotate_onb(quat);
     }
 }
 
@@ -348,6 +359,13 @@ impl Hitable for Boxel {
             self.rect[random_handle].random(o)
         } else {
             self.flip_rect[random_handle].random(o)
+        }
+    }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        for i in 0..3 {
+            self.rect[i].rotate_onb(quat);
+            self.flip_rect[i].rotate_onb(quat);
         }
     }
 }

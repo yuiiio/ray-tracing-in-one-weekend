@@ -4,6 +4,7 @@ use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
 use crate::ray::Ray;
 use crate::vec3::Vector3;
+use crate::quotation::Rotation;
 
 #[derive(Clone)]
 pub struct HitableList { 
@@ -91,5 +92,11 @@ impl Hitable for HitableList {
 
         let index: f64 = n as f64 * rand; // (1 * 0.9) as usize = 0
         self.hitable_list[index as usize].random(o)
+    }
+
+    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+        for i in self.iter_mut() {
+            i.rotate_onb(quat);
+        }
     }
 }
