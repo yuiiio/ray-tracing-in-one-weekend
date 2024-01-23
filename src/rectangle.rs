@@ -230,6 +230,10 @@ impl Hitable for FlipNormals {
 
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
         self.shape.rotate_onb(quat);
+
+        self.normal = vec3_mul_b(&self.shape.normal, -1.0);
+        let onb = Onb::build_from_w(&self.normal);
+        self.onb_uv = (onb.u, onb.v);
     }
 }
 
