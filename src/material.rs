@@ -130,9 +130,10 @@ pub struct Metal {
     texture: TextureHandle,
 }
 
+#[allow(dead_code)]
 fn reflect(v: &Vector3<f64>, n: &Vector3<f64>) -> Vector3<f64> {
     vec3_add(
-        &vec3_mul_b(&vec3_mul_b(n, vec3_dot(v, n)), -2.0),
+        &vec3_mul_b(n, vec3_dot(v, n)*-2.0),
         v,
     )
 }
@@ -151,9 +152,14 @@ impl Metal {
     }
 
     fn scatter(&self, r_in: &Ray, hit_record: &HitRecord, texture_list: &TextureList) -> Option<MatRecord> {
-        let mut reflected = reflect(
+        let dt = vec3_dot(&r_in.direction, &hit_record.normal);
+        if dt.is_sign_positive() {
+            return None;
+        }
+
+        let mut reflected = reflect_with_dt_n(
             &r_in.direction,
-            &hit_record.normal,
+            &vec3_mul_b(&hit_record.normal, dt),
         );
         if self.fuzz != 0.0 { // should return Pdf instadof Ray when fuzz != 0.0 ?
             reflected = vec3_unit_vector_f64(
@@ -163,16 +169,12 @@ impl Metal {
         let scatterd = Ray{ origin: hit_record.p, direction: reflected };
         let attenuation = texture_list
             .get_value(hit_record.uv, &hit_record.p, &self.texture);
-        let absorabance = [0.0, 0.0, 0.0];
-        if vec3_dot(&scatterd.direction, &hit_record.normal).is_sign_positive() {
-            Some(MatRecord {
-                scatterd: Scatterd::Ray(scatterd),
-                attenuation,
-                absorabance,
-            })
-        } else {
-            None
-        }
+
+        Some(MatRecord {
+            scatterd: Scatterd::Ray(scatterd),
+            attenuation,
+            absorabance: [0.0, 0.0, 0.0], 
+        })
     }
 }
 
