@@ -137,11 +137,8 @@ impl Hitable for Rotate {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
-
             let ro = self.revq.rotate(&ray.origin);
-            let p = vec3_add(&ray.origin, &ray.direction);
-            let rp = self.revq.rotate(&p);
-            let rv = vec3_sub(&rp, &ro);
+            let rv = self.revq.rotate(&ray.direction);
             return self.obj.pdf_value(&Ray{origin: ro, direction: rv});
         }
         0.0
@@ -149,9 +146,7 @@ impl Hitable for Rotate {
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let ro = self.revq.rotate(o);
         let rv = self.obj.random(&ro);
-        let rp = vec3_add(&ro, &rv);
-        let p = self.quat.rotate(&rp);
-        vec3_sub(&p, o)
+        self.quat.rotate(&rv)
     }
 
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
