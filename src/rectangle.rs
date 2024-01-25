@@ -49,22 +49,22 @@ impl Rect {
         let (aabb_box, normal) = match axis {
             AxisType::Kxy => (
                 Aabb {
-                b_min: [x0, y0, k],
-                b_max: [x1, y1, k],
+                b_min: [x0, y0, k - 0.0001],
+                b_max: [x1, y1, k + 0.0001],
                 }, 
                 [0.0, 0.0, 1.0] 
             ),
             AxisType::Kxz => (
                 Aabb {
-                b_min: [x0, k, y0],
-                b_max: [x1, k, y1],
+                b_min: [x0, k - 0.0001, y0],
+                b_max: [x1, k + 0.0001, y1],
                 },
                 [0.0, 1.0, 0.0]
             ),
             AxisType::Kyz => (
                 Aabb {
-                b_min: [k, x0, y0],
-                b_max: [k, x1, y1],
+                b_min: [k - 0.0001, x0, y0],
+                b_max: [k + 0.0001, x1, y1],
                 },
                 [1.0, 0.0, 0.0]
             ),
