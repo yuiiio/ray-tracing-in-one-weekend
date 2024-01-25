@@ -5,6 +5,7 @@ use std::mem::swap;
 
 pub struct AabbHitRecord {
     pub t_max: f64,
+    pub t_min: f64,
 }
 
 #[derive(Clone)]
@@ -32,7 +33,7 @@ impl Aabb {
                 return None
             }
         }
-        Some(AabbHitRecord{ t_max: tmax })
+        Some(AabbHitRecord{ t_max: tmax, t_min: tmin })
     }
 
     pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
@@ -53,7 +54,7 @@ impl Aabb {
                 return None
             }
         }
-        Some(AabbHitRecord{ t_max: tmax })
+        Some(AabbHitRecord{ t_max: tmax, t_min: tmin })
     }
 }
 
