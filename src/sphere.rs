@@ -151,17 +151,17 @@ impl Hitable for Sphere {
         let norm_co = vec3_mul_b(&co, nor_dist);
         let uvw = Onb::build_from_w(&norm_co);
 
-        uvw.local(&random_to_sphere(self.radius_sq, distabce_squared))
+        uvw.local(&random_to_sphere(self.radius_sq, distabce_squared, nor_dist))
     }
 
     fn rotate_onb(&mut self, _quat: &Rotation) -> () {}
 }
 
-fn random_to_sphere(radius_sq: f64, distabce_squared: f64) -> Vector3<f64> {
+fn random_to_sphere(radius_sq: f64, distabce_squared: f64, nor_dist: f64) -> Vector3<f64> {
     let mut rng = rand::thread_rng();
     let r1: f64 = rng.gen();
     let r2: f64 = rng.gen();
-    let cos_theta_max = (1.0 - (radius_sq / distabce_squared)).sqrt();
+    let cos_theta_max = (distabce_squared - radius_sq).sqrt() * nor_dist;
     let z = 1.0 - r2 * (1.0 - cos_theta_max);
     let a = 2.0 * PI * r1;
     let b = (1.0 - z.powi(2)).sqrt();
