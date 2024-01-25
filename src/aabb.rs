@@ -4,6 +4,7 @@ use crate::utils::{min, max};
 use std::mem::swap;
 
 pub struct AabbHitRecord {
+    pub t_max: f64,
 }
 
 #[derive(Clone)]
@@ -31,7 +32,7 @@ impl Aabb {
                 return None
             }
         }
-        Some(AabbHitRecord{})
+        Some(AabbHitRecord{ t_max: tmax })
     }
 
     pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
@@ -52,7 +53,7 @@ impl Aabb {
                 return None
             }
         }
-        Some(AabbHitRecord{})
+        Some(AabbHitRecord{ t_max: tmax })
     }
 }
 

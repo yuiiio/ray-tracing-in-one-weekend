@@ -326,11 +326,11 @@ impl Hitable for BvhTree {
             if bvh_pos_diff == 1 { // this node has actual item
                 let right_obj = &self.hitable_list[current_bvh_node.right];
                 if !current_bvh_node.only_have_left_obj { // ! so need check both
-                    if let Some(_right_aabb_hit) = right_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // check bounding_box
-                        if let Some(right_rec) = right_obj.hit(r, t_min, min_hit_t) { // actual hit check
+                    if let Some(right_aabb_hit) = right_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // check bounding_box
+                        if let Some(right_rec) = right_obj.hit(r, t_min, right_aabb_hit.t_max) { // actual hit check
                             let left_obj = &self.hitable_list[current_bvh_node.left];
-                            if let Some(_left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, right_rec.t) { // bounding_box
-                                if let Some(left_rec) = left_obj.hit(r, t_min, right_rec.t) { // acutual hit check
+                            if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, right_rec.t) { // bounding_box
+                                if let Some(left_rec) = left_obj.hit(r, t_min, left_aabb_hit.t_max) { // acutual hit check
                                     min_hit_t = left_rec.t;
                                     return_rec = Some(left_rec);
                                     current_pos -= 1;
@@ -354,8 +354,8 @@ impl Hitable for BvhTree {
                 };
                 // not need check right
                 let left_obj = &self.hitable_list[current_bvh_node.left];
-                if let Some(_left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // bounding_box
-                    if let Some(left_rec) = left_obj.hit(r, t_min, min_hit_t) { // acutual hit check
+                if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // bounding_box
+                    if let Some(left_rec) = left_obj.hit(r, t_min, left_aabb_hit.t_max) { // acutual hit check
                         min_hit_t = left_rec.t;
                         return_rec = Some(left_rec);
                         current_pos -= 1;
