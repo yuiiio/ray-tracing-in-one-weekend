@@ -42,7 +42,7 @@ impl Sphere {
         }
     }
 
-    fn only_hit_check_return_oc_sq(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<f64> {
+    fn only_hit_check_return_oc_sq_c(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<(f64, f64)> {
         let oc = vec3_sub(&r.origin, &self.center);
         let b = vec3_dot(&r.direction, &oc);// -oc~0~oc
         let oc_sq = vec3_squared_length(&oc);
@@ -53,7 +53,7 @@ impl Sphere {
             let temp = -b - desc_sqrt;
             if temp < t_max {
                 if temp > t_min {
-                    return Some(oc_sq);
+                    return Some((oc_sq, c));
                 }
             } else {
                 // t_max < (-b - desc_sqrt) < (-b + desc_sqrt)
@@ -61,7 +61,7 @@ impl Sphere {
             }
             let temp = -b + desc_sqrt;
             if temp < t_max && temp > t_min {
-                return Some(oc_sq);
+                return Some((oc_sq, c));
             }
         }
         None
@@ -134,8 +134,8 @@ impl Hitable for Sphere {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
-            if let Some(oc_sq) = self.only_hit_check_return_oc_sq(ray, aabb_hit.t_min, aabb_hit.t_max) {
-                let cos_theta_max: f64 = (1.0 - (self.radius_sq / oc_sq)).sqrt();
+            if let Some((oc_sq, c)) = self.only_hit_check_return_oc_sq_c(ray, aabb_hit.t_min, aabb_hit.t_max) {
+                let cos_theta_max: f64 = (c / oc_sq).sqrt();
                 // if cos_theta_max == 1,0 return 0.0
                 // but, never happen (radius_sq > 0.0)
                 return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
