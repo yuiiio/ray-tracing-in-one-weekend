@@ -41,6 +41,31 @@ impl Sphere {
             needs_uv,
         }
     }
+
+    fn only_hit_check_return_oc_sq(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<f64> {
+        let oc = vec3_sub(&r.origin, &self.center);
+        let b = vec3_dot(&r.direction, &oc);// -oc~0~oc
+        let oc_sq = vec3_squared_length(&oc);
+        let c = oc_sq - self.radius_sq;// oc^2 - r^2
+        let descriminant = b.powi(2) - c;// (0~oc)^2 - (oc^2 - r^2)
+        if descriminant.is_sign_positive() {
+            let desc_sqrt = descriminant.sqrt();
+            let temp = -b - desc_sqrt;
+            if temp < t_max {
+                if temp > t_min {
+                    return Some(oc_sq);
+                }
+            } else {
+                // t_max < (-b - desc_sqrt) < (-b + desc_sqrt)
+                return None;
+            }
+            let temp = -b + desc_sqrt;
+            if temp < t_max && temp > t_min {
+                return Some(oc_sq);
+            }
+        }
+        None
+    }
 }
 
 fn get_sphere_uv(point: Vector3<f64>) -> (f64, f64) {
@@ -109,9 +134,8 @@ impl Hitable for Sphere {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
-            if let Some(_rec) = self.hit(ray, aabb_hit.t_min, aabb_hit.t_max) {
-                let distabce_squared: f64 = vec3_squared_length(&vec3_sub(&self.center, &ray.origin));
-                let cos_theta_max: f64 = (1.0 - (self.radius_sq / distabce_squared)).sqrt();
+            if let Some(oc_sq) = self.only_hit_check_return_oc_sq(ray, aabb_hit.t_min, aabb_hit.t_max) {
+                let cos_theta_max: f64 = (1.0 - (self.radius_sq / oc_sq)).sqrt();
                 // if cos_theta_max == 1,0 return 0.0
                 // but, never happen (radius_sq > 0.0)
                 return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
