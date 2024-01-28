@@ -319,19 +319,24 @@ impl Hitable for BvhTree {
         let mut current_pos: usize = self.last_node_num;
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
+        let mut second_depth_aabb_min: f64 = 0.0;
+        let mut second_depth_aabb_max: f64 = 0.0;
         let r_dir_inv = &[ 1.0 / r.direction[0], 1.0 / r.direction[1], 1.0/ r.direction[2] ];
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             let bvh_pos_diff = current_bvh_node.next_pos_diff;
             if bvh_pos_diff == 1 { // this node has actual item
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, second_depth_aabb_min, second_depth_aabb_max) {
+                    Some(first_hit_rec) => {
                 let right_obj = &self.hitable_list[current_bvh_node.right];
                 if !current_bvh_node.only_have_left_obj { // ! so need check both
-                    if let Some(right_aabb_hit) = right_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // check bounding_box
+                    if let Some(right_aabb_hit) = right_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, first_hit_rec.t_min, first_hit_rec.t_max) { // check bounding_box
                         if let Some(right_rec) = right_obj.hit(r, right_aabb_hit.t_min, right_aabb_hit.t_max) { // actual hit check
                             let left_obj = &self.hitable_list[current_bvh_node.left];
-                            if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, right_rec.t) { // bounding_box
+                            if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, first_hit_rec.t_min, right_rec.t) { // bounding_box
                                 if let Some(left_rec) = left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max) { // acutual hit check
                                     min_hit_t = left_rec.t;
+                                    second_depth_aabb_max = left_rec.t;
                                     return_rec = Some(left_rec);
                                     current_pos -= 1;
                                     if current_pos == 0 {
@@ -342,6 +347,7 @@ impl Hitable for BvhTree {
                                 }; // not hit left obj or right_t < left_t
                             }; // not hit left_bounding_box
                             min_hit_t = right_rec.t;
+                            second_depth_aabb_max = right_rec.t;
                             return_rec = Some(right_rec);
                             current_pos -= 1;
                             if current_pos == 0 {
@@ -354,9 +360,10 @@ impl Hitable for BvhTree {
                 };
                 // not need check right
                 let left_obj = &self.hitable_list[current_bvh_node.left];
-                if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) { // bounding_box
+                if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, first_hit_rec.t_min, first_hit_rec.t_max) { // bounding_box
                     if let Some(left_rec) = left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max) { // acutual hit check
                         min_hit_t = left_rec.t;
+                        second_depth_aabb_max = left_rec.t;
                         return_rec = Some(left_rec);
                         current_pos -= 1;
                         if current_pos == 0 {
@@ -373,33 +380,24 @@ impl Hitable for BvhTree {
                 } else {
                     continue;
                 }
+                    },
+                    None => {
+                // nothing update
+                current_pos -= 1;
+                if current_pos == 0 {
+                    break; // no more hit node, ealy return;
+                } else {
+                    continue;
+                }
+                    }
+                }
             } else if bvh_pos_diff == 3 { // this node depth = 2 // TODO: just use match ?
                 match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
                     Some(hit_rec) => {
-                        let right_child = current_pos - 1;
-                        match self.bvh_node_list[right_child].bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, hit_rec.t_min, hit_rec.t_max) {
-                            Some(hit_rec) => {
-                                current_pos = right_child;
-                                continue;
-                            },
-                            None => {
-                            },
-                        }
-                        let left_child = current_pos - 2;
-                        match self.bvh_node_list[left_child].bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, hit_rec.t_min, hit_rec.t_max) {
-                            Some(hit_rec) => {
-                                current_pos = left_child;
-                                continue;
-                            },
-                            None => {
-                                current_pos -= 3;
-                                if current_pos == 0 {
-                                    break; // no more hit node, ealy return;
-                                } else {
-                                    continue;
-                                }
-                            },
-                        }
+                        second_depth_aabb_max = hit_rec.t_max;
+                        second_depth_aabb_min = hit_rec.t_min;
+                        current_pos -= 1;
+                        continue;
                     },
                     None => {
                         current_pos -= 3;
