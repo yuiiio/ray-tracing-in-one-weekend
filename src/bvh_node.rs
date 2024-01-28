@@ -373,6 +373,44 @@ impl Hitable for BvhTree {
                 } else {
                     continue;
                 }
+            } else if bvh_pos_diff == 3 { // this node depth = 2 // TODO: just use match ?
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
+                    Some(hit_rec) => {
+                        let right_child = current_pos - 1;
+                        match self.bvh_node_list[right_child].bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, hit_rec.t_min, hit_rec.t_max) {
+                            Some(hit_rec) => {
+                                current_pos = right_child;
+                                continue;
+                            },
+                            None => {
+                            },
+                        }
+                        let left_child = current_pos - 2;
+                        match self.bvh_node_list[left_child].bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, hit_rec.t_min, hit_rec.t_max) {
+                            Some(hit_rec) => {
+                                current_pos = left_child;
+                                continue;
+                            },
+                            None => {
+                                current_pos -= 3;
+                                if current_pos == 0 {
+                                    break; // no more hit node, ealy return;
+                                } else {
+                                    continue;
+                                }
+                            },
+                        }
+                    },
+                    None => {
+                        current_pos -= 3;
+                        if current_pos == 0 {
+                            break; // no more hit node, ealy return;
+                        } else {
+                            continue;
+                        }
+                    },
+                }
+            
             } else { // this node has other nodes
                 match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
                     Some(_hit_rec) => { // if hit, next_pos_diff => 1;
