@@ -319,8 +319,10 @@ impl Hitable for BvhTree {
         let mut current_pos: usize = self.last_node_num;
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
-        let mut second_depth_aabb_min: f64 = 0.0;
-        let mut second_depth_aabb_max: f64 = 0.0;
+        let mut second_depth_aabb_min: f64 = t_min;
+        let mut second_depth_aabb_max: f64 = t_max;
+        let mut third_depth_aabb_min: f64 = t_min;
+        let mut third_depth_aabb_max: f64 = t_max;
         let r_dir_inv = &[ 1.0 / r.direction[0], 1.0 / r.direction[1], 1.0/ r.direction[2] ];
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
@@ -337,6 +339,7 @@ impl Hitable for BvhTree {
                                 if let Some(left_rec) = left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max) { // acutual hit check
                                     min_hit_t = left_rec.t;
                                     second_depth_aabb_max = left_rec.t;
+                                    third_depth_aabb_max = left_rec.t;
                                     return_rec = Some(left_rec);
                                     current_pos -= 1;
                                     if current_pos == 0 {
@@ -348,6 +351,7 @@ impl Hitable for BvhTree {
                             }; // not hit left_bounding_box
                             min_hit_t = right_rec.t;
                             second_depth_aabb_max = right_rec.t;
+                            third_depth_aabb_max = right_rec.t;
                             return_rec = Some(right_rec);
                             current_pos -= 1;
                             if current_pos == 0 {
@@ -364,6 +368,7 @@ impl Hitable for BvhTree {
                     if let Some(left_rec) = left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max) { // acutual hit check
                         min_hit_t = left_rec.t;
                         second_depth_aabb_max = left_rec.t;
+                        third_depth_aabb_max = left_rec.t;
                         return_rec = Some(left_rec);
                         current_pos -= 1;
                         if current_pos == 0 {
@@ -392,7 +397,7 @@ impl Hitable for BvhTree {
                     }
                 }
             } else if bvh_pos_diff == 3 { // this node depth = 2 // TODO: just use match ?
-                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, third_depth_aabb_min, third_depth_aabb_max) {
                     Some(hit_rec) => {
                         second_depth_aabb_max = hit_rec.t_max;
                         second_depth_aabb_min = hit_rec.t_min;
@@ -408,7 +413,23 @@ impl Hitable for BvhTree {
                         }
                     },
                 }
-            
+            } else if bvh_pos_diff == 7 { // this node depth = 3 // TODO: just use match ?
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
+                    Some(hit_rec) => {
+                        third_depth_aabb_max = hit_rec.t_max;
+                        third_depth_aabb_min = hit_rec.t_min;
+                        current_pos -= 1;
+                        continue;
+                    },
+                    None => {
+                        current_pos -= 7;
+                        if current_pos == 0 {
+                            break; // no more hit node, ealy return;
+                        } else {
+                            continue;
+                        }
+                    },
+                }
             } else { // this node has other nodes
                 match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
                     Some(_hit_rec) => { // if hit, next_pos_diff => 1;
