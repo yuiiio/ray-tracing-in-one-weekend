@@ -129,14 +129,14 @@ fn color(
             None => {
                 // if not hit any obj
                 // sky
-                /*
                 let a = (ray.direction[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
                     &vec3_mul_b(&[0.3, 0.1, 0.1], 1.0 - a),
                     &vec3_mul_b(&[0.2, 0.3, 0.5], a),
                 );
-                */
+                /*
                 let last_emitted = [0.01, 0.01, 0.01];
+                */
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
@@ -237,7 +237,7 @@ fn main() {
 
     obj_list.push(Translate::new(
         Box::new(Rotate::new(
-            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], white)),
+            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], white.clone())),
             &[0.0, 1.0, 0.0],
             -18.0,
         )),
@@ -261,7 +261,7 @@ fn main() {
     let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
     obj_list.push(light_sphere.clone());
 
-    let bunny_list = obj_loader(&mut File::open("./dragon.obj").unwrap(), red_glass);
+    let bunny_list = obj_loader(&mut File::open("./lucy.obj").unwrap(), red_glass, 0.3);
 
     let now1 = SystemTime::now();
     let bunny_bvh = BvhTree::new(bunny_list);
@@ -271,8 +271,8 @@ fn main() {
     );
 
     let translated_bunny_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(bunny_bvh), &[0.0, 1.0, 0.0], 180.0)),
-        [200.0, 300.0, 200.0],
+        Box::new(Rotate::new(Box::new(bunny_bvh), &[1.0, 1.0, 0.0], 90.0)),
+        [100.0, 300.0, 150.0],
     );
 
     obj_list.push(translated_bunny_bvh.clone());
