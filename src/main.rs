@@ -131,8 +131,8 @@ fn color(
                 // sky
                 let a = (ray.direction[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
-                    &vec3_mul_b(&[0.3, 0.1, 0.1], 1.0 - a),
-                    &vec3_mul_b(&[0.2, 0.3, 0.5], a),
+                    &vec3_mul_b(&[0.1, 0.03, 0.03], 1.0 - a),
+                    &vec3_mul_b(&[0.07, 0.1, 0.17], a),
                 );
                 /*
                 let last_emitted = [0.01, 0.01, 0.01];
@@ -167,7 +167,7 @@ fn main() {
     //let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
     //let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
-    let light_texture = texture_list.add_color_texture(ColorTexture::new([20.0, 10.0, 20.0]));
+    let light_texture = texture_list.add_color_texture(ColorTexture::new([40.0, 20.0, 40.0]));
     let magick_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.png").unwrap().into_rgba8()));
     let earth_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.jpg").unwrap().into_rgba8()));
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
@@ -235,14 +235,16 @@ fn main() {
     let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxz, white.clone());
     obj_list.push(floor.clone());
 
-    obj_list.push(Translate::new(
+    let glass_box = Translate::new(
         Box::new(Rotate::new(
-            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], white.clone())),
+            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], red_glass)),
             &[0.0, 1.0, 0.0],
             -18.0,
         )),
         [130.0, 0.0, 65.0],
-    ));
+    );
+    obj_list.push(glass_box.clone());
+    
     let metal_box = Translate::new(
         Box::new(Rotate::new(
             Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal)),
@@ -261,7 +263,7 @@ fn main() {
     let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
     obj_list.push(light_sphere.clone());
 
-    let bunny_list = obj_loader(&mut File::open("./lucy.obj").unwrap(), red_glass, 0.3);
+    let bunny_list = obj_loader(&mut File::open("./lucy.obj").unwrap(), white, 0.3);
 
     let now1 = SystemTime::now();
     let bunny_bvh = BvhTree::new(bunny_list);
@@ -271,8 +273,8 @@ fn main() {
     );
 
     let translated_bunny_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(bunny_bvh), &[1.0, 1.0, 0.0], 90.0)),
-        [100.0, 300.0, 150.0],
+        Box::new(Rotate::new(Box::new(bunny_bvh), &[1.0, 1.0, 0.0], 270.0)),
+        [50.0, 270.0, -50.0],
     );
 
     obj_list.push(translated_bunny_bvh.clone());
@@ -305,7 +307,7 @@ fn main() {
     light_list.push(light_sphere);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
-    //light_list.push(glass_box);
+    light_list.push(glass_box);
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
