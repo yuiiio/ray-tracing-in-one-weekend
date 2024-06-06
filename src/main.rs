@@ -131,8 +131,8 @@ fn color(
                 // sky
                 let a = (ray.direction[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
-                    &vec3_mul_b(&[0.1, 0.03, 0.03], 1.0 - a),
-                    &vec3_mul_b(&[0.07, 0.1, 0.17], a),
+                    &vec3_mul_b(&[0.0, 0.0, 0.0], 1.0 - a),
+                    &vec3_mul_b(&[0.3, 0.4, 0.5], a),
                 );
                 /*
                 let last_emitted = [0.01, 0.01, 0.01];
@@ -151,7 +151,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 800;
     const OUTPUT_Y: usize = 800;
-    const NS: usize = 8;// x^2 / per pixel sample size;
+    const NS: usize = 16;// x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -164,18 +164,18 @@ fn main() {
     let mut material_list = MaterialList::new();
 
     let mut texture_list = TextureList::new();
-    //let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
+    let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
-    //let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
-    let light_texture = texture_list.add_color_texture(ColorTexture::new([40.0, 20.0, 40.0]));
+    let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
+    let light_texture = texture_list.add_color_texture(ColorTexture::new([20.0, 15.0, 10.0]));
     let magick_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.png").unwrap().into_rgba8()));
     let earth_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.jpg").unwrap().into_rgba8()));
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     //let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
-    //let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
+    let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
-    //let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
+    let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
     let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
                 // but, > 1.0 can happen when powerfull light ?
         material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
@@ -186,7 +186,6 @@ fn main() {
     let metal = material_list.add_metal_mat(Metal::new(0.0, metal_texture));
     //let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
-    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -197,7 +196,6 @@ fn main() {
         green,
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kyz, red));
-    */
 
     /*
     let light_rect = FlipNormals::new(Rect::new(
@@ -210,6 +208,7 @@ fn main() {
         light,
     ));
     obj_list.push(light_rect.clone());
+    */
 
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
@@ -220,7 +219,6 @@ fn main() {
         AxisType::Kxz,
         white.clone(),
     )));
-    */
 
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
@@ -247,7 +245,7 @@ fn main() {
     
     let metal_box = Translate::new(
         Box::new(Rotate::new(
-            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal)),
+            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal.clone())),
             &[0.0, 1.0, 0.0],
             15.0,
         )),
@@ -263,7 +261,7 @@ fn main() {
     let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
     obj_list.push(light_sphere.clone());
 
-    let bunny_list = obj_loader(&mut File::open("./lucy.obj").unwrap(), white, 0.3);
+    let bunny_list = obj_loader(&mut File::open("./lucy.obj").unwrap(), white, 0.2);
 
     let now1 = SystemTime::now();
     let bunny_bvh = BvhTree::new(bunny_list);
@@ -273,8 +271,8 @@ fn main() {
     );
 
     let translated_bunny_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(bunny_bvh), &[1.0, 1.0, 0.0], 270.0)),
-        [50.0, 270.0, -50.0],
+        Box::new(Rotate::new(Box::new(bunny_bvh), &[1.0, 0.5, 0.0], 270.0)),
+        [130.0, 90.0, -50.0],
     );
 
     obj_list.push(translated_bunny_bvh.clone());
