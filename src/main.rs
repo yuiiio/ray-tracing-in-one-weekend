@@ -151,7 +151,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 800;
     const OUTPUT_Y: usize = 800;
-    const NS: usize = 16;// x^2 / per pixel sample size;
+    const NS: usize = 4;// x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
