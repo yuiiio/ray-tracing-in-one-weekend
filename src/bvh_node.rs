@@ -14,7 +14,6 @@ pub struct BvhTree {
     aabb_box: Aabb,
     last_node_num: usize,
     nor_hitable_list_num: f64,
-    bvh_tree_depth: usize,
 }
 
 #[derive(Clone)]
@@ -24,7 +23,6 @@ pub struct BvhNode {
     right: usize,
     next_pos_diff: usize,// 1 is last // (2^depth) -1
     only_have_left_obj: bool,
-    this_node_is_right: bool,
 }
 
 fn dmerge(
@@ -130,7 +128,7 @@ enum Axis {
 //              7             14       <=  diff 7 (2^3 - 1)
 //           3     6      10      13   <=  diff 3 (2^2 - 1)
 //          1 2   4 5    8  9    11 12 <=  diff 1 (2^1 - 1)
-fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, center_list: &Vec<Vector3<f64>>, is_right_node: bool) -> usize {
+fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis, bvh_node_list: &mut Vec<BvhNode>, bvh_depth: usize, center_list: &Vec<Vector3<f64>>) -> usize {
     let handle_size = handle.len();
     let next_pos_diff = 2usize.pow(bvh_depth as u32) - 1;
     match handle_size {
@@ -144,7 +142,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                 right: handle[0], // right == left, but should skip with flag
                 next_pos_diff,
                 only_have_left_obj: true,
-                this_node_is_right: is_right_node,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -159,7 +156,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                     right: handle[1],
                     next_pos_diff,
                     only_have_left_obj: false,
-                    this_node_is_right: is_right_node,
                 };
                 let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
@@ -167,9 +163,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
             } else {
                 //assert_eq!(bvh_depth, 2); // should bvh_depth 1 or 2
                 
-                // hidari-zume ( left first )
-                let left_handle = build_bvh(hitable_list, &[handle[0]], pre_sort_axis, bvh_node_list, bvh_depth - 1,  center_list, false);
-                let right_handle = build_bvh(hitable_list, &[handle[1]], pre_sort_axis, bvh_node_list, bvh_depth - 1, center_list, true);
+                let left_handle = build_bvh(hitable_list, &[handle[0]], pre_sort_axis, bvh_node_list, bvh_depth - 1,  center_list);
+                let right_handle = build_bvh(hitable_list, &[handle[1]], pre_sort_axis, bvh_node_list, bvh_depth - 1, center_list);
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                                   , &bvh_node_list[right_handle].bvh_node_box),
@@ -177,7 +172,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                     right: right_handle,
                     next_pos_diff,
                     only_have_left_obj: false,
-                    this_node_is_right: is_right_node,
                 };
                 let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
@@ -244,9 +238,8 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
 
             let (a, b) = selected_handle.split_at(handle_size / 2);
 
-            // hidari-zume ( left first )
-            let left_handle = build_bvh(hitable_list, a, &sorted_axis, bvh_node_list, bvh_depth - 1, center_list, false);
-            let right_handle = build_bvh(hitable_list, b, &sorted_axis, bvh_node_list, bvh_depth - 1, center_list, true);
+            let left_handle = build_bvh(hitable_list, a, &sorted_axis, bvh_node_list, bvh_depth - 1, center_list);
+            let right_handle = build_bvh(hitable_list, b, &sorted_axis, bvh_node_list, bvh_depth - 1, center_list);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(&bvh_node_list[left_handle].bvh_node_box
                                               , &bvh_node_list[right_handle].bvh_node_box),
@@ -254,7 +247,6 @@ fn build_bvh(hitable_list: &HitableList, handle: &[usize], pre_sort_axis: &Axis,
                 right: right_handle,
                 next_pos_diff,
                 only_have_left_obj: false,
-                this_node_is_right: is_right_node,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -295,12 +287,11 @@ impl BvhTree {
             right: 0,
             next_pos_diff: 0,
             only_have_left_obj: false,
-            this_node_is_right: false,
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
         let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
-        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth, &aabb_center_list, false);
+        let last_node_num = build_bvh(&hitable_list, &handle, &Axis::X, &mut bvh_node_list, bvh_tree_depth, &aabb_center_list);
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
         let nor_hitable_list_num = 1.0 / (hitable_list_len as f64);
@@ -319,7 +310,6 @@ impl BvhTree {
             aabb_box,
             last_node_num,
             nor_hitable_list_num,
-            bvh_tree_depth,
         }
     }
 }
@@ -327,22 +317,18 @@ impl BvhTree {
 impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut current_pos: usize = self.last_node_num;
+        let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
-        let mut min_max_t: f64 = t_max;
-        let mut aabb_min_max_vec: Vec<(f64, f64)> = Vec::with_capacity(self.bvh_tree_depth);
-        aabb_min_max_vec.push((t_min, t_max));
+        let mut second_depth_aabb_min: f64 = t_min;
+        let mut second_depth_aabb_max: f64 = t_max;
+        let mut third_depth_aabb_min: f64 = t_min;
+        let mut third_depth_aabb_max: f64 = t_max;
         let r_dir_inv = &[ 1.0 / r.direction[0], 1.0 / r.direction[1], 1.0/ r.direction[2] ];
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             let bvh_pos_diff = current_bvh_node.next_pos_diff;
-            let (min_t, max_t): (f64, f64) = if current_bvh_node.this_node_is_right {
-                *aabb_min_max_vec.last().unwrap() // do not consume for next left child
-            } else {
-                aabb_min_max_vec.pop().unwrap() // no need more
-            };
-            let max_t = min_max_t.min(max_t);
             if bvh_pos_diff == 1 { // this node has actual item
-                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, min_t, max_t) {
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, second_depth_aabb_min, second_depth_aabb_max) {
                     Some(first_hit_rec) => {
                 let right_obj = &self.hitable_list[current_bvh_node.right];
                 if !current_bvh_node.only_have_left_obj { // ! so need check both
@@ -351,7 +337,9 @@ impl Hitable for BvhTree {
                             let left_obj = &self.hitable_list[current_bvh_node.left];
                             if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, first_hit_rec.t_min, right_rec.t) { // bounding_box
                                 if let Some(left_rec) = left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max) { // acutual hit check
-                                    min_max_t = left_rec.t; // for all parent 
+                                    min_hit_t = left_rec.t;
+                                    second_depth_aabb_max = left_rec.t;
+                                    third_depth_aabb_max = left_rec.t;
                                     return_rec = Some(left_rec);
                                     current_pos -= 1;
                                     if current_pos == 0 {
@@ -361,7 +349,9 @@ impl Hitable for BvhTree {
                                     }
                                 }; // not hit left obj or right_t < left_t
                             }; // not hit left_bounding_box
-                            min_max_t = right_rec.t; // for all parent 
+                            min_hit_t = right_rec.t;
+                            second_depth_aabb_max = right_rec.t;
+                            third_depth_aabb_max = right_rec.t;
                             return_rec = Some(right_rec);
                             current_pos -= 1;
                             if current_pos == 0 {
@@ -376,7 +366,9 @@ impl Hitable for BvhTree {
                 let left_obj = &self.hitable_list[current_bvh_node.left];
                 if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(r, r_dir_inv, first_hit_rec.t_min, first_hit_rec.t_max) { // bounding_box
                     if let Some(left_rec) = left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max) { // acutual hit check
-                        min_max_t = left_rec.t; // for all parent 
+                        min_hit_t = left_rec.t;
+                        second_depth_aabb_max = left_rec.t;
+                        third_depth_aabb_max = left_rec.t;
                         return_rec = Some(left_rec);
                         current_pos -= 1;
                         if current_pos == 0 {
@@ -404,10 +396,43 @@ impl Hitable for BvhTree {
                 }
                     }
                 }
+            } else if bvh_pos_diff == 3 { // this node depth = 2 // TODO: just use match ?
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, third_depth_aabb_min, third_depth_aabb_max) {
+                    Some(hit_rec) => {
+                        second_depth_aabb_max = hit_rec.t_max;
+                        second_depth_aabb_min = hit_rec.t_min;
+                        current_pos -= 1;
+                        continue;
+                    },
+                    None => {
+                        current_pos -= 3;
+                        if current_pos == 0 {
+                            break; // no more hit node, ealy return;
+                        } else {
+                            continue;
+                        }
+                    },
+                }
+            } else if bvh_pos_diff == 7 { // this node depth = 3 // TODO: just use match ?
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
+                    Some(hit_rec) => {
+                        third_depth_aabb_max = hit_rec.t_max;
+                        third_depth_aabb_min = hit_rec.t_min;
+                        current_pos -= 1;
+                        continue;
+                    },
+                    None => {
+                        current_pos -= 7;
+                        if current_pos == 0 {
+                            break; // no more hit node, ealy return;
+                        } else {
+                            continue;
+                        }
+                    },
+                }
             } else { // this node has other nodes
-                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, min_t, max_t) {
-                    Some(hit_rec) => { // if hit, next_pos_diff => 1;
-                        aabb_min_max_vec.push((hit_rec.t_min, hit_rec.t_max)); // push for child
+                match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, t_min, min_hit_t) {
+                    Some(_hit_rec) => { // if hit, next_pos_diff => 1;
                         current_pos -= 1;
                         // perfect tree so, not need check this case.
                         /*
