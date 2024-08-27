@@ -329,18 +329,22 @@ impl Hitable for BvhTree {
         let mut current_pos: usize = self.last_node_num;
         let mut return_rec: Option<HitRecord> = None;
         let mut min_max_t: f64 = t_max;
-        let mut aabb_min_max_vec: Vec<(f64, f64)> = Vec::with_capacity(self.bvh_tree_depth);
-        aabb_min_max_vec.push((t_min, t_max));
+        //let mut aabb_min_max_vec: Vec<(f64, f64)> = Vec::with_capacity(self.bvh_tree_depth);
+        //aabb_min_max_vec.push((t_min, t_max));
         let r_dir_inv = &[ 1.0 / r.direction[0], 1.0 / r.direction[1], 1.0/ r.direction[2] ];
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             let bvh_pos_diff = current_bvh_node.next_pos_diff;
+            /*
             let (min_t, max_t): (f64, f64) = if current_bvh_node.this_node_is_right {
                 *aabb_min_max_vec.last().unwrap() // do not consume for next left child
             } else {
                 aabb_min_max_vec.pop().unwrap() // no need more
             };
             let max_t = min_max_t.min(max_t);
+            */
+            let min_t = t_min;
+            let max_t = min_max_t;
             if bvh_pos_diff == 1 { // this node has actual item
                 match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, min_t, max_t) {
                     Some(first_hit_rec) => {
@@ -407,7 +411,7 @@ impl Hitable for BvhTree {
             } else { // this node has other nodes
                 match current_bvh_node.bvh_node_box.aabb_hit_with_cache(r, r_dir_inv, min_t, max_t) {
                     Some(hit_rec) => { // if hit, next_pos_diff => 1;
-                        aabb_min_max_vec.push((hit_rec.t_min, hit_rec.t_max)); // push for child
+                        //aabb_min_max_vec.push((hit_rec.t_min, hit_rec.t_max)); // push for child
                         current_pos -= 1;
                         // perfect tree so, not need check this case.
                         /*
