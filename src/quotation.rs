@@ -1,4 +1,4 @@
-use crate::vec3::{Vector3, vec3_add, vec3_mul_b, vec3_unit_vector_f64};
+use crate::vec3::{vec3_add, vec3_mul_b, vec3_unit_vector_f64, Vector3};
 
 #[derive(Clone)]
 pub struct Rotation {
@@ -13,9 +13,12 @@ impl Rotation {
         let cos = radians.cos();
         let sin = radians.sin();
         let vec3 = vec3_mul_b(&axis, sin);
-        let q = Qotation{ w: cos, xyz: vec3 };
-        let oq = Qotation { w:cos, xyz: vec3_mul_b(&vec3, -1.0) };
-        Rotation {q, oq}
+        let q = Qotation { w: cos, xyz: vec3 };
+        let oq = Qotation {
+            w: cos,
+            xyz: vec3_mul_b(&vec3, -1.0),
+        };
+        Rotation { q, oq }
     }
 
     pub fn rotate(&self, target: &Vector3<f64>) -> Vector3<f64> {
@@ -36,29 +39,32 @@ pub fn qmul(q1: &Qotation, q2: &Qotation) -> Qotation {
     let w2 = q2.w;
     let v1 = q1.xyz;
     let v2 = q2.xyz;
-    let inner = (v1[0] * v2[0])
-                + (v1[1] * v2[1])
-                + (v1[2] * v2[2]);
-    let cross: Vector3<f64> = [ (v1[1] * v2[2]) - (v1[2] * v2[1]),
-                                (v1[2] * v2[0]) - (v1[0] * v2[2]),
-                                (v1[0] * v2[1]) - (v1[1] * v2[0]), ];
+    let inner = (v1[0] * v2[0]) + (v1[1] * v2[1]) + (v1[2] * v2[2]);
+    let cross: Vector3<f64> = [
+        (v1[1] * v2[2]) - (v1[2] * v2[1]),
+        (v1[2] * v2[0]) - (v1[0] * v2[2]),
+        (v1[0] * v2[1]) - (v1[1] * v2[0]),
+    ];
     Qotation {
         w: (w1 * w2) - inner,
-        xyz: vec3_add(&vec3_add(&vec3_mul_b(&v2, w1), &vec3_mul_b(&v1, w2)), &cross),
+        xyz: vec3_add(
+            &vec3_add(&vec3_mul_b(&v2, w1), &vec3_mul_b(&v1, w2)),
+            &cross,
+        ),
     }
 }
 
 pub fn qmul_q2_xyz(q1: &Qotation, v2: &[f64; 3]) -> Qotation {
     let w1 = q1.w;
     let v1 = q1.xyz;
-    let inner = (v1[0] * v2[0])
-                + (v1[1] * v2[1])
-                + (v1[2] * v2[2]);
-    let cross: Vector3<f64> = [ (v1[1] * v2[2]) - (v1[2] * v2[1]),
-                                (v1[2] * v2[0]) - (v1[0] * v2[2]),
-                                (v1[0] * v2[1]) - (v1[1] * v2[0]), ];
+    let inner = (v1[0] * v2[0]) + (v1[1] * v2[1]) + (v1[2] * v2[2]);
+    let cross: Vector3<f64> = [
+        (v1[1] * v2[2]) - (v1[2] * v2[1]),
+        (v1[2] * v2[0]) - (v1[0] * v2[2]),
+        (v1[0] * v2[1]) - (v1[1] * v2[0]),
+    ];
     Qotation {
-        w: - inner,
+        w: -inner,
         xyz: vec3_add(&vec3_mul_b(v2, w1), &cross),
     }
 }
@@ -68,9 +74,14 @@ pub fn qmul_ret_xyz(q1: &Qotation, q2: &Qotation) -> [f64; 3] {
     let w2 = q2.w;
     let v1 = q1.xyz;
     let v2 = q2.xyz;
-    let cross: Vector3<f64> = [ (v1[1] * v2[2]) - (v1[2] * v2[1]),
-                                (v1[2] * v2[0]) - (v1[0] * v2[2]),
-                                (v1[0] * v2[1]) - (v1[1] * v2[0]), ];
+    let cross: Vector3<f64> = [
+        (v1[1] * v2[2]) - (v1[2] * v2[1]),
+        (v1[2] * v2[0]) - (v1[0] * v2[2]),
+        (v1[0] * v2[1]) - (v1[1] * v2[0]),
+    ];
 
-    vec3_add(&vec3_add(&vec3_mul_b(&v2, w1), &vec3_mul_b(&v1, w2)), &cross)
+    vec3_add(
+        &vec3_add(&vec3_mul_b(&v2, w1), &vec3_mul_b(&v1, w2)),
+        &cross,
+    )
 }

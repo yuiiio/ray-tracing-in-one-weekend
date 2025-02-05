@@ -1,6 +1,6 @@
-use crate::vec3::Vector3;
 use crate::ray::Ray;
-use crate::utils::{min, max};
+use crate::utils::{max, min};
+use crate::vec3::Vector3;
 use std::mem::swap;
 
 pub struct AabbHitRecord {
@@ -15,7 +15,13 @@ pub struct Aabb {
 }
 
 impl Aabb {
-    pub fn aabb_hit_with_cache(&self, r: &Ray, r_dir_div: &Vector3<f64>, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
+    pub fn aabb_hit_with_cache(
+        &self,
+        r: &Ray,
+        r_dir_div: &Vector3<f64>,
+        t_min: f64,
+        t_max: f64,
+    ) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
@@ -30,10 +36,13 @@ impl Aabb {
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
             if tmax < tmin {
-                return None
+                return None;
             }
         }
-        Some(AabbHitRecord{ t_max: tmax, t_min: tmin })
+        Some(AabbHitRecord {
+            t_max: tmax,
+            t_min: tmin,
+        })
     }
 
     pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
@@ -51,10 +60,13 @@ impl Aabb {
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
             if tmax < tmin {
-                return None
+                return None;
             }
         }
-        Some(AabbHitRecord{ t_max: tmax, t_min: tmin })
+        Some(AabbHitRecord {
+            t_max: tmax,
+            t_min: tmin,
+        })
     }
 }
 
@@ -73,34 +85,50 @@ mod test {
 
     #[test]
     fn aabb_hit_test() {
-        let aabb_box = Aabb{ b_min: [1.0, 1.0, 1.0], b_max: [2.0, 2.0, 2.0] };
-        let r = Ray{ origin: [0.0, 0.0, 0.0], direction: [1.5, 1.5, 1.5] };
+        let aabb_box = Aabb {
+            b_min: [1.0, 1.0, 1.0],
+            b_max: [2.0, 2.0, 2.0],
+        };
+        let r = Ray {
+            origin: [0.0, 0.0, 0.0],
+            direction: [1.5, 1.5, 1.5],
+        };
         let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
-         };
+        };
         assert_eq!(true, result);
-        let r = Ray{ origin: [0.0, 0.0, 0.0], direction: [1.5, 0.0, 1.5] };
+        let r = Ray {
+            origin: [0.0, 0.0, 0.0],
+            direction: [1.5, 0.0, 1.5],
+        };
         let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
-         };
+        };
         assert_eq!(false, result);
-        let r = Ray{ origin: [3.0, 3.0, 3.0], direction: [-1.0, -1.0, -1.0] };
+        let r = Ray {
+            origin: [3.0, 3.0, 3.0],
+            direction: [-1.0, -1.0, -1.0],
+        };
         let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
-         };
+        };
         assert_eq!(true, result);
     }
 }
 
 pub fn surrounding_box(box0: &Aabb, box1: &Aabb) -> Aabb {
-    let b_min = [min(box0.b_min[0], box1.b_min[0]),
-                min(box0.b_min[1], box1.b_min[1]),
-                min(box0.b_min[2], box1.b_min[2])];
-    let b_max = [max(box0.b_max[0], box1.b_max[0]),
-                max(box0.b_max[1], box1.b_max[1]),
-                max(box0.b_max[2], box1.b_max[2])];
-    Aabb {b_min, b_max}
+    let b_min = [
+        min(box0.b_min[0], box1.b_min[0]),
+        min(box0.b_min[1], box1.b_min[1]),
+        min(box0.b_min[2], box1.b_min[2]),
+    ];
+    let b_max = [
+        max(box0.b_max[0], box1.b_max[0]),
+        max(box0.b_max[1], box1.b_max[1]),
+        max(box0.b_max[2], box1.b_max[2]),
+    ];
+    Aabb { b_min, b_max }
 }

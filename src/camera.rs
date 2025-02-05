@@ -51,9 +51,9 @@ impl Camera {
                 &vec3_add(
                     &vec3_add(&self.lower_left_corner, &vec3_mul_b(&self.horizontal, s)),
                     &vec3_mul_b(&self.vertical, t),
-                    ),
-                    &self.origin,
-                    )),
+                ),
+                &self.origin,
+            )),
         }
     }
 }

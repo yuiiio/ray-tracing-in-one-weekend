@@ -1,11 +1,11 @@
 use image::{open, Rgba, RgbaImage};
+use rand::prelude::*;
 use std::fs::File;
-use std::sync::{Arc, Mutex};
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::Relaxed;
+use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
-use rand::prelude::*;
 
 mod aabb;
 mod bvh_node;
@@ -32,18 +32,15 @@ use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatterd};
 use obj_loader::obj_loader;
+use onb::Onb;
 use pdf::{cosine_pdf_generate, cosine_pdf_value};
 use ray::Ray;
-use rectangle::{AxisType, Boxel, Rect, FlipNormals};
+use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
 use std::f64;
-use texture::{TextureList, ColorTexture, ImageTexture};
+use texture::{ColorTexture, ImageTexture, TextureList};
 use translate::{Rotate, Translate};
-use vec3::{
-    vec3_add, vec3_mul, vec3_mul_b,
-    Vector3,
-};
-use onb::Onb;
+use vec3::{vec3_add, vec3_mul, vec3_mul_b, Vector3};
 
 const MAX_DEPTH: usize = 20;
 
@@ -85,25 +82,34 @@ fn color(
                     last_absorabance = mat_rec.absorabance;
                     match mat_rec.scatterd {
                         Scatterd::Ray(next_ray) => {
-                            last_throughput = vec3_mul(&last_throughput, &vec3_mul(&attenuation, &absorabance));
+                            last_throughput =
+                                vec3_mul(&last_throughput, &vec3_mul(&attenuation, &absorabance));
                             ray = next_ray;
                             continue;
-                        },
+                        }
                         Scatterd::CosinePdf => {
                             let mut rng = rand::thread_rng();
                             let rand: f64 = rng.gen();
                             let next_ray = if rand < 0.4 {
-                                Ray{ origin: hit_rec.p, direction: light_list.random(&hit_rec.p) }
+                                Ray {
+                                    origin: hit_rec.p,
+                                    direction: light_list.random(&hit_rec.p),
+                                }
                             } else {
                                 let direction = match hit_rec.onb_uv {
-                                    Some(onb_uv) => {
-                                        cosine_pdf_generate(&Onb{u: onb_uv.0, v: onb_uv.1, w: hit_rec.normal})
-                                    },
+                                    Some(onb_uv) => cosine_pdf_generate(&Onb {
+                                        u: onb_uv.0,
+                                        v: onb_uv.1,
+                                        w: hit_rec.normal,
+                                    }),
                                     None => {
                                         cosine_pdf_generate(&Onb::build_from_w(&hit_rec.normal))
-                                    },
+                                    }
                                 };
-                                Ray{ origin: hit_rec.p, direction }
+                                Ray {
+                                    origin: hit_rec.p,
+                                    direction,
+                                }
                             }; // next_ray direction should normalized value.
 
                             let light_list_pdf = light_list.pdf_value(&next_ray);
@@ -115,17 +121,20 @@ fn color(
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec);
                                 let albedo = vec3_mul_b(&attenuation, spdf_value);
                                 let nor_pdf_value = 1.0 / pdf_value;
-                                last_throughput = vec3_mul(&last_throughput, &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value));
+                                last_throughput = vec3_mul(
+                                    &last_throughput,
+                                    &vec3_mul_b(&vec3_mul(&albedo, &absorabance), nor_pdf_value),
+                                );
                                 ray = next_ray;
                                 continue;
                             } else {
                                 return cur_emitted;
                             };
-                        },
+                        }
                     };
                 };
                 return cur_emitted;
-            },
+            }
             None => {
                 // if not hit any obj
                 /*
@@ -151,7 +160,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 1920;
     const OUTPUT_Y: usize = 1080;
-    const NS: usize = 8;// x^2 / per pixel sample size;
+    const NS: usize = 8; // x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -168,8 +177,12 @@ fn main() {
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
     let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
     let light_texture = texture_list.add_color_texture(ColorTexture::new([20.0, 15.0, 10.0]));
-    let magick_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.png").unwrap().into_rgba8()));
-    let earth_texture = texture_list.add_image_texture(ImageTexture::new(open("./texture.jpg").unwrap().into_rgba8()));
+    let magick_texture = texture_list.add_image_texture(ImageTexture::new(
+        open("./texture.png").unwrap().into_rgba8(),
+    ));
+    let earth_texture = texture_list.add_image_texture(ImageTexture::new(
+        open("./texture.jpg").unwrap().into_rgba8(),
+    ));
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     //let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
@@ -234,12 +247,24 @@ fn main() {
     )));
     */
 
-    let floor = Rect::new(-10000.0, 10000.0, -10000.0, 10000.0, 0.0, AxisType::Kxz, white.clone());
+    let floor = Rect::new(
+        -10000.0,
+        10000.0,
+        -10000.0,
+        10000.0,
+        0.0,
+        AxisType::Kxz,
+        white.clone(),
+    );
     obj_list.push(floor.clone());
 
     let glass_box = Translate::new(
         Box::new(Rotate::new(
-            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 165.0, 165.0], red_glass)),
+            Box::new(Boxel::new(
+                [0.0, 0.0, 0.0],
+                [165.0, 165.0, 165.0],
+                red_glass,
+            )),
             &[0.0, 1.0, 0.0],
             -18.0,
         )),
@@ -256,10 +281,14 @@ fn main() {
         [80.0, 330.0, 90.0],
     );
     obj_list.push(magick_box.clone());
-    
+
     let metal_box = Translate::new(
         Box::new(Rotate::new(
-            Box::new(Boxel::new([0.0, 0.0, 0.0], [165.0, 330.0, 165.0], metal.clone())),
+            Box::new(Boxel::new(
+                [0.0, 0.0, 0.0],
+                [165.0, 330.0, 165.0],
+                metal.clone(),
+            )),
             &[0.0, 1.0, 0.0],
             15.0,
         )),
@@ -369,7 +398,7 @@ fn main() {
                             light_list_borrowed,
                             texture_list_borrowed,
                             material_list_borrowed,
-                            );
+                        );
                         img_line[i] = col;
                     }
                     img_box.push(img_line);
@@ -391,7 +420,7 @@ fn main() {
     );
 
     let mut output_img = RgbaImage::new(OUTPUT_X as u32, OUTPUT_Y as u32);
-    const SPP_DIV: f64 = 1.0 / (NS as u32).pow(2) as f64; 
+    const SPP_DIV: f64 = 1.0 / (NS as u32).pow(2) as f64;
     let imgbuf = imgbuf.into_inner().unwrap();
     for x in 0..OUTPUT_X {
         for y in 0..OUTPUT_Y {
@@ -399,20 +428,25 @@ fn main() {
             for i in 0..NS {
                 for j in 0..NS {
                     accum_pixel = [
-                        imgbuf[(x*NS) + i][(y*NS) + j][0] + accum_pixel[0],
-                        imgbuf[(x*NS) + i][(y*NS) + j][1] + accum_pixel[1],
-                        imgbuf[(x*NS) + i][(y*NS) + j][2] + accum_pixel[2],
+                        imgbuf[(x * NS) + i][(y * NS) + j][0] + accum_pixel[0],
+                        imgbuf[(x * NS) + i][(y * NS) + j][1] + accum_pixel[1],
+                        imgbuf[(x * NS) + i][(y * NS) + j][2] + accum_pixel[2],
                     ];
                 }
             }
             let pixel = [
                 (accum_pixel[0] * SPP_DIV).sqrt(),
                 (accum_pixel[1] * SPP_DIV).sqrt(),
-                (accum_pixel[2] * SPP_DIV).sqrt(), ];
+                (accum_pixel[2] * SPP_DIV).sqrt(),
+            ];
             let ir: u8 = (255.99 * pixel[0]) as u8;
             let ig: u8 = (255.99 * pixel[1]) as u8;
             let ib: u8 = (255.99 * pixel[2]) as u8;
-            output_img.put_pixel(x as u32, (OUTPUT_Y - (y + 1))as u32, Rgba([ir, ig, ib, 255]));
+            output_img.put_pixel(
+                x as u32,
+                (OUTPUT_Y - (y + 1)) as u32,
+                Rgba([ir, ig, ib, 255]),
+            );
         }
     }
     output_img.save("image.png").unwrap()

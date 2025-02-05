@@ -3,10 +3,10 @@ use rand::prelude::*;
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
-use crate::ray::Ray;
-use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, Vector3, vec3_unit_vector_f64};
 use crate::onb::Onb;
 use crate::quotation::Rotation;
+use crate::ray::Ray;
+use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -49,24 +49,24 @@ impl Rect {
         let (aabb_box, normal) = match axis {
             AxisType::Kxy => (
                 Aabb {
-                b_min: [x0, y0, k - 0.0001],
-                b_max: [x1, y1, k + 0.0001],
-                }, 
-                [0.0, 0.0, 1.0] 
+                    b_min: [x0, y0, k - 0.0001],
+                    b_max: [x1, y1, k + 0.0001],
+                },
+                [0.0, 0.0, 1.0],
             ),
             AxisType::Kxz => (
                 Aabb {
-                b_min: [x0, k - 0.0001, y0],
-                b_max: [x1, k + 0.0001, y1],
+                    b_min: [x0, k - 0.0001, y0],
+                    b_max: [x1, k + 0.0001, y1],
                 },
-                [0.0, 1.0, 0.0]
+                [0.0, 1.0, 0.0],
             ),
             AxisType::Kyz => (
                 Aabb {
-                b_min: [k - 0.0001, x0, y0],
-                b_max: [k + 0.0001, x1, y1],
+                    b_min: [k - 0.0001, x0, y0],
+                    b_max: [k + 0.0001, x1, y1],
                 },
-                [1.0, 0.0, 0.0]
+                [1.0, 0.0, 0.0],
             ),
         };
         let width = x1 - x0;
@@ -120,8 +120,10 @@ impl Hitable for Rect {
         }
 
         let (u, v) = if self.needs_uv {
-            ((x - self.x0) * self.nor_width,
-            (y - self.y0) * self.nor_height)
+            (
+                (x - self.x0) * self.nor_width,
+                (y - self.y0) * self.nor_height,
+            )
         } else {
             (0.0, 0.0)
         };
@@ -193,7 +195,7 @@ impl FlipNormals {
     pub fn new(shape: Rect) -> Self {
         let normal = vec3_mul_b(&shape.normal, -1.0);
         let onb = Onb::build_from_w(&normal);
-        FlipNormals{
+        FlipNormals {
             shape,
             normal,
             onb_uv: (onb.u, onb.v),
@@ -257,57 +259,61 @@ impl Boxel {
                 p1[2],
                 AxisType::Kxy,
                 mat_ptr.clone(),
-                ),
-                Rect::new(
-                    p0[0],
-                    p1[0],
-                    p0[2],
-                    p1[2],
-                    p1[1],
-                    AxisType::Kxz,
-                    mat_ptr.clone(),
-                    ),
-                    Rect::new(
-                        p0[1],
-                        p1[1],
-                        p0[2],
-                        p1[2],
-                        p1[0],
-                        AxisType::Kyz,
-                        mat_ptr.clone(),
-                        ),
-                    ];
+            ),
+            Rect::new(
+                p0[0],
+                p1[0],
+                p0[2],
+                p1[2],
+                p1[1],
+                AxisType::Kxz,
+                mat_ptr.clone(),
+            ),
+            Rect::new(
+                p0[1],
+                p1[1],
+                p0[2],
+                p1[2],
+                p1[0],
+                AxisType::Kyz,
+                mat_ptr.clone(),
+            ),
+        ];
         let flip_rect: [FlipNormals; 3] = [
             FlipNormals::new(Rect::new(
-                    p0[0],
-                    p1[0],
-                    p0[1],
-                    p1[1],
-                    p0[2],
-                    AxisType::Kxy,
-                    mat_ptr.clone(),
-                    )),
-                    FlipNormals::new(Rect::new(
-                            p0[0],
-                            p1[0],
-                            p0[2],
-                            p1[2],
-                            p0[1],
-                            AxisType::Kxz,
-                            mat_ptr.clone(),
-                            )),
-                            FlipNormals::new(Rect::new(
-                                    p0[1],
-                                    p1[1],
-                                    p0[2],
-                                    p1[2],
-                                    p0[0],
-                                    AxisType::Kyz,
-                                    mat_ptr.clone(),
-                                    )),
-                            ];
-        let aabb_box = Aabb{b_min, b_max};
-        Boxel { rect, flip_rect, aabb_box }
+                p0[0],
+                p1[0],
+                p0[1],
+                p1[1],
+                p0[2],
+                AxisType::Kxy,
+                mat_ptr.clone(),
+            )),
+            FlipNormals::new(Rect::new(
+                p0[0],
+                p1[0],
+                p0[2],
+                p1[2],
+                p0[1],
+                AxisType::Kxz,
+                mat_ptr.clone(),
+            )),
+            FlipNormals::new(Rect::new(
+                p0[1],
+                p1[1],
+                p0[2],
+                p1[2],
+                p0[0],
+                AxisType::Kyz,
+                mat_ptr.clone(),
+            )),
+        ];
+        let aabb_box = Aabb { b_min, b_max };
+        Boxel {
+            rect,
+            flip_rect,
+            aabb_box,
+        }
     }
 }
 
@@ -340,15 +346,15 @@ impl Hitable for Boxel {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             const DIV6: f64 = 1.0 / 6.0;
-            ( self.rect[0].pdf_value(ray)
-              + self.rect[1].pdf_value(ray)
-              + self.rect[2].pdf_value(ray)
-              + self.flip_rect[0].pdf_value(ray)
-              + self.flip_rect[1].pdf_value(ray)
-              + self.flip_rect[2].pdf_value(ray)
-            ) * DIV6
+            (self.rect[0].pdf_value(ray)
+                + self.rect[1].pdf_value(ray)
+                + self.rect[2].pdf_value(ray)
+                + self.flip_rect[0].pdf_value(ray)
+                + self.flip_rect[1].pdf_value(ray)
+                + self.flip_rect[2].pdf_value(ray))
+                * DIV6
         } else {
             0.0
         }

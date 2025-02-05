@@ -2,12 +2,12 @@ use rand::prelude::*;
 
 use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
+use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
-use crate::quotation::Rotation;
 
 #[derive(Clone)]
-pub struct HitableList { 
+pub struct HitableList {
     hitable_list: Vec<Box<dyn Hitable + Send + Sync>>,
     aabb_box: Aabb,
     nor_hitable_list_len: f64,
@@ -15,28 +15,33 @@ pub struct HitableList {
 
 impl HitableList {
     pub fn new() -> Self {
-        HitableList{
+        HitableList {
             hitable_list: Vec::new(),
-            aabb_box: Aabb{ b_min:[0.0, 0.0, 0.0], b_max:[0.0, 0.0, 0.0] },
+            aabb_box: Aabb {
+                b_min: [0.0, 0.0, 0.0],
+                b_max: [0.0, 0.0, 0.0],
+            },
             nor_hitable_list_len: 1.0,
         }
     }
 
     pub fn with_capacity(size: usize) -> Self {
-        HitableList{
+        HitableList {
             hitable_list: Vec::with_capacity(size),
-            aabb_box: Aabb{ b_min:[0.0, 0.0, 0.0], b_max:[0.0, 0.0, 0.0] },
+            aabb_box: Aabb {
+                b_min: [0.0, 0.0, 0.0],
+                b_max: [0.0, 0.0, 0.0],
+            },
             nor_hitable_list_len: 1.0,
         }
     }
 
     pub fn push<H: Hitable + 'static + Send + Sync>(&mut self, hitable: H) {
-        self.aabb_box =
-            if self.hitable_list.is_empty() {
-                hitable.bounding_box().clone()
-            } else {
-                surrounding_box(&self.aabb_box, hitable.bounding_box())
-            };
+        self.aabb_box = if self.hitable_list.is_empty() {
+            hitable.bounding_box().clone()
+        } else {
+            surrounding_box(&self.aabb_box, hitable.bounding_box())
+        };
         self.hitable_list.push(Box::new(hitable));
         self.nor_hitable_list_len = 1.0 / (self.hitable_list.len() as f64);
     }

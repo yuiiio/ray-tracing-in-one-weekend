@@ -25,7 +25,7 @@ pub fn min(a: f64, b: f64) -> f64 {
     }
 }
 
-// merge 
+// merge
 // left, mid, right
 // 2, 3, 1
 //
@@ -43,7 +43,6 @@ fn merge<T: Clone>(
     let mut k: usize = 0;
     let length: usize = right - left;
 
-    
     if i < mid && j < right {
         loop {
             if compare(&vec[i], &vec[j]) {
@@ -65,10 +64,11 @@ fn merge<T: Clone>(
         }
     }
 
-    if i == mid { // already left~mid is move to stock_vec
-                  // so mid(>j)~right move to stock_vec
+    if i == mid {
+        // already left~mid is move to stock_vec
+        // so mid(>j)~right move to stock_vec
         for m in k..length {
-            stock_vec[m] = vec[j].clone(); 
+            stock_vec[m] = vec[j].clone();
             j += 1;
         }
     } else {
@@ -91,11 +91,12 @@ pub fn merge_sort<T: Clone + std::fmt::Debug>(
     left: usize,
     right: usize,
 ) {
-    if (left == right) || (left + 1 == right) { // when left+1 = right, 
-                                                // left = 1,right = 3: mid = (1+3)/2; => 2;
-                                                // {[1, 2], [2, 3]} => return
-                                                // merge (1, 2, 3) => mid 2 is absolutely compare
-                                                // vs 1
+    if (left == right) || (left + 1 == right) {
+        // when left+1 = right,
+        // left = 1,right = 3: mid = (1+3)/2; => 2;
+        // {[1, 2], [2, 3]} => return
+        // merge (1, 2, 3) => mid 2 is absolutely compare
+        // vs 1
         println!("ealy return: left:{}, right:{}\n", left, right);
         return;
     }
@@ -138,9 +139,10 @@ mod test {
 
         // if vec.len() => 9. (vec index [0, 1, 2, 3, 4, 5, 6, 7, 8])
         // 9/2 as usize => 4,
-        for i in 0..(len/2) { // first merge two element use swap.
-            let left = i*2;
-            let right = left+1;
+        for i in 0..(len / 2) {
+            // first merge two element use swap.
+            let left = i * 2;
+            let right = left + 1;
             if vec[left] > vec[right] {
                 println!("swap: left:{}, right:{}\n", left, right);
                 vec.swap(left, right);
@@ -157,20 +159,22 @@ mod test {
         // 8, 2
 
         let mut k = 1 * 2;
-        while k < len {// if len = 10, k => 1, 2, 4, 8
+        while k < len {
+            // if len = 10, k => 1, 2, 4, 8
             let mut i = 0;
-            while i < len { // k=1: i => 0, 2, 4, 6
-                            // k=2: i => 0, 4, 8, 12
-                            // k=4: i => 0, 8, 16, 24
-                            // k=8: i => 0, 16
-                let next_block = i + (k*2);
+            while i < len {
+                // k=1: i => 0, 2, 4, 6
+                // k=2: i => 0, 4, 8, 12
+                // k=4: i => 0, 8, 16, 24
+                // k=8: i => 0, 16
+                let next_block = i + (k * 2);
                 // right: next_block: could over len, so need check and shrink to len
                 let right = if len < next_block { len } else { next_block };
-                merge(&mut vec, &mut stock_vec, compare, i, i+k, right);
+                merge(&mut vec, &mut stock_vec, compare, i, i + k, right);
 
                 i = next_block;
             }
-            k = k*2;
+            k = k * 2;
         }
 
         assert_eq!(vec, [1, 2, 3, 4, 5, 5, 6, 7, 8]);

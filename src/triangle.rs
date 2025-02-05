@@ -3,14 +3,13 @@ use rand::prelude::*;
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
+use crate::onb::Onb;
+use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::utils::{max, min};
 use crate::vec3::{
-    cross, vec3_add, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_sub,
-    vec3_unit_vector_f64, Vector3,
+    cross, vec3_add, vec3_dot, vec3_length_f64, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3,
 };
-use crate::onb::Onb;
-use crate::quotation::Rotation;
 
 #[derive(Clone)]
 pub struct Triangle {
@@ -49,7 +48,7 @@ impl Triangle {
             max(max(v0[1], v1[1]), v2[1]),
             max(max(v0[2], v1[2]), v2[2]),
         ];
-        let aabb_box = Aabb {b_min, b_max};
+        let aabb_box = Aabb { b_min, b_max };
 
         let n_norm = vec3_unit_vector_f64(&n);
         let onb = Onb::build_from_w(&n_norm);
@@ -118,7 +117,7 @@ impl Hitable for Triangle {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
+        if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             if let Some(rec) = self.hit(ray, aabb_hit.t_min, aabb_hit.t_max) {
                 let distance_squared = rec.t.powi(2);
                 let cosine = vec3_dot(&ray.direction, &rec.normal).abs();

@@ -1,8 +1,8 @@
 use crate::aabb::Aabb;
 use crate::material::MaterialHandle;
+use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
-use crate::quotation::Rotation;
 
 pub struct HitRecord<'a> {
     pub t: f64,
@@ -19,7 +19,8 @@ pub trait Hitable: HitableClone {
     fn pdf_value(&self, _r: &Ray) -> f64 {
         0.0
     }
-    fn random(&self, _o: &Vector3<f64>) -> Vector3<f64> { // should return normalized vector
+    fn random(&self, _o: &Vector3<f64>) -> Vector3<f64> {
+        // should return normalized vector
         [1.0, 0.0, 0.0]
     }
     fn rotate_onb(&mut self, quat: &Rotation) -> (); // rotate onb and normal vec used at build time

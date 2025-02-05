@@ -5,18 +5,18 @@ use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
 use crate::onb::Onb;
+use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::{
     vec3_add_b, vec3_dot, vec3_mul_b, vec3_squared_length, vec3_sub, vec3_sub_b, Vector3,
 };
-use crate::quotation::Rotation;
 
 #[derive(Clone)]
 pub struct Sphere {
     center: Vector3<f64>,
     //radius: f64,
     nor_radius: f64, // for fn hit(), pre compute
-    radius_sq: f64, // radius^2
+    radius_sq: f64,  // radius^2
     mat_ptr: MaterialHandle,
     aabb_box: Aabb,
     needs_uv: bool,
@@ -44,10 +44,10 @@ impl Sphere {
 
     fn only_hit_check_return_oc_sq_c(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<(f64, f64)> {
         let oc = vec3_sub(&r.origin, &self.center);
-        let b = vec3_dot(&r.direction, &oc);// -oc~0~oc
+        let b = vec3_dot(&r.direction, &oc); // -oc~0~oc
         let oc_sq = vec3_squared_length(&oc);
-        let c = oc_sq - self.radius_sq;// oc^2 - r^2
-        let descriminant = b.powi(2) - c;// (0~oc)^2 - (oc^2 - r^2)
+        let c = oc_sq - self.radius_sq; // oc^2 - r^2
+        let descriminant = b.powi(2) - c; // (0~oc)^2 - (oc^2 - r^2)
         if descriminant.is_sign_positive() {
             let desc_sqrt = descriminant.sqrt();
             let temp = -b - desc_sqrt;
@@ -78,9 +78,9 @@ impl Hitable for Sphere {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let rec: Option<HitRecord> = None;
         let oc = vec3_sub(&r.origin, &self.center);
-        let b = vec3_dot(&r.direction, &oc);// -oc~0~oc
-        let c = vec3_squared_length(&oc) - self.radius_sq;// oc^2 - r^2
-        let descriminant = b.powi(2) - c;// (0~oc)^2 - (oc^2 - r^2)
+        let b = vec3_dot(&r.direction, &oc); // -oc~0~oc
+        let c = vec3_squared_length(&oc) - self.radius_sq; // oc^2 - r^2
+        let descriminant = b.powi(2) - c; // (0~oc)^2 - (oc^2 - r^2)
         if descriminant.is_sign_positive() {
             let desc_sqrt = descriminant.sqrt();
             let temp = -b - desc_sqrt;
@@ -133,8 +133,10 @@ impl Hitable for Sphere {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
-            if let Some((oc_sq, c)) = self.only_hit_check_return_oc_sq_c(ray, aabb_hit.t_min, aabb_hit.t_max) {
+        if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
+            if let Some((oc_sq, c)) =
+                self.only_hit_check_return_oc_sq_c(ray, aabb_hit.t_min, aabb_hit.t_max)
+            {
                 let cos_theta_max: f64 = (c / oc_sq).sqrt();
                 // if cos_theta_max == 1,0 return 0.0
                 // but, never happen (radius_sq > 0.0)
@@ -151,7 +153,11 @@ impl Hitable for Sphere {
         let norm_co = vec3_mul_b(&co, nor_dist);
         let uvw = Onb::build_from_w(&norm_co);
 
-        uvw.local(&random_to_sphere(self.radius_sq, distabce_squared, nor_dist))
+        uvw.local(&random_to_sphere(
+            self.radius_sq,
+            distabce_squared,
+            nor_dist,
+        ))
     }
 
     fn rotate_onb(&mut self, _quat: &Rotation) -> () {}

@@ -17,24 +17,29 @@ impl Translate {
             b_min: vec3_add(&obj.bounding_box().b_min, &offset),
             b_max: vec3_add(&obj.bounding_box().b_max, &offset),
         };
-        Translate { obj, offset, aabb_box, }
+        Translate {
+            obj,
+            offset,
+            aabb_box,
+        }
     }
 }
 
 impl Hitable for Translate {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let r = Ray{ origin: vec3_sub(&r.origin, &self.offset), direction: r.direction };
+        let r = Ray {
+            origin: vec3_sub(&r.origin, &self.offset),
+            direction: r.direction,
+        };
         match self.obj.hit(&r, t_min, t_max) {
-            Some(hit) => {
-                Some(HitRecord {
-                    t: hit.t,
-                    uv: hit.uv,
-                    p: vec3_add(&hit.p, &self.offset),
-                    normal: hit.normal,
-                    mat_ptr: hit.mat_ptr,
-                    onb_uv: hit.onb_uv,
-                })
-            },
+            Some(hit) => Some(HitRecord {
+                t: hit.t,
+                uv: hit.uv,
+                p: vec3_add(&hit.p, &self.offset),
+                normal: hit.normal,
+                mat_ptr: hit.mat_ptr,
+                onb_uv: hit.onb_uv,
+            }),
             None => None,
         }
     }
@@ -45,7 +50,10 @@ impl Hitable for Translate {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         let on = vec3_sub(&ray.origin, &self.offset);
-        self.obj.pdf_value(&Ray{origin: on, direction: ray.direction}) // this use self->obj's pdf_value func
+        self.obj.pdf_value(&Ray {
+            origin: on,
+            direction: ray.direction,
+        }) // this use self->obj's pdf_value func
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let on = vec3_sub(o, &self.offset);
@@ -93,7 +101,7 @@ impl Rotate {
                 }
             }
         }
-        let aabb_box = Aabb{b_min, b_max};
+        let aabb_box = Aabb { b_min, b_max };
 
         obj.rotate_onb(&quat); // rotate obj's normal and onb
 
@@ -115,7 +123,7 @@ impl Hitable for Rotate {
             Some(hit) => {
                 let normal = match hit.onb_uv {
                     Some(_onb_uv) => hit.normal, // norm and onb is static(eg. rect, triangle)
-                                                // already rotated
+                    // already rotated
                     None => self.quat.rotate(&hit.normal), // norm and onb is not static(eg. sphere)
                 };
                 Some(HitRecord {
@@ -126,7 +134,7 @@ impl Hitable for Rotate {
                     mat_ptr: hit.mat_ptr,
                     onb_uv: hit.onb_uv,
                 })
-            },
+            }
             None => None,
         }
     }
@@ -136,10 +144,13 @@ impl Hitable for Rotate {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0)  {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             let ro = self.revq.rotate(&ray.origin);
             let rv = self.revq.rotate(&ray.direction);
-            return self.obj.pdf_value(&Ray{origin: ro, direction: rv});
+            return self.obj.pdf_value(&Ray {
+                origin: ro,
+                direction: rv,
+            });
         }
         0.0
     }

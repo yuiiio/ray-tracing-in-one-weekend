@@ -49,7 +49,12 @@ impl TextureList {
         }
     }
 
-    pub fn get_value(&self, uv: (f64, f64), p: &Vector3<f64>, texture_handle: &TextureHandle) -> Vector3<f64> {
+    pub fn get_value(
+        &self,
+        uv: (f64, f64),
+        p: &Vector3<f64>,
+        texture_handle: &TextureHandle,
+    ) -> Vector3<f64> {
         let texture_pos = texture_handle.position;
         match texture_handle.texture_type {
             Texture::ColorTexture => self.color_texture_list[texture_pos].get_value(),
@@ -116,14 +121,18 @@ impl ImageTexture {
             for j in 0..width {
                 let pixel = teximage.get_pixel(j, i);
                 line.push([
-                          pixel[0] as f64 / 255.99,
-                          pixel[1] as f64 / 255.99,
-                          pixel[2] as f64 / 255.99,
+                    pixel[0] as f64 / 255.99,
+                    pixel[1] as f64 / 255.99,
+                    pixel[2] as f64 / 255.99,
                 ])
             }
             pixels.push(line);
         }
-        ImageTexture { teximage: pixels, width: width as f64, height: height as f64 }
+        ImageTexture {
+            teximage: pixels,
+            width: width as f64,
+            height: height as f64,
+        }
     }
 
     fn get_value(&self, uv: (f64, f64), _p: &Vector3<f64>) -> Vector3<f64> {

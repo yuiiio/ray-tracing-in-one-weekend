@@ -57,7 +57,7 @@ pub fn obj_loader(file: &mut File, material_handle: MaterialHandle, scale: f64) 
         let v1 = vertex[i1 - 1];
         let v2 = vertex[i2 - 1];
 
-        let triangle = Triangle::new(v0, v2, v1, material_handle.clone()); 
+        let triangle = Triangle::new(v0, v2, v1, material_handle.clone());
         hitablelist.push(triangle);
     }
 

@@ -1,4 +1,4 @@
-use crate::vec3::{Vector3, vec3_add, vec3_mul_b};
+use crate::vec3::{vec3_add, vec3_mul_b, Vector3};
 
 pub struct Ray {
     pub origin: Vector3<f64>,
