@@ -145,7 +145,7 @@ fn color(
                     &vec3_mul_b(&[0.1, 0.1, 0.5], a),
                 );
                 */
-                let last_emitted = [0.01, 0.01, 0.01];
+                let last_emitted = [0.5, 0.5, 0.5];
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
@@ -158,8 +158,8 @@ fn color(
 
 fn main() {
     let now = SystemTime::now();
-    const OUTPUT_X: usize = 1920;
-    const OUTPUT_Y: usize = 1080;
+    const OUTPUT_X: usize = 900;
+    const OUTPUT_Y: usize = 900;
     const NS: usize = 8; // x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
@@ -195,11 +195,10 @@ fn main() {
     let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
     let earth = material_list.add_lambertian_mat(Lambertian::new(earth_texture));
     let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
-    let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
+    //let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_metal_mat(Metal::new(0.01, metal_texture));
     //let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
-    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -210,9 +209,7 @@ fn main() {
         green,
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kyz, red));
-    */
 
-    /*
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -220,12 +217,10 @@ fn main() {
         332.0,
         554.0,
         AxisType::Kxz,
-        light,
+        light.clone(),
     ));
     obj_list.push(light_rect.clone());
-    */
 
-    /*
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
         555.0,
@@ -245,42 +240,23 @@ fn main() {
         AxisType::Kxy,
         magick,
     )));
-    */
 
-    let floor = Rect::new(
-        -10000.0,
-        10000.0,
-        -10000.0,
-        10000.0,
-        0.0,
-        AxisType::Kxz,
-        white.clone(),
-    );
+    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxz, white.clone());
     obj_list.push(floor.clone());
 
-    let glass_box = Translate::new(
+    let box_1 = Translate::new(
         Box::new(Rotate::new(
             Box::new(Boxel::new(
                 [0.0, 0.0, 0.0],
                 [165.0, 165.0, 165.0],
-                red_glass,
+                white.clone(),
             )),
             &[0.0, 1.0, 0.0],
             -18.0,
         )),
         [130.0, 0.0, 65.0],
     );
-    obj_list.push(glass_box.clone());
-
-    let magick_box = Translate::new(
-        Box::new(Rotate::new(
-            Box::new(Boxel::new([0.0, 0.0, 0.0], [130.0, 130.0, 130.0], magick)),
-            &[0.5, 0.5, 0.5],
-            -30.0,
-        )),
-        [80.0, 330.0, 90.0],
-    );
-    obj_list.push(magick_box.clone());
+    obj_list.push(box_1.clone());
 
     let metal_box = Translate::new(
         Box::new(Rotate::new(
@@ -343,12 +319,11 @@ fn main() {
         now2.elapsed().unwrap().as_secs_f64()
     );
 
-    //light_list.push(light_rect);
+    light_list.push(light_rect);
     //light_list.push(floor);
     light_list.push(light_sphere);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
-    light_list.push(glass_box);
 
     let cam = Camera::new(
         [278.0, 278.0, -800.0],
