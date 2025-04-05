@@ -380,105 +380,72 @@ impl Hitable for BvhTree {
             let bvh_pos_diff = current_bvh_node.next_pos_diff;
             if bvh_pos_diff == 1 {
                 // this node has actual item
-                match current_bvh_node
+                if let Some(first_hit_rec) = current_bvh_node
                     .bvh_node_box
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
                 {
-                    Some(first_hit_rec) => {
-                        let right_obj = &self.hitable_list[current_bvh_node.right];
-                        if !current_bvh_node.only_have_left_obj {
-                            // ! so need check both
-                            if let Some(right_rec) =
-                                right_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
-                            {
-                                let left_obj = &self.hitable_list[current_bvh_node.left];
-                                if let Some(left_rec) =
-                                    left_obj.hit(r, first_hit_rec.t_min, right_rec.t)
-                                // t_max=right_rec.t, so when hit always left_rec.t < right_rec.t
-                                {
-                                    min_hit_t = left_rec.t;
-                                    return_rec = Some(left_rec);
-                                    current_pos -= 1;
-                                    if current_pos == 0 {
-                                        break; // no more hit node, ealy return;
-                                    } else {
-                                        continue;
-                                    }
-                                }; // not hit left obj or right_t < left_t
-                                min_hit_t = right_rec.t;
-                                return_rec = Some(right_rec);
-                                current_pos -= 1;
-                                if current_pos == 0 {
-                                    break; // no more hit node, ealy return;
-                                } else {
-                                    continue;
-                                }
-                            }; // not hit right obj
-                        };
-                        // not need check right
-                        let left_obj = &self.hitable_list[current_bvh_node.left];
-                        if let Some(left_rec) =
-                            left_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
+                    let right_obj = &self.hitable_list[current_bvh_node.right];
+                    if !current_bvh_node.only_have_left_obj {
+                        // ! so need check both
+                        if let Some(right_rec) =
+                            right_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
                         {
-                            min_hit_t = left_rec.t;
-                            return_rec = Some(left_rec);
+                            min_hit_t = right_rec.t;
+                            return_rec = Some(right_rec);
+
+                            let left_obj = &self.hitable_list[current_bvh_node.left];
+                            if let Some(left_rec) = left_obj.hit(r, first_hit_rec.t_min, min_hit_t)
+                            // t_max=right_rec.t, so when hit always left_rec.t < right_rec.t
+                            {
+                                min_hit_t = left_rec.t;
+                                return_rec = Some(left_rec);
+                            };
                             current_pos -= 1;
                             if current_pos == 0 {
                                 break; // no more hit node, ealy return;
                             } else {
                                 continue;
                             }
-                        };
-                        // nothing update
-                        current_pos -= 1;
-                        if current_pos == 0 {
-                            break; // no more hit node, ealy return;
-                        } else {
-                            continue;
-                        }
-                    }
-                    None => {
-                        // nothing update
-                        current_pos -= 1;
-                        if current_pos == 0 {
-                            break; // no more hit node, ealy return;
-                        } else {
-                            continue;
-                        }
-                    }
+                        }; // not hit right obj
+                           // still need left check lator
+                    };
+                    // not need check right
+                    let left_obj = &self.hitable_list[current_bvh_node.left];
+                    if let Some(left_rec) =
+                        left_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
+                    {
+                        min_hit_t = left_rec.t;
+                        return_rec = Some(left_rec);
+                    };
                 }
             } else {
                 // this node has other nodes
-                match current_bvh_node
+                if let Some(_hit_rec) = current_bvh_node
                     .bvh_node_box
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
                 {
-                    Some(_hit_rec) => {
-                        // if hit, next_pos_diff => 1;
-                        current_pos -= 1;
-                        // perfect tree so, not need check this case.
-                        /*
-                        if current_pos == 0 {
-                            break; // no more hit node, ealy return;
-                        } else {
-                            continue;
-                        }
-                        */
-                        continue;
+                    // if hit, next_pos_diff => 1;
+                    current_pos -= 1;
+                    // perfect tree so, not need check this case.
+                    /*
+                    if current_pos == 0 {
+                    break; // no more hit node, ealy return;
+                    } else {
+                    continue;
                     }
-                    None => {
-                        // next_pos_diff: set skip number using current depth
-                        // (2^depth) -1
-                        // println!("(skip) next_pos_diff: {}, current_pos: {}, top_depth: {}", next_pos_diff, current_pos, top_depth);
-                        current_pos -= bvh_pos_diff;
-                        if current_pos == 0 {
-                            break; // no more hit node, ealy return;
-                        } else {
-                            continue;
-                        }
-                    }
-                };
-            };
+                    */
+                    continue;
+                }
+            }
+            // next_pos_diff: set skip number using current depth
+            // (2^depth) -1
+            // println!("(skip) next_pos_diff: {}, current_pos: {}, top_depth: {}", next_pos_diff, current_pos, top_depth);
+            current_pos -= bvh_pos_diff;
+            if current_pos == 0 {
+                break; // no more hit node, ealy return;
+            } else {
+                continue;
+            }
         }
         return_rec
     }
