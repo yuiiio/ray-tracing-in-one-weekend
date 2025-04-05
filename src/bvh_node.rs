@@ -398,6 +398,7 @@ impl Hitable for BvhTree {
                         let right_obj = &self.hitable_list[current_bvh_node.right];
                         if !current_bvh_node.only_have_left_obj {
                             // ! so need check both
+                            /*
                             if let Some(right_aabb_hit) =
                                 right_obj.bounding_box().aabb_hit_with_cache(
                                     r,
@@ -406,77 +407,80 @@ impl Hitable for BvhTree {
                                     first_hit_rec.t_max,
                                 )
                             {
-                                // check bounding_box
-                                if let Some(right_rec) =
-                                    right_obj.hit(r, right_aabb_hit.t_min, right_aabb_hit.t_max)
+                            */
+                            // check bounding_box
+                            if let Some(right_rec) =
+                                right_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
+                            {
+                                // actual hit check
+                                let left_obj = &self.hitable_list[current_bvh_node.left];
+                                /*
+                                if let Some(left_aabb_hit) =
+                                    left_obj.bounding_box().aabb_hit_with_cache(
+                                        r,
+                                        r_dir_inv,
+                                        first_hit_rec.t_min,
+                                        right_rec.t,
+                                    )
                                 {
-                                    // actual hit check
-                                    let left_obj = &self.hitable_list[current_bvh_node.left];
-                                    if let Some(left_aabb_hit) =
-                                        left_obj.bounding_box().aabb_hit_with_cache(
-                                            r,
-                                            r_dir_inv,
-                                            first_hit_rec.t_min,
-                                            right_rec.t,
-                                        )
-                                    {
-                                        // bounding_box
-                                        if let Some(left_rec) = left_obj.hit(
-                                            r,
-                                            left_aabb_hit.t_min,
-                                            left_aabb_hit.t_max,
-                                        ) {
-                                            // acutual hit check
-                                            min_hit_t = left_rec.t;
-                                            second_depth_aabb_max = left_rec.t;
-                                            third_depth_aabb_max = left_rec.t;
-                                            return_rec = Some(left_rec);
-                                            current_pos -= 1;
-                                            if current_pos == 0 {
-                                                break; // no more hit node, ealy return;
-                                            } else {
-                                                continue;
-                                            }
-                                        }; // not hit left obj or right_t < left_t
-                                    }; // not hit left_bounding_box
-                                    min_hit_t = right_rec.t;
-                                    second_depth_aabb_max = right_rec.t;
-                                    third_depth_aabb_max = right_rec.t;
-                                    return_rec = Some(right_rec);
+                                */
+                                // bounding_box
+                                if let Some(left_rec) =
+                                    left_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
+                                {
+                                    // acutual hit check
+                                    min_hit_t = left_rec.t;
+                                    second_depth_aabb_max = left_rec.t;
+                                    third_depth_aabb_max = left_rec.t;
+                                    return_rec = Some(left_rec);
                                     current_pos -= 1;
                                     if current_pos == 0 {
                                         break; // no more hit node, ealy return;
                                     } else {
                                         continue;
                                     }
-                                }; // not hit right obj
-                            }; // not hit right_bounding_box
-                        };
-                        // not need check right
-                        let left_obj = &self.hitable_list[current_bvh_node.left];
-                        if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(
-                            r,
-                            r_dir_inv,
-                            first_hit_rec.t_min,
-                            first_hit_rec.t_max,
-                        ) {
-                            // bounding_box
-                            if let Some(left_rec) =
-                                left_obj.hit(r, left_aabb_hit.t_min, left_aabb_hit.t_max)
-                            {
-                                // acutual hit check
-                                min_hit_t = left_rec.t;
-                                second_depth_aabb_max = left_rec.t;
-                                third_depth_aabb_max = left_rec.t;
-                                return_rec = Some(left_rec);
+                                }; // not hit left obj or right_t < left_t
+                                   //}; // not hit left_bounding_box
+                                min_hit_t = right_rec.t;
+                                second_depth_aabb_max = right_rec.t;
+                                third_depth_aabb_max = right_rec.t;
+                                return_rec = Some(right_rec);
                                 current_pos -= 1;
                                 if current_pos == 0 {
                                     break; // no more hit node, ealy return;
                                 } else {
                                     continue;
                                 }
-                            };
+                            }; // not hit right obj
+                               //}; // not hit right_bounding_box
                         };
+                        // not need check right
+                        let left_obj = &self.hitable_list[current_bvh_node.left];
+                        /*
+                        if let Some(left_aabb_hit) = left_obj.bounding_box().aabb_hit_with_cache(
+                            r,
+                            r_dir_inv,
+                            first_hit_rec.t_min,
+                            first_hit_rec.t_max,
+                        ) {
+                        */
+                        // bounding_box
+                        if let Some(left_rec) =
+                            left_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
+                        {
+                            // acutual hit check
+                            min_hit_t = left_rec.t;
+                            second_depth_aabb_max = left_rec.t;
+                            third_depth_aabb_max = left_rec.t;
+                            return_rec = Some(left_rec);
+                            current_pos -= 1;
+                            if current_pos == 0 {
+                                break; // no more hit node, ealy return;
+                            } else {
+                                continue;
+                            }
+                        };
+                        //};
                         // nothing update
                         current_pos -= 1;
                         if current_pos == 0 {
