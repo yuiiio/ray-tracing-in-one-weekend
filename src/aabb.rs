@@ -35,9 +35,9 @@ impl Aabb {
 
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
-            if tmax < tmin {
-                return None;
-            }
+        }
+        if tmax < tmin {
+            return None;
         }
         Some(AabbHitRecord {
             t_max: tmax,
