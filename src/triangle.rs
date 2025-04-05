@@ -117,15 +117,10 @@ impl Hitable for Triangle {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(aabb_hit) = self
-            .aabb_box
-            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
-        {
-            if let Some(rec) = self.hit(ray, aabb_hit.t_min, aabb_hit.t_max) {
-                let distance_squared = rec.t.powi(2);
-                let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-                return distance_squared / (cosine * self.area);
-            }
+        if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
+            let distance_squared = rec.t.powi(2);
+            let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
+            return distance_squared / (cosine * self.area);
         }
         0.0
     }
