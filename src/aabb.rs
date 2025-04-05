@@ -15,7 +15,7 @@ pub struct Aabb {
 }
 
 impl Aabb {
-    pub fn aabb_hit_with_cache(
+    pub fn aabb_hit(
         &self,
         r: &Ray,
         r_dir_div: &Vector3<f64>,
@@ -25,43 +25,19 @@ impl Aabb {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
-            let inv_d = r_dir_div[i];
-            let mut t0 = (self.b_min[i] - r.origin[i]) * inv_d;
-            let mut t1 = (self.b_max[i] - r.origin[i]) * inv_d;
+            let mut t0 = (self.b_min[i] - r.origin[i]) * r_dir_div[i];
+            let mut t1 = (self.b_max[i] - r.origin[i]) * r_dir_div[i];
 
-            if inv_d.is_sign_negative() {
+            if r_dir_div[i].is_sign_negative() {
                 swap(&mut t0, &mut t1);
             }
 
             tmin = max(t0, tmin);
             tmax = min(t1, tmax);
         }
+
         if tmax < tmin {
             return None;
-        }
-        Some(AabbHitRecord {
-            t_max: tmax,
-            t_min: tmin,
-        })
-    }
-
-    pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
-        let mut tmin = t_min;
-        let mut tmax = t_max;
-        for i in 0..3 {
-            let inv_d = 1.0 / r.direction[i];
-            let mut t0 = (self.b_min[i] - r.origin[i]) * inv_d;
-            let mut t1 = (self.b_max[i] - r.origin[i]) * inv_d;
-
-            if inv_d.is_sign_negative() {
-                swap(&mut t0, &mut t1);
-            }
-
-            tmin = max(t0, tmin);
-            tmax = min(t1, tmax);
-            if tmax < tmin {
-                return None;
-            }
         }
         Some(AabbHitRecord {
             t_max: tmax,
@@ -93,7 +69,7 @@ mod test {
             origin: [0.0, 0.0, 0.0],
             direction: [1.5, 1.5, 1.5],
         };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };
@@ -102,7 +78,7 @@ mod test {
             origin: [0.0, 0.0, 0.0],
             direction: [1.5, 0.0, 1.5],
         };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };
@@ -111,7 +87,7 @@ mod test {
             origin: [3.0, 3.0, 3.0],
             direction: [-1.0, -1.0, -1.0],
         };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };

@@ -144,7 +144,10 @@ impl Hitable for Rotate {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
+        if let Some(_aabb_hit) = self
+            .aabb_box
+            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
+        {
             let ro = self.revq.rotate(&ray.origin);
             let rv = self.revq.rotate(&ray.direction);
             return self.obj.pdf_value(&Ray {
