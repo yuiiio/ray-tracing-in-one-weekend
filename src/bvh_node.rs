@@ -393,7 +393,8 @@ impl Hitable for BvhTree {
                             {
                                 let left_obj = &self.hitable_list[current_bvh_node.left];
                                 if let Some(left_rec) =
-                                    left_obj.hit(r, first_hit_rec.t_min, first_hit_rec.t_max)
+                                    left_obj.hit(r, first_hit_rec.t_min, right_rec.t)
+                                // t_max=right_rec.t, so when hit always left_rec.t < right_rec.t
                                 {
                                     min_hit_t = left_rec.t;
                                     return_rec = Some(left_rec);
