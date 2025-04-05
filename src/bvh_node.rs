@@ -124,11 +124,10 @@ const AI_X: usize = 0;
 const AI_Y: usize = 1;
 const AI_Z: usize = 2;
 
-#[derive(Clone)]
 enum Axis {
-    X = 0,
-    Y = 1,
-    Z = 2,
+    X,
+    Y,
+    Z,
 }
 
 // push bvh_node_list and return handle
@@ -265,57 +264,7 @@ fn build_bvh(
                 handle_x
             };
 
-            let (mut a, mut b) = selected_handle.split_at(handle_size / 2);
-
-            if handle_size % 2 == 0 {
-                // can't change for completely balance tree ( dummy node and skip flag can use
-                // for flexible tree ? or split as recursive bvhtree ?)
-            } else {
-                // can change 1 element left or right
-                // (a: (left)) (b: (center-1), (right))
-                // should use box size(all axis) instead of selected axis ?
-                let mut left_min: f64 = std::f64::MAX;
-                let mut left_max: f64 = std::f64::MIN;
-                for i in 0..a.len() {
-                    left_max = left_max.max(
-                        hitable_list[selected_handle[i]].bounding_box().b_max
-                            [sorted_axis.clone() as usize],
-                    );
-                    left_min = left_min.min(
-                        hitable_list[selected_handle[i]].bounding_box().b_min
-                            [sorted_axis.clone() as usize],
-                    );
-                }
-                let left_size = left_max - left_min;
-
-                let mut right_min: f64 = std::f64::MAX;
-                let mut right_max: f64 = std::f64::MIN;
-                for i in 1..b.len() {
-                    right_max = right_max.max(
-                        hitable_list[selected_handle[i]].bounding_box().b_max
-                            [sorted_axis.clone() as usize],
-                    );
-                    right_min = right_min.min(
-                        hitable_list[selected_handle[i]].bounding_box().b_min
-                            [sorted_axis.clone() as usize],
-                    );
-                }
-                let right_size = right_max - right_min;
-
-                let center_min =
-                    hitable_list[b[0]].bounding_box().b_min[sorted_axis.clone() as usize];
-                let center_max =
-                    hitable_list[b[0]].bounding_box().b_max[sorted_axis.clone() as usize];
-
-                let right_with_center_size = right_max.max(center_max) - right_min.min(center_min);
-                let left_with_center_size = left_max.max(center_max) - left_min.min(center_min);
-
-                if (left_size + right_with_center_size) < (left_with_center_size + right_size) {
-                    // ok
-                } else {
-                    (a, b) = selected_handle.split_at((handle_size / 2) + 1);
-                }
-            }
+            let (a, b) = selected_handle.split_at(handle_size / 2);
 
             let left_handle = build_bvh(
                 hitable_list,
