@@ -21,7 +21,9 @@ pub struct BvhNode {
     bvh_node_box: Aabb,
     left: usize,
     right: usize,
-    next_pos_diff: usize, // 1 is last // (2^depth) -1
+    //next_pos_diff: usize, // 1 is last // (2^depth) -1
+    skip_next_pos: usize,
+    have_hitable: bool,
     only_have_left_obj: bool,
 }
 
@@ -151,19 +153,21 @@ fn build_bvh(
             // but we have *not* perfect binary tree,
             // so need more checks depth in 2 => arm.
             //assert_eq!(bvh_depth, 1);
+            let pos = bvh_node_list.len();
             let new_node = BvhNode {
                 bvh_node_box: (hitable_list[handle[0]].bounding_box()).clone(),
                 left: handle[0],
                 right: handle[0], // right == left, but should skip with flag
-                next_pos_diff,
+                skip_next_pos: pos - next_pos_diff,
+                have_hitable: true,
                 only_have_left_obj: true,
             };
-            let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
             pos
         }
         2 => {
             if bvh_depth == 1 {
+                let pos = bvh_node_list.len();
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(
                         hitable_list[handle[0]].bounding_box(),
@@ -171,10 +175,10 @@ fn build_bvh(
                     ),
                     left: handle[0],
                     right: handle[1],
-                    next_pos_diff,
+                    skip_next_pos: pos - next_pos_diff,
+                    have_hitable: true,
                     only_have_left_obj: false,
                 };
-                let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
                 pos
             } else {
@@ -196,6 +200,7 @@ fn build_bvh(
                     bvh_depth - 1,
                     center_list,
                 );
+                let pos = bvh_node_list.len();
                 let new_node = BvhNode {
                     bvh_node_box: surrounding_box(
                         &bvh_node_list[left_handle].bvh_node_box,
@@ -203,10 +208,10 @@ fn build_bvh(
                     ),
                     left: left_handle,
                     right: right_handle,
-                    next_pos_diff,
+                    skip_next_pos: pos - next_pos_diff,
+                    have_hitable: false,
                     only_have_left_obj: false,
                 };
-                let pos = bvh_node_list.len();
                 bvh_node_list.push(new_node);
                 pos
             }
@@ -282,6 +287,7 @@ fn build_bvh(
                 bvh_depth - 1,
                 center_list,
             );
+            let pos = bvh_node_list.len();
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(
                     &bvh_node_list[left_handle].bvh_node_box,
@@ -289,10 +295,10 @@ fn build_bvh(
                 ),
                 left: left_handle,
                 right: right_handle,
-                next_pos_diff,
+                skip_next_pos: pos - next_pos_diff,
+                have_hitable: false,
                 only_have_left_obj: false,
             };
-            let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
             pos
         }
@@ -333,7 +339,8 @@ impl BvhTree {
             },
             left: 0,
             right: 0,
-            next_pos_diff: 0,
+            skip_next_pos: 0,
+            have_hitable: false,
             only_have_left_obj: false,
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
@@ -377,8 +384,8 @@ impl Hitable for BvhTree {
         let r_dir_inv = &r.get_inv_dir();
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
-            let bvh_pos_diff = current_bvh_node.next_pos_diff;
-            if bvh_pos_diff == 1 {
+            //let bvh_pos_diff = current_bvh_node.next_pos_diff;
+            if current_bvh_node.have_hitable == true {
                 // this node has actual item
                 if let Some(mut aabb_hit_rec) = current_bvh_node
                     .bvh_node_box
@@ -427,7 +434,8 @@ impl Hitable for BvhTree {
             // next_pos_diff: set skip number using current depth
             // (2^depth) -1
             // println!("(skip) next_pos_diff: {}, current_pos: {}, top_depth: {}", next_pos_diff, current_pos, top_depth);
-            current_pos -= bvh_pos_diff;
+            //current_pos -= bvh_pos_diff;
+            current_pos = current_bvh_node.skip_next_pos;
             if current_pos == 0 {
                 break; // no more hit node, ealy return;
             } else {
