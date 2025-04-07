@@ -132,6 +132,10 @@ impl Hitable for Sphere {
         &self.aabb_box
     }
 
+    fn bounding_box_with_rotate(&self, _revq: &Rotation) -> Aabb {
+        self.aabb_box.clone()
+    }
+
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(aabb_hit) = self
             .aabb_box
