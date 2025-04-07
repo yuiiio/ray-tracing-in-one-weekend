@@ -78,6 +78,20 @@ impl Hitable for HitableList {
         &self.aabb_box
     }
 
+    fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
+        let mut b_min = [std::f64::MAX; 3];
+        let mut b_max = [std::f64::MIN; 3];
+        for i in 0..self.hitable_list.len() {
+            for axis in 0..3 {
+                b_min[axis] = b_min[axis]
+                    .min(self.hitable_list[i].bounding_box_with_rotate(quat).b_min[axis]);
+                b_max[axis] = b_max[axis]
+                    .max(self.hitable_list[i].bounding_box_with_rotate(quat).b_max[axis]);
+            }
+        }
+        Aabb { b_min, b_max }
+    }
+
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self
             .aabb_box

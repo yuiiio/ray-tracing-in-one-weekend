@@ -79,29 +79,8 @@ impl Rotate {
         let revq = Rotation::new(-angle, axis);
 
         // let found boundingbox to enough include rotate-obj
-        let bbox = obj.bounding_box();
-        let mut b_min = [std::f64::MAX; 3];
-        let mut b_max = [-std::f64::MAX; 3];
-        for i in [1, 0].iter() {
-            for j in [1, 0].iter() {
-                for k in [1, 0].iter() {
-                    let x = *i as f64 * bbox.b_max[0] + (1 - *i) as f64 * bbox.b_min[0];
-                    let y = *j as f64 * bbox.b_max[1] + (1 - *j) as f64 * bbox.b_min[1];
-                    let z = *k as f64 * bbox.b_max[2] + (1 - *k) as f64 * bbox.b_min[2];
 
-                    let rotated = quat.rotate(&[x, y, z]);
-                    for c in 0..3 {
-                        if rotated[c] > b_max[c] {
-                            b_max[c] = rotated[c];
-                        }
-                        if rotated[c] < b_min[c] {
-                            b_min[c] = rotated[c];
-                        }
-                    }
-                }
-            }
-        }
-        let aabb_box = Aabb { b_min, b_max };
+        let aabb_box = obj.bounding_box_with_rotate(&quat);
 
         obj.rotate_onb(&quat); // rotate obj's normal and onb
 

@@ -441,6 +441,12 @@ impl Hitable for BvhTree {
         &self.aabb_box
     }
 
+    fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
+        // TODO: depth(n) trival more small aabb by child node
+        // now all same as hitablelist
+        self.hitable_list.bounding_box_with_rotate(quat)
+    }
+
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(_aabb_hit) = self
             .aabb_box
