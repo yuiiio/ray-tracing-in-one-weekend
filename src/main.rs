@@ -282,6 +282,11 @@ fn main() {
 
     let bunny_list = obj_loader(&mut File::open("./lucy.obj").unwrap(), white, 0.2);
 
+    println!(
+        "object load & translate & rotate time: {}",
+        now.elapsed().unwrap().as_secs_f64()
+    );
+
     let now1 = SystemTime::now();
     let bunny_bvh = BvhTree::new(bunny_list);
     println!(
