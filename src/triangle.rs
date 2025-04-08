@@ -116,6 +116,23 @@ impl Hitable for Triangle {
         &self.aabb_box
     }
 
+    fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
+        let v0 = quat.rotate(&self.v0);
+        let v1 = quat.rotate(&self.v1);
+        let v2 = quat.rotate(&self.v2);
+        let b_min = [
+            min(min(v0[0], v1[0]), v2[0]),
+            min(min(v0[1], v1[1]), v2[1]),
+            min(min(v0[2], v1[2]), v2[2]),
+        ];
+        let b_max = [
+            max(max(v0[0], v1[0]), v2[0]),
+            max(max(v0[1], v1[1]), v2[1]),
+            max(max(v0[2], v1[2]), v2[2]),
+        ];
+        Aabb { b_min, b_max }
+    }
+
     fn pdf_value(&self, ray: &Ray) -> f64 {
         if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
             let distance_squared = rec.t.powi(2);
