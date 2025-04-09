@@ -210,6 +210,7 @@ fn main() {
     )));
     obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kyz, red));
 
+    /*
     let light_rect = FlipNormals::new(Rect::new(
         213.0,
         343.0,
@@ -220,6 +221,7 @@ fn main() {
         light.clone(),
     ));
     obj_list.push(light_rect.clone());
+    */
 
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
@@ -240,6 +242,8 @@ fn main() {
         AxisType::Kxy,
         magick,
     )));
+
+    let outdoor_light = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxy, white.clone());
 
     let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxz, white.clone());
     obj_list.push(floor.clone());
@@ -279,8 +283,8 @@ fn main() {
     let earth_sphere = Sphere::new([500.0, 300.0, 100.0], 60.0, earth);
     obj_list.push(earth_sphere);
 
-    let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
-    obj_list.push(light_sphere.clone());
+    //let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
+    //obj_list.push(light_sphere.clone());
 
     let mut pana_list = obj_loader(&mut File::open("./pana.obj").unwrap(), white.clone(), 80.0);
     let pana_face = obj_loader(
@@ -344,9 +348,10 @@ fn main() {
         now2.elapsed().unwrap().as_secs_f64()
     );
 
-    light_list.push(light_rect);
+    //light_list.push(light_rect);
     //light_list.push(floor);
-    light_list.push(light_sphere);
+    light_list.push(outdoor_light);
+    //light_list.push(light_sphere);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
 
