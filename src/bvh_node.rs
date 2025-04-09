@@ -125,6 +125,7 @@ const AI_X: usize = 0;
 const AI_Y: usize = 1;
 const AI_Z: usize = 2;
 
+#[derive(Clone)]
 enum Axis {
     X,
     Y,
@@ -235,7 +236,51 @@ fn build_bvh(
                 handle_x
             };
 
-            let (a, b) = selected_handle.split_at(handle_size / 2);
+            // search best split_at (now allowed non perfect-balanced tree)
+            let mut split_minimum_size: f64 = std::f64::MAX;
+            let mut split_minimum_pos: usize = 0;
+            const SEARCH_RADIUS: usize = 5;
+            let search_start = (handle_size / 2).saturating_sub(SEARCH_RADIUS) + 1;
+            let search_end = if ((handle_size / 2) + SEARCH_RADIUS) >= handle_size {
+                handle_size - 1
+            } else {
+                ((handle_size / 2) + SEARCH_RADIUS) - 1
+            };
+            for split_at in search_start..search_end {
+                let mut left_min: f64 = std::f64::MAX;
+                let mut left_max: f64 = std::f64::MIN;
+                for i in 0..split_at {
+                    left_max = left_max.max(
+                        hitable_list[selected_handle[i]].bounding_box().b_max
+                            [sorted_axis.clone() as usize],
+                    );
+                    left_min = left_min.min(
+                        hitable_list[selected_handle[i]].bounding_box().b_min
+                            [sorted_axis.clone() as usize],
+                    );
+                }
+                let left_size = left_max - left_min;
+
+                let mut right_min: f64 = std::f64::MAX;
+                let mut right_max: f64 = std::f64::MIN;
+                for i in split_at..handle_size {
+                    right_max = right_max.max(
+                        hitable_list[selected_handle[i]].bounding_box().b_max
+                            [sorted_axis.clone() as usize],
+                    );
+                    right_min = right_min.min(
+                        hitable_list[selected_handle[i]].bounding_box().b_min
+                            [sorted_axis.clone() as usize],
+                    );
+                }
+                let right_size = right_max - right_min;
+                let cost = left_size + right_size;
+                if cost < split_minimum_size {
+                    split_minimum_size = cost;
+                    split_minimum_pos = split_at;
+                }
+            }
+            let (a, b) = selected_handle.split_at(split_minimum_pos);
 
             let left_handle = build_bvh(
                 hitable_list,
