@@ -348,7 +348,7 @@ impl Hitable for BvhTree {
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
         let r_dir_inv = &r.get_inv_dir();
-        loop {
+        while current_pos != 0 {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
                 // this node has actual item
@@ -384,23 +384,12 @@ impl Hitable for BvhTree {
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
                 {
                     current_pos -= 1;
-                    if current_pos == 0 {
-                        // needs for not perfect balance tree
-                        break; // no more hit node, ealy return;
-                    } else {
-                        continue;
-                    }
-                    /*
+
                     continue;
-                    */
                 }
             }
+            // if not hit bvh_node's aabb or check's after has_hitable node.
             current_pos = current_bvh_node.skip_pos;
-            if current_pos == 0 {
-                break; // no more hit node, ealy return;
-            } else {
-                continue;
-            }
         }
         return_rec
     }
