@@ -26,7 +26,7 @@ mod triangle;
 mod utils;
 mod vec3;
 
-use bvh_node::BvhTree;
+use bvh_node::{BvhRecursive, BvhTree};
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
@@ -46,7 +46,7 @@ const MAX_DEPTH: usize = 20;
 
 fn color(
     ray: Ray,
-    world: &BvhTree,
+    world: &BvhRecursive,
     light_list: &HitableList,
     texture_list: &TextureList,
     material_list: &MaterialList,
@@ -306,8 +306,8 @@ fn main() {
     );
 
     let now1 = SystemTime::now();
-    let pana_bvh = BvhTree::new(pana_list);
-    let face_bvh = BvhTree::new(pana_face);
+    let pana_bvh = BvhRecursive::new(pana_list);
+    let face_bvh = BvhRecursive::new(pana_face);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -342,7 +342,7 @@ fn main() {
     */
 
     let now2 = SystemTime::now();
-    let obj_bvh = BvhTree::new(obj_list);
+    let obj_bvh = BvhRecursive::new(obj_list);
     println!(
         "BVH-2 Build Time elapsed: {}",
         now2.elapsed().unwrap().as_secs_f64()
