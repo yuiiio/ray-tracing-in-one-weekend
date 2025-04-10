@@ -4,7 +4,9 @@ use std::f64::consts::PI;
 use crate::hitable::HitRecord;
 use crate::ray::Ray;
 use crate::texture::{TextureHandle, TextureList};
-use crate::vec3::{vec3_add, vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
+use crate::vec3::{
+    vec3_add, vec3_dot, vec3_inv, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3,
+};
 use std::f64;
 
 pub enum Scatterd {
@@ -183,6 +185,7 @@ impl Metal {
         let scatterd = Ray {
             origin: hit_record.p,
             direction: reflected,
+            inv_dir: vec3_inv(&reflected),
         };
         let attenuation = texture_list.get_value(hit_record.uv, &hit_record.p, &self.texture);
 
@@ -333,23 +336,28 @@ impl Dielectric {
                     let mut rng = rand::thread_rng();
                     let rand: f64 = rng.gen();
                     if rand < reflect_prob {
+                        let direction = reflect_with_dt_n(&r_in.direction, &refracted.1); // dt_n
                         Ray {
                             origin: hit_record.p,
-                            direction: reflect_with_dt_n(&r_in.direction, &refracted.1), // dt_n
+                            direction,
+                            inv_dir: vec3_inv(&direction),
                         }
                     } else {
                         refracted_root = true;
                         Ray {
                             origin: hit_record.p,
                             direction: refracted.0,
+                            inv_dir: vec3_inv(&refracted.0),
                         } // refracted
                     }
                 }
                 Refract::DtN(dt_n) => {
                     inside_to_inside = true;
+                    let direction = reflect_with_dt_n(&r_in.direction, &dt_n);
                     Ray {
                         origin: hit_record.p,
-                        direction: reflect_with_dt_n(&r_in.direction, &dt_n),
+                        direction,
+                        inv_dir: vec3_inv(&direction),
                     }
                 }
             };

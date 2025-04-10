@@ -2,7 +2,7 @@ use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::quotation::Rotation;
 use crate::ray::Ray;
-use crate::vec3::{vec3_add, vec3_sub, Vector3};
+use crate::vec3::{vec3_add, vec3_inv, vec3_sub, Vector3};
 
 #[derive(Clone)]
 pub struct Translate {
@@ -30,6 +30,7 @@ impl Hitable for Translate {
         let r = Ray {
             origin: vec3_sub(&r.origin, &self.offset),
             direction: r.direction,
+            inv_dir: vec3_inv(&r.direction),
         };
         match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => Some(HitRecord {
@@ -53,6 +54,7 @@ impl Hitable for Translate {
         self.obj.pdf_value(&Ray {
             origin: on,
             direction: ray.direction,
+            inv_dir: vec3_inv(&ray.direction),
         }) // this use self->obj's pdf_value func
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
@@ -97,7 +99,11 @@ impl Hitable for Rotate {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let origin = self.revq.rotate(&r.origin);
         let direction = self.revq.rotate(&r.direction);
-        let r = Ray { origin, direction };
+        let r = Ray {
+            origin,
+            direction,
+            inv_dir: vec3_inv(&direction),
+        };
         match self.obj.hit(&r, t_min, t_max) {
             Some(hit) => {
                 let normal = match hit.onb_uv {
@@ -123,15 +129,13 @@ impl Hitable for Rotate {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self
-            .aabb_box
-            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
-        {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             let ro = self.revq.rotate(&ray.origin);
             let rv = self.revq.rotate(&ray.direction);
             return self.obj.pdf_value(&Ray {
                 origin: ro,
                 direction: rv,
+                inv_dir: vec3_inv(&rv),
             });
         }
         0.0

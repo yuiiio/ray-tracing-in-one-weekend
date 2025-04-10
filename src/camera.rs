@@ -1,5 +1,5 @@
 use crate::ray::Ray;
-use crate::vec3::{cross, vec3_add, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
+use crate::vec3::{cross, vec3_add, vec3_inv, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
 use rand::prelude::*;
 use std::f64;
 
@@ -45,15 +45,17 @@ impl Camera {
     }
 
     pub fn get_ray(&self, s: f64, t: f64) -> Ray {
+        let direction = vec3_unit_vector_f64(&vec3_sub(
+            &vec3_add(
+                &vec3_add(&self.lower_left_corner, &vec3_mul_b(&self.horizontal, s)),
+                &vec3_mul_b(&self.vertical, t),
+            ),
+            &self.origin,
+        ));
         Ray {
             origin: self.origin,
-            direction: vec3_unit_vector_f64(&vec3_sub(
-                &vec3_add(
-                    &vec3_add(&self.lower_left_corner, &vec3_mul_b(&self.horizontal, s)),
-                    &vec3_mul_b(&self.vertical, t),
-                ),
-                &self.origin,
-            )),
+            direction,
+            inv_dir: vec3_inv(&direction),
         }
     }
 }

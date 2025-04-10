@@ -40,7 +40,7 @@ use sphere::Sphere;
 use std::f64;
 use texture::{ColorTexture, ImageTexture, TextureList};
 use translate::{Rotate, Translate};
-use vec3::{vec3_add, vec3_mul, vec3_mul_b, Vector3};
+use vec3::{vec3_add, vec3_inv, vec3_mul, vec3_mul_b, Vector3};
 
 const MAX_DEPTH: usize = 20;
 
@@ -91,9 +91,11 @@ fn color(
                             let mut rng = rand::thread_rng();
                             let rand: f64 = rng.gen();
                             let next_ray = if rand < 0.4 {
+                                let direction = light_list.random(&hit_rec.p);
                                 Ray {
                                     origin: hit_rec.p,
-                                    direction: light_list.random(&hit_rec.p),
+                                    direction,
+                                    inv_dir: vec3_inv(&direction),
                                 }
                             } else {
                                 let direction = match hit_rec.onb_uv {
@@ -109,6 +111,7 @@ fn color(
                                 Ray {
                                     origin: hit_rec.p,
                                     direction,
+                                    inv_dir: vec3_inv(&direction),
                                 }
                             }; // next_ray direction should normalized value.
 

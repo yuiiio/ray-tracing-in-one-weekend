@@ -258,9 +258,7 @@ impl BvhRecursive {
 
 impl Hitable for BvhRecursive {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let r_dir_inv = &r.get_inv_dir();
-        // should ray have r_dir_inv ? to avoid every bvh depth
-        if let Some(aabb_rec) = self.aabb_box.aabb_hit(r, r_dir_inv, t_min, t_max) {
+        if let Some(aabb_rec) = self.aabb_box.aabb_hit(r, t_min, t_max) {
             if let Some(left_rec) = self.left_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
                 if self.only_have_left_obj == false {
                     if let Some(right_rec) = self.right_obj.hit(r, aabb_rec.t_min, left_rec.t) {
@@ -288,10 +286,7 @@ impl Hitable for BvhRecursive {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self
-            .aabb_box
-            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
-        {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             self.left_obj.pdf_value(ray) + self.right_obj.pdf_value(ray)
         } else {
             0.0
@@ -548,14 +543,12 @@ impl Hitable for BvhTree {
         let mut current_pos: usize = self.last_node_num;
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
-        let r_dir_inv = &r.get_inv_dir();
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
                 // this node has actual item
-                if let Some(mut aabb_hit_rec) = current_bvh_node
-                    .bvh_node_box
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
+                if let Some(mut aabb_hit_rec) =
+                    current_bvh_node.bvh_node_box.aabb_hit(r, t_min, min_hit_t)
                 {
                     let left_obj = &self.hitable_list[current_bvh_node.left];
                     if let Some(left_rec) = left_obj.hit(r, aabb_hit_rec.t_min, aabb_hit_rec.t_max)
@@ -580,9 +573,7 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
-                if let Some(_hit_rec) = current_bvh_node
-                    .bvh_node_box
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
+                if let Some(_hit_rec) = current_bvh_node.bvh_node_box.aabb_hit(r, t_min, min_hit_t)
                 {
                     current_pos -= 1;
                     // not hitable having node's is not current_pos = 1, so not needs index == 0 check
@@ -611,10 +602,7 @@ impl Hitable for BvhTree {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self
-            .aabb_box
-            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
-        {
+        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
             let hitable_list_len = self.hitable_list.len();
             let mut pdf_sum: f64 = 0.0;
             for i in 0..hitable_list_len {

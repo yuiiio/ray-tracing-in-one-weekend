@@ -96,3 +96,8 @@ pub fn cross(a: &Vector3<f64>, b: &Vector3<f64>) -> Vector3<f64> {
         a[0] * b[1] - a[1] * b[0],
     ]
 }
+
+#[inline(always)]
+pub fn vec3_inv(a: &Vector3<f64>) -> Vector3<f64> {
+    [1.0 / a[0], 1.0 / a[1], 1.0 / a[2]]
+}
