@@ -267,8 +267,11 @@ impl Hitable for BvhRecursive {
                 }
                 return Some(left_rec);
             }
-            if let Some(right_rec) = self.right_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
-                return Some(right_rec);
+
+            if self.only_have_left_obj == false {
+                if let Some(right_rec) = self.right_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
+                    return Some(right_rec);
+                }
             }
         }
         return None;
