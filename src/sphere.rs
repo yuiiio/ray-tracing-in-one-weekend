@@ -137,7 +137,10 @@ impl Hitable for Sphere {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
+        if let Some(aabb_hit) = self
+            .aabb_box
+            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
+        {
             if let Some((oc_sq, c)) =
                 self.only_hit_check_return_oc_sq_c(ray, aabb_hit.t_min, aabb_hit.t_max)
             {

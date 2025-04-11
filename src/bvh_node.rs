@@ -8,15 +8,6 @@ use crate::ray::Ray;
 use crate::vec3::Vector3;
 
 #[derive(Clone)]
-pub struct BvhRecursive {
-    aabb_box: Aabb,
-    left_obj: Box<dyn Hitable + Send + Sync>,
-    right_obj: Box<dyn Hitable + Send + Sync>,
-    only_have_left_obj: bool,
-    have_hitable: bool,
-}
-
-#[derive(Clone)]
 pub struct BvhTree {
     hitable_list: HitableList,
     bvh_node_list: Vec<BvhNode>,
@@ -138,228 +129,6 @@ enum Axis {
     X,
     Y,
     Z,
-}
-
-fn build_bvh_recursive(
-    hitable_list: &HitableList,
-    handle: &[usize],
-    pre_sort_axis: &Axis,
-    center_list: &Vec<Vector3<f64>>,
-) -> BvhRecursive {
-    let handle_size = handle.len();
-    match handle_size {
-        1 => BvhRecursive {
-            aabb_box: hitable_list[handle[0]].bounding_box().clone(),
-            left_obj: hitable_list[handle[0]].clone(),
-            right_obj: hitable_list[handle[0]].clone(),
-            only_have_left_obj: true,
-            have_hitable: true,
-        },
-        2 => BvhRecursive {
-            aabb_box: surrounding_box(
-                hitable_list[handle[0]].bounding_box(),
-                hitable_list[handle[1]].bounding_box(),
-            ),
-            left_obj: hitable_list[handle[0]].clone(),
-            right_obj: hitable_list[handle[1]].clone(),
-            only_have_left_obj: false,
-            have_hitable: true,
-        },
-        _ => {
-            let mut handle_2: Vec<usize> = handle.to_owned();
-            let mut handle_3: Vec<usize> = handle.to_owned();
-            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis
-            {
-                Axis::X => {
-                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (handle, &handle_2, &handle_3)
-                }
-                Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (&handle_2, handle, &handle_3)
-                }
-                Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
-                    (&handle_2, &handle_3, handle)
-                }
-            };
-
-            let x_max: f64 = hitable_list[handle_x[handle_size - 1]].bounding_box().b_max[0]
-                - hitable_list[handle_x[0]].bounding_box().b_min[0];
-            let y_max: f64 = hitable_list[handle_y[handle_size - 1]].bounding_box().b_max[1]
-                - hitable_list[handle_y[0]].bounding_box().b_min[1];
-            let z_max: f64 = hitable_list[handle_z[handle_size - 1]].bounding_box().b_max[2]
-                - hitable_list[handle_z[0]].bounding_box().b_min[2];
-
-            let sorted_axis: Axis;
-            let selected_handle = if x_max < y_max {
-                if y_max < z_max {
-                    sorted_axis = Axis::Z;
-                    handle_z
-                } else {
-                    sorted_axis = Axis::Y;
-                    handle_y
-                }
-            } else if x_max < z_max {
-                sorted_axis = Axis::Z;
-                handle_z
-            } else {
-                sorted_axis = Axis::X;
-                handle_x
-            };
-
-            let (a, b) = selected_handle.split_at(handle_size / 2);
-            let left_obj = Box::new(build_bvh_recursive(
-                hitable_list,
-                a,
-                &sorted_axis,
-                center_list,
-            ));
-            let right_obj = Box::new(build_bvh_recursive(
-                hitable_list,
-                b,
-                &sorted_axis,
-                center_list,
-            ));
-            BvhRecursive {
-                aabb_box: surrounding_box(&left_obj.aabb_box, &right_obj.aabb_box),
-                left_obj,
-                right_obj,
-                only_have_left_obj: false,
-                have_hitable: false,
-            }
-        }
-    }
-}
-
-impl BvhRecursive {
-    pub fn new(hitable_list: HitableList) -> Self {
-        let hitable_list_len: usize = hitable_list.len();
-        let mut handle = Vec::with_capacity(hitable_list_len);
-        for i in 0..hitable_list_len {
-            handle.push(i);
-        }
-
-        let mut aabb_center_list = Vec::with_capacity(hitable_list_len);
-        for i in 0..hitable_list_len {
-            let bounding_box_max = hitable_list[i].bounding_box().b_max;
-            let bounding_box_min = hitable_list[i].bounding_box().b_min;
-            let center_point: Vector3<f64> = [
-                (bounding_box_max[0] + bounding_box_min[0]) * 0.5,
-                (bounding_box_max[1] + bounding_box_min[1]) * 0.5,
-                (bounding_box_max[2] + bounding_box_min[2]) * 0.5,
-            ];
-            aabb_center_list.push(center_point);
-        }
-        dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
-
-        build_bvh_recursive(&hitable_list, &handle, &Axis::X, &aabb_center_list)
-    }
-}
-
-impl Hitable for BvhRecursive {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        //if self.have_hitable == false {
-        //bvh node
-        // imagine to use simd
-        let left_aabb_rec = self.left_obj.bounding_box().aabb_hit(r, t_min, t_max);
-        let right_aabb_rec = self.right_obj.bounding_box().aabb_hit(r, t_min, t_max);
-
-        if let Some(left_aabb) = left_aabb_rec {
-            if let Some(right_aabb) = right_aabb_rec {
-                if let Some(left_hit) = self.left_obj.hit(r, left_aabb.t_min, left_aabb.t_max) {
-                    if let Some(right_hit) = self.right_obj.hit(r, right_aabb.t_min, left_hit.t) {
-                        return Some(right_hit);
-                    } else {
-                        return Some(left_hit);
-                    }
-                } else {
-                    return self.right_obj.hit(r, right_aabb.t_min, right_aabb.t_max);
-                }
-            } else {
-                return self.left_obj.hit(r, left_aabb.t_min, left_aabb.t_max);
-            }
-        } else {
-            if let Some(right_aabb) = right_aabb_rec {
-                return self.right_obj.hit(r, right_aabb.t_min, right_aabb.t_max);
-            }
-        }
-        /*
-        } else {
-            // have_hitable(last node) should also use simd for multiple-triangle?
-            if let Some(left_aabb_rec) = self.left_obj.bounding_box().aabb_hit(r, t_min, t_max) {
-                if let Some(left_rec) =
-                    self.left_obj
-                        .hit(r, left_aabb_rec.t_min, left_aabb_rec.t_max)
-                {
-                    if self.only_have_left_obj == false {
-                        if let Some(right_aabb_rec) =
-                            self.right_obj.bounding_box().aabb_hit(r, t_min, left_rec.t)
-                        {
-                            if let Some(right_rec) =
-                                self.right_obj
-                                    .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
-                            {
-                                return Some(right_rec);
-                            }
-                        }
-                    }
-                    return Some(left_rec);
-                }
-            }
-            if self.only_have_left_obj == false {
-                if let Some(right_aabb_rec) =
-                    self.right_obj.bounding_box().aabb_hit(r, t_min, t_max)
-                {
-                    if let Some(right_rec) =
-                        self.right_obj
-                            .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
-                    {
-                        return Some(right_rec);
-                    }
-                }
-            }
-        }
-            */
-        return None;
-    }
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
-    }
-
-    fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
-        // TODO: depth(n) trival more small aabb by child node
-        surrounding_box(
-            &self.left_obj.bounding_box_with_rotate(quat),
-            &self.right_obj.bounding_box_with_rotate(quat),
-        )
-    }
-
-    fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
-            self.left_obj.pdf_value(ray) + self.right_obj.pdf_value(ray)
-        } else {
-            0.0
-        }
-    }
-
-    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        let mut rng = rand::thread_rng();
-        let rand: f64 = rng.gen();
-        if rand < 0.5 {
-            self.left_obj.random(o)
-        } else {
-            self.right_obj.random(o)
-        }
-    }
-
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
-        self.left_obj.rotate_onb(quat);
-        self.right_obj.rotate_onb(quat);
-    }
 }
 
 // push bvh_node_list and return handle
@@ -596,12 +365,14 @@ impl Hitable for BvhTree {
         let mut current_pos: usize = self.last_node_num;
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
+        let r_dir_inv = &r.get_inv_dir();
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
                 // this node has actual item
-                if let Some(mut aabb_hit_rec) =
-                    current_bvh_node.bvh_node_box.aabb_hit(r, t_min, min_hit_t)
+                if let Some(mut aabb_hit_rec) = current_bvh_node
+                    .bvh_node_box
+                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
                 {
                     let left_obj = &self.hitable_list[current_bvh_node.left];
                     if let Some(left_rec) = left_obj.hit(r, aabb_hit_rec.t_min, aabb_hit_rec.t_max)
@@ -626,7 +397,9 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
-                if let Some(_hit_rec) = current_bvh_node.bvh_node_box.aabb_hit(r, t_min, min_hit_t)
+                if let Some(_hit_rec) = current_bvh_node
+                    .bvh_node_box
+                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
                 {
                     current_pos -= 1;
                     // not hitable having node's is not current_pos = 1, so not needs index == 0 check
@@ -655,7 +428,10 @@ impl Hitable for BvhTree {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
+        if let Some(_aabb_hit) = self
+            .aabb_box
+            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
+        {
             let hitable_list_len = self.hitable_list.len();
             let mut pdf_sum: f64 = 0.0;
             for i in 0..hitable_list_len {

@@ -1,6 +1,6 @@
 use crate::ray::Ray;
 use crate::utils::{max, min};
-use crate::vec3::{vec3_inv, Vector3};
+use crate::vec3::Vector3;
 use std::mem::swap;
 
 pub struct AabbHitRecord {
@@ -15,14 +15,20 @@ pub struct Aabb {
 }
 
 impl Aabb {
-    pub fn aabb_hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<AabbHitRecord> {
+    pub fn aabb_hit(
+        &self,
+        r: &Ray,
+        r_dir_div: &Vector3<f64>,
+        t_min: f64,
+        t_max: f64,
+    ) -> Option<AabbHitRecord> {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
-            let mut t0 = (self.b_min[i] - r.origin[i]) * r.inv_dir[i];
-            let mut t1 = (self.b_max[i] - r.origin[i]) * r.inv_dir[i];
+            let mut t0 = (self.b_min[i] - r.origin[i]) * r_dir_div[i];
+            let mut t1 = (self.b_max[i] - r.origin[i]) * r_dir_div[i];
 
-            if r.inv_dir[i].is_sign_negative() {
+            if r_dir_div[i].is_sign_negative() {
                 swap(&mut t0, &mut t1);
             }
 
@@ -62,9 +68,8 @@ mod test {
         let r = Ray {
             origin: [0.0, 0.0, 0.0],
             direction: [1.5, 1.5, 1.5],
-            inv_dir: vec3_inv(&[1.5, 1.5, 1.5]),
         };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };
@@ -72,9 +77,8 @@ mod test {
         let r = Ray {
             origin: [0.0, 0.0, 0.0],
             direction: [1.5, 0.0, 1.5],
-            inv_dir: vec3_inv(&[1.5, 0.0, 1.5]),
         };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };
@@ -82,9 +86,8 @@ mod test {
         let r = Ray {
             origin: [3.0, 3.0, 3.0],
             direction: [-1.0, -1.0, -1.0],
-            inv_dir: vec3_inv(&[-1.0, -1.0, -1.0]),
         };
-        let result = match aabb_box.aabb_hit(&r, 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };

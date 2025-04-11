@@ -26,7 +26,7 @@ mod triangle;
 mod utils;
 mod vec3;
 
-use bvh_node::{BvhRecursive, BvhTree};
+use bvh_node::BvhTree;
 use camera::Camera;
 use hitable::Hitable;
 use hitablelist::HitableList;
@@ -40,13 +40,13 @@ use sphere::Sphere;
 use std::f64;
 use texture::{ColorTexture, ImageTexture, TextureList};
 use translate::{Rotate, Translate};
-use vec3::{vec3_add, vec3_inv, vec3_mul, vec3_mul_b, Vector3};
+use vec3::{vec3_add, vec3_mul, vec3_mul_b, Vector3};
 
 const MAX_DEPTH: usize = 20;
 
 fn color(
     ray: Ray,
-    world: &BvhRecursive,
+    world: &BvhTree,
     light_list: &HitableList,
     texture_list: &TextureList,
     material_list: &MaterialList,
@@ -91,11 +91,9 @@ fn color(
                             let mut rng = rand::thread_rng();
                             let rand: f64 = rng.gen();
                             let next_ray = if rand < 0.4 {
-                                let direction = light_list.random(&hit_rec.p);
                                 Ray {
                                     origin: hit_rec.p,
-                                    direction,
-                                    inv_dir: vec3_inv(&direction),
+                                    direction: light_list.random(&hit_rec.p),
                                 }
                             } else {
                                 let direction = match hit_rec.onb_uv {
@@ -111,7 +109,6 @@ fn color(
                                 Ray {
                                     origin: hit_rec.p,
                                     direction,
-                                    inv_dir: vec3_inv(&direction),
                                 }
                             }; // next_ray direction should normalized value.
 
@@ -309,8 +306,8 @@ fn main() {
     );
 
     let now1 = SystemTime::now();
-    let pana_bvh = BvhRecursive::new(pana_list);
-    let face_bvh = BvhRecursive::new(pana_face);
+    let pana_bvh = BvhTree::new(pana_list);
+    let face_bvh = BvhTree::new(pana_face);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -345,7 +342,7 @@ fn main() {
     */
 
     let now2 = SystemTime::now();
-    let obj_bvh = BvhRecursive::new(obj_list);
+    let obj_bvh = BvhTree::new(obj_list);
     println!(
         "BVH-2 Build Time elapsed: {}",
         now2.elapsed().unwrap().as_secs_f64()

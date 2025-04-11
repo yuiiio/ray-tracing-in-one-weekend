@@ -346,7 +346,10 @@ impl Hitable for Boxel {
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
-        if let Some(_aabb_hit) = self.aabb_box.aabb_hit(ray, 0.00001, 10000.0) {
+        if let Some(_aabb_hit) = self
+            .aabb_box
+            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
+        {
             const DIV6: f64 = 1.0 / 6.0;
             (self.rect[0].pdf_value(ray)
                 + self.rect[1].pdf_value(ray)
