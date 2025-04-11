@@ -258,17 +258,34 @@ impl BvhRecursive {
 
 impl Hitable for BvhRecursive {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        if let Some(aabb_rec) = self.aabb_box.aabb_hit(r, t_min, t_max) {
-            if let Some(left_rec) = self.left_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
+        if let Some(left_aabb_rec) = self.left_obj.bounding_box().aabb_hit(r, t_min, t_max) {
+            if let Some(left_rec) = self
+                .left_obj
+                .hit(r, left_aabb_rec.t_min, left_aabb_rec.t_max)
+            {
                 if self.only_have_left_obj == false {
-                    if let Some(right_rec) = self.right_obj.hit(r, aabb_rec.t_min, left_rec.t) {
-                        return Some(right_rec);
+                    if let Some(right_aabb_rec) =
+                        self.right_obj.bounding_box().aabb_hit(r, t_min, left_rec.t)
+                    {
+                        if let Some(right_rec) =
+                            self.right_obj
+                                .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
+                        {
+                            return Some(right_rec);
+                        }
                     }
                 }
                 return Some(left_rec);
             }
-            if let Some(right_rec) = self.right_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
-                return Some(right_rec);
+        }
+        if self.only_have_left_obj == false {
+            if let Some(right_aabb_rec) = self.right_obj.bounding_box().aabb_hit(r, t_min, t_max) {
+                if let Some(right_rec) =
+                    self.right_obj
+                        .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
+                {
+                    return Some(right_rec);
+                }
             }
         }
         return None;
