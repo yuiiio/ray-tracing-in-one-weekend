@@ -132,13 +132,16 @@ enum Axis {
 }
 
 // push bvh_node_list and return handle
-//                    15
-//              7             14       <=  diff 7 (2^3 - 1)
-//           3     6      10      13   <=  diff 3 (2^2 - 1)
-//          1 2   4 5    8  9    11 12 <=  diff 1 (2^1 - 1)
-// (^previous behavaior)
 //
 // now allow non perfect balance tree.
+//                          19
+//          3                               18
+//       1     2                14                       17
+//                      10              13            15    16
+//                  6       9        11    12
+//                4   5   7   8
+// skip_node is (last right top-parent's left brother node)
+
 fn build_bvh(
     hitable_list: &HitableList,
     handle: &[usize],
@@ -341,6 +344,21 @@ impl BvhTree {
         }
     }
 }
+
+/*
+ * future idea when use wide-bvh for simd
+ * skip_pos_ref_list[0..last_node_num]
+ * [0 1 2 3 4 5 6 7 8 9 10 ... last_node_num]
+ *  child node [o * o *] qbvh *=>miss(doesn't hit node's aabb), o=>hit
+ *             [5 5 6 8] => shift hit child node's skip_pos
+ *                          and fill low side as (child node's minimum skip_pos-1)
+ *
+ *  current_pos = skip_pos_ref_list[current_bvh_node.skip_pos];
+ *
+ *  but every bvh-tree hit needs allocate [usize; last_node_num]
+ *  ... might slow
+ *  so this stack-recursive-less traversal is not work for wide-bvh for simd
+*/
 
 impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
