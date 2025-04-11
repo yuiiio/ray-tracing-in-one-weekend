@@ -13,6 +13,7 @@ pub struct BvhRecursive {
     left_obj: Box<dyn Hitable + Send + Sync>,
     right_obj: Box<dyn Hitable + Send + Sync>,
     only_have_left_obj: bool,
+    have_hitable: bool,
 }
 
 #[derive(Clone)]
@@ -152,6 +153,7 @@ fn build_bvh_recursive(
             left_obj: hitable_list[handle[0]].clone(),
             right_obj: hitable_list[handle[0]].clone(),
             only_have_left_obj: true,
+            have_hitable: true,
         },
         2 => BvhRecursive {
             aabb_box: surrounding_box(
@@ -161,6 +163,7 @@ fn build_bvh_recursive(
             left_obj: hitable_list[handle[0]].clone(),
             right_obj: hitable_list[handle[1]].clone(),
             only_have_left_obj: false,
+            have_hitable: true,
         },
         _ => {
             let mut handle_2: Vec<usize> = handle.to_owned();
@@ -226,6 +229,7 @@ fn build_bvh_recursive(
                 left_obj,
                 right_obj,
                 only_have_left_obj: false,
+                have_hitable: false,
             }
         }
     }
@@ -258,36 +262,68 @@ impl BvhRecursive {
 
 impl Hitable for BvhRecursive {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        if let Some(left_aabb_rec) = self.left_obj.bounding_box().aabb_hit(r, t_min, t_max) {
-            if let Some(left_rec) = self
-                .left_obj
-                .hit(r, left_aabb_rec.t_min, left_aabb_rec.t_max)
-            {
-                if self.only_have_left_obj == false {
-                    if let Some(right_aabb_rec) =
-                        self.right_obj.bounding_box().aabb_hit(r, t_min, left_rec.t)
-                    {
-                        if let Some(right_rec) =
-                            self.right_obj
-                                .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
+        //if self.have_hitable == false {
+        //bvh node
+        // imagine to use simd
+        let left_aabb_rec = self.left_obj.bounding_box().aabb_hit(r, t_min, t_max);
+        let right_aabb_rec = self.right_obj.bounding_box().aabb_hit(r, t_min, t_max);
+
+        if let Some(left_aabb) = left_aabb_rec {
+            if let Some(right_aabb) = right_aabb_rec {
+                if let Some(left_hit) = self.left_obj.hit(r, left_aabb.t_min, left_aabb.t_max) {
+                    if let Some(right_hit) = self.right_obj.hit(r, right_aabb.t_min, left_hit.t) {
+                        return Some(right_hit);
+                    } else {
+                        return Some(left_hit);
+                    }
+                } else {
+                    return self.right_obj.hit(r, right_aabb.t_min, right_aabb.t_max);
+                }
+            } else {
+                return self.left_obj.hit(r, left_aabb.t_min, left_aabb.t_max);
+            }
+        } else {
+            if let Some(right_aabb) = right_aabb_rec {
+                return self.right_obj.hit(r, right_aabb.t_min, right_aabb.t_max);
+            }
+        }
+        /*
+        } else {
+            // have_hitable(last node) should also use simd for multiple-triangle?
+            if let Some(left_aabb_rec) = self.left_obj.bounding_box().aabb_hit(r, t_min, t_max) {
+                if let Some(left_rec) =
+                    self.left_obj
+                        .hit(r, left_aabb_rec.t_min, left_aabb_rec.t_max)
+                {
+                    if self.only_have_left_obj == false {
+                        if let Some(right_aabb_rec) =
+                            self.right_obj.bounding_box().aabb_hit(r, t_min, left_rec.t)
                         {
-                            return Some(right_rec);
+                            if let Some(right_rec) =
+                                self.right_obj
+                                    .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
+                            {
+                                return Some(right_rec);
+                            }
                         }
                     }
+                    return Some(left_rec);
                 }
-                return Some(left_rec);
             }
-        }
-        if self.only_have_left_obj == false {
-            if let Some(right_aabb_rec) = self.right_obj.bounding_box().aabb_hit(r, t_min, t_max) {
-                if let Some(right_rec) =
-                    self.right_obj
-                        .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
+            if self.only_have_left_obj == false {
+                if let Some(right_aabb_rec) =
+                    self.right_obj.bounding_box().aabb_hit(r, t_min, t_max)
                 {
-                    return Some(right_rec);
+                    if let Some(right_rec) =
+                        self.right_obj
+                            .hit(r, right_aabb_rec.t_min, right_aabb_rec.t_max)
+                    {
+                        return Some(right_rec);
+                    }
                 }
             }
         }
+            */
         return None;
     }
     fn bounding_box(&self) -> &Aabb {
