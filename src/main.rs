@@ -160,7 +160,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 900;
     const OUTPUT_Y: usize = 900;
-    const NS: usize = 16; // x^2 / per pixel sample size;
+    const NS: usize = 8; // x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -292,15 +292,17 @@ fn main() {
         white.clone(),
         80.0,
     );
-    let pana_list = obj_loader(
-        Some(pana_list),
-        &mut File::open("./pana-face.obj").unwrap(),
-        white.clone(),
-        80.0,
-    );
+    // pana-wear is much-overwrapped to pana_list, so merge bvh
     let pana_list = obj_loader(
         Some(pana_list),
         &mut File::open("./pana-wear.obj").unwrap(),
+        white.clone(),
+        80.0,
+    );
+    // pana_face is less-overwrapped to pana_list, so split to another bvh
+    let pana_face = obj_loader(
+        None,
+        &mut File::open("./pana-face.obj").unwrap(),
         white.clone(),
         80.0,
     );
@@ -312,6 +314,7 @@ fn main() {
 
     let now1 = SystemTime::now();
     let pana_bvh = BvhTree::new(pana_list);
+    let face_bvh = BvhTree::new(pana_face);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -321,8 +324,13 @@ fn main() {
         Box::new(Rotate::new(Box::new(pana_bvh), &[0.0, 1.0, 0.0], 45.0)),
         [-50.0, 200.0, -150.0],
     );
+    let translated_face_bvh = Translate::new(
+        Box::new(Rotate::new(Box::new(face_bvh), &[0.0, 1.0, 0.0], 45.0)),
+        [-50.0, 200.0, -150.0],
+    );
 
     obj_list.push(translated_pana_bvh.clone());
+    obj_list.push(translated_face_bvh.clone());
 
     /*
     let glass_box = obj_loader(&mut File::open("./box.obj").unwrap(), glass);
