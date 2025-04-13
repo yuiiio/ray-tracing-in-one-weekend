@@ -286,26 +286,24 @@ fn main() {
     //let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
     //obj_list.push(light_sphere.clone());
 
-    let mut pana_list = obj_loader(
+    let pana_list = obj_loader(
         None,
         &mut File::open("./pana.obj").unwrap(),
         white.clone(),
         80.0,
     );
-    let mut pana_list = obj_loader(
+    let pana_list = obj_loader(
         Some(pana_list),
         &mut File::open("./pana-face.obj").unwrap(),
         white.clone(),
         80.0,
     );
-    /*
-    let mut pana_list = obj_loader(
+    let pana_list = obj_loader(
         Some(pana_list),
         &mut File::open("./pana-wear.obj").unwrap(),
         white.clone(),
         80.0,
     );
-    */
 
     println!(
         "object load & translate & rotate time: {}",
