@@ -286,24 +286,26 @@ fn main() {
     //let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
     //obj_list.push(light_sphere.clone());
 
-    let mut pana_list = obj_loader(&mut File::open("./pana.obj").unwrap(), white.clone(), 80.0);
-    let pana_face = obj_loader(
+    let mut pana_list = obj_loader(
+        None,
+        &mut File::open("./pana.obj").unwrap(),
+        white.clone(),
+        80.0,
+    );
+    let mut pana_list = obj_loader(
+        Some(pana_list),
         &mut File::open("./pana-face.obj").unwrap(),
         white.clone(),
         80.0,
     );
     /*
-    pana_list.push(obj_loader(
-        &mut File::open("./pana-face.obj").unwrap(),
-        white,
-        80.0,
-    ));
-    */
-    let pana_wear = obj_loader(
+    let mut pana_list = obj_loader(
+        Some(pana_list),
         &mut File::open("./pana-wear.obj").unwrap(),
         white.clone(),
         80.0,
     );
+    */
 
     println!(
         "object load & translate & rotate time: {}",
@@ -312,8 +314,6 @@ fn main() {
 
     let now1 = SystemTime::now();
     let pana_bvh = BvhTree::new(pana_list);
-    let face_bvh = BvhTree::new(pana_face);
-    let wear_bvh = BvhTree::new(pana_wear);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -323,18 +323,8 @@ fn main() {
         Box::new(Rotate::new(Box::new(pana_bvh), &[0.0, 1.0, 0.0], 45.0)),
         [-50.0, 200.0, -150.0],
     );
-    let translated_face_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(face_bvh), &[0.0, 1.0, 0.0], 45.0)),
-        [-50.0, 200.0, -150.0],
-    );
-    let translated_wear_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(wear_bvh), &[0.0, 1.0, 0.0], 45.0)),
-        [-50.0, 200.0, -150.0],
-    );
 
     obj_list.push(translated_pana_bvh.clone());
-    obj_list.push(translated_face_bvh.clone());
-    obj_list.push(translated_wear_bvh.clone());
 
     /*
     let glass_box = obj_loader(&mut File::open("./box.obj").unwrap(), glass);

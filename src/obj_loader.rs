@@ -6,7 +6,12 @@ use crate::material::MaterialHandle;
 use crate::triangle::Triangle;
 use crate::vec3::Vector3;
 
-pub fn obj_loader(file: &mut File, material_handle: MaterialHandle, scale: f64) -> HitableList {
+pub fn obj_loader(
+    append_list: Option<HitableList>,
+    file: &mut File,
+    material_handle: MaterialHandle,
+    scale: f64,
+) -> HitableList {
     let mut contents = String::new();
     file.read_to_string(&mut contents)
         .expect("Failed to read to string obj-file");
@@ -39,7 +44,11 @@ pub fn obj_loader(file: &mut File, material_handle: MaterialHandle, scale: f64) 
         .filter(|s| s.get(0..1).unwrap() == "f")
         .collect();
 
-    let mut hitablelist = HitableList::with_capacity(face_line.len());
+    let mut hitablelist = if let Some(list) = append_list {
+        list
+    } else {
+        HitableList::with_capacity(face_line.len())
+    };
 
     for s in face_line {
         let attr: Vec<&str> = s.split(&" ").skip(1).collect(); //remove "f" at front
