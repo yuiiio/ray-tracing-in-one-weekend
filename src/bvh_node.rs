@@ -21,10 +21,11 @@ pub struct BvhTree {
 #[derive(Clone)]
 pub struct BvhNode {
     bvh_node_box: Aabb,
-    left: usize,
-    right: usize,
+    //left: usize,
+    //right: usize,
+    child: [usize; 2],
     this_node_has_hitable: bool,
-    only_have_left_obj: bool,
+    max_childs: usize, //only_have_left_obj: bool,
 }
 
 fn dmerge(
@@ -154,16 +155,11 @@ fn build_bvh(
     let handle_size = handle.len();
     match handle_size {
         1 => {
-            // create bvh new node when item is onece,
-            // but we have *not* perfect binary tree,
-            // so need more checks depth in 2 => arm.
-            //assert_eq!(bvh_depth, 1);
             let new_node = BvhNode {
                 bvh_node_box: (hitable_list[handle[0]].bounding_box()).clone(),
-                left: handle[0],
-                right: handle[0], // right == left, but should skip with flag
+                child: [handle[0], handle[0]], // max_childs: 1, child([0] == [1])
                 this_node_has_hitable: true,
-                only_have_left_obj: true,
+                max_childs: 1,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -175,10 +171,9 @@ fn build_bvh(
                     hitable_list[handle[0]].bounding_box(),
                     hitable_list[handle[1]].bounding_box(),
                 ),
-                left: handle[0],
-                right: handle[1],
+                child: [handle[0], handle[1]],
                 this_node_has_hitable: true,
-                only_have_left_obj: false,
+                max_childs: 2,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -246,10 +241,9 @@ fn build_bvh(
                     &bvh_node_list[left_handle].bvh_node_box,
                     &bvh_node_list[right_handle].bvh_node_box,
                 ),
-                left: left_handle,
-                right: right_handle,
+                child: [left_handle, right_handle],
                 this_node_has_hitable: false,
-                only_have_left_obj: false,
+                max_childs: 2,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -290,10 +284,9 @@ impl BvhTree {
                 b_min: [0.0, 0.0, 0.0],
                 b_max: [0.0, 0.0, 0.0],
             },
-            left: 0,
-            right: 0,
+            child: [0, 0],
             this_node_has_hitable: false,
-            only_have_left_obj: false,
+            max_childs: 2,
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
@@ -340,39 +333,23 @@ impl Hitable for BvhTree {
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
-                let left_obj = &self.hitable_list[current_bvh_node.left];
-                if let Some(left_aabb) = left_obj
-                    .bounding_box()
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                {
-                    if let Some(left_rec) = left_obj.hit(r, left_aabb.t_min, left_aabb.t_max) {
-                        min_hit_t = left_rec.t;
-                        return_rec = Some(left_rec);
-                    }
-                };
-
-                if current_bvh_node.only_have_left_obj {
-                    // not need check right
-                } else {
-                    let right_obj = &self.hitable_list[current_bvh_node.right];
-                    if let Some(right_aabb) = right_obj
+                for i in 0..current_bvh_node.max_childs {
+                    let child_obj = &self.hitable_list[current_bvh_node.child[i]];
+                    if let Some(aabb_rec) = child_obj
                         .bounding_box()
                         .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                    // t_max = left_rec.t(if left hit), so when hit always right_rec.t < left_rec.t
                     {
-                        if let Some(right_rec) =
-                            right_obj.hit(r, right_aabb.t_min, right_aabb.t_max)
-                        {
-                            min_hit_t = right_rec.t;
-                            return_rec = Some(right_rec);
+                        if let Some(child_rec) = child_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
+                            min_hit_t = child_rec.t;
+                            return_rec = Some(child_rec);
                         }
                     };
                 }
             } else {
                 // this node has other nodes
                 let (left_aabb, right_aabb) = aabb_hit_simd(
-                    &self.bvh_node_list[current_bvh_node.left].bvh_node_box,
-                    &self.bvh_node_list[current_bvh_node.right].bvh_node_box,
+                    &self.bvh_node_list[current_bvh_node.child[0]].bvh_node_box,
+                    &self.bvh_node_list[current_bvh_node.child[1]].bvh_node_box,
                     r,
                     r_dir_inv,
                     t_min,
@@ -380,7 +357,7 @@ impl Hitable for BvhTree {
                 );
 
                 if let Some(_left_aabb) = left_aabb {
-                    return_stack.push(current_bvh_node.left);
+                    return_stack.push(current_bvh_node.child[0]);
                 }
 
                 if let Some(_right_aabb) = right_aabb {
