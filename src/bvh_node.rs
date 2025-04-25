@@ -22,7 +22,6 @@ pub struct BvhNode {
     bvh_node_box: Aabb,
     left: usize,
     right: usize,
-    skip_pos: usize,
     this_node_has_hitable: bool,
     only_have_left_obj: bool,
 }
@@ -148,7 +147,6 @@ fn build_bvh(
     handle: &[usize],
     pre_sort_axis: &Axis,
     bvh_node_list: &mut Vec<BvhNode>,
-    skip_pos: usize,
     center_list: &Vec<Vector3<f64>>,
 ) -> usize {
     let handle_size = handle.len();
@@ -162,7 +160,6 @@ fn build_bvh(
                 bvh_node_box: (hitable_list[handle[0]].bounding_box()).clone(),
                 left: handle[0],
                 right: handle[0], // right == left, but should skip with flag
-                skip_pos,
                 this_node_has_hitable: true,
                 only_have_left_obj: true,
             };
@@ -178,7 +175,6 @@ fn build_bvh(
                 ),
                 left: handle[0],
                 right: handle[1],
-                skip_pos,
                 this_node_has_hitable: true,
                 only_have_left_obj: false,
             };
@@ -241,22 +237,8 @@ fn build_bvh(
 
             let (a, b) = selected_handle.split_at(handle_size / 2);
 
-            let left_handle = build_bvh(
-                hitable_list,
-                a,
-                &sorted_axis,
-                bvh_node_list,
-                skip_pos,
-                center_list,
-            );
-            let right_handle = build_bvh(
-                hitable_list,
-                b,
-                &sorted_axis,
-                bvh_node_list,
-                left_handle, // for next skip_pos
-                center_list,
-            );
+            let left_handle = build_bvh(hitable_list, a, &sorted_axis, bvh_node_list, center_list);
+            let right_handle = build_bvh(hitable_list, b, &sorted_axis, bvh_node_list, center_list);
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(
                     &bvh_node_list[left_handle].bvh_node_box,
@@ -264,7 +246,6 @@ fn build_bvh(
                 ),
                 left: left_handle,
                 right: right_handle,
-                skip_pos,
                 this_node_has_hitable: false,
                 only_have_left_obj: false,
             };
@@ -309,7 +290,6 @@ impl BvhTree {
             },
             left: 0,
             right: 0,
-            skip_pos: 0,
             this_node_has_hitable: false,
             only_have_left_obj: false,
         }); // [0] dummy node; to actually node start at 1;
@@ -321,7 +301,6 @@ impl BvhTree {
             &handle,
             &Axis::X,
             &mut bvh_node_list,
-            0,
             &aabb_center_list,
         );
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
@@ -395,20 +374,11 @@ impl Hitable for BvhTree {
                     t_min,
                     min_hit_t,
                 );
-                /*
-                if let Some(_left_hit_rec) = self.bvh_node_list[current_bvh_node.left]
-                    .bvh_node_box
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                */
+
                 if let Some(_left_aabb) = left_aabb {
                     return_stack.push(current_bvh_node.left);
                 }
 
-                /*
-                if let Some(_right_hit_rec) = self.bvh_node_list[current_bvh_node.right]
-                    .bvh_node_box
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                */
                 if let Some(_right_aabb) = right_aabb {
                     current_pos -= 1;
                     continue;
