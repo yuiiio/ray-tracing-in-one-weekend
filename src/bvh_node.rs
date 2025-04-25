@@ -346,21 +346,6 @@ impl BvhTree {
     }
 }
 
-/*
- * future idea when use wide-bvh for simd
- * skip_pos_ref_list[0..last_node_num]
- * [0 1 2 3 4 5 6 7 8 9 10 ... last_node_num]
- *  child node [o * o *] qbvh *=>miss(doesn't hit node's aabb), o=>hit
- *             [5 5 6 8] => shift hit child node's skip_pos
- *                          and fill low side as (child node's minimum skip_pos-1)
- *
- *  current_pos = skip_pos_ref_list[current_bvh_node.skip_pos];
- *
- *  but every bvh-tree hit needs allocate [usize; last_node_num]
- *  ... might slow
- *  so this stack-recursive-less traversal is not work for wide-bvh for simd
-*/
-
 impl Hitable for BvhTree {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut current_pos: usize = self.last_node_num;
@@ -372,13 +357,6 @@ impl Hitable for BvhTree {
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
-                // this node has actual item
-                /*
-                if let Some(mut aabb_hit_rec) = current_bvh_node
-                    .bvh_node_box
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                {
-                */
                 let left_obj = &self.hitable_list[current_bvh_node.left];
                 if let Some(left_aabb) = left_obj
                     .bounding_box()
@@ -407,7 +385,6 @@ impl Hitable for BvhTree {
                         }
                     };
                 }
-                //}
             } else {
                 // this node has other nodes
                 if let Some(_left_hit_rec) = self.bvh_node_list[current_bvh_node.left]
@@ -424,20 +401,8 @@ impl Hitable for BvhTree {
                     current_pos -= 1;
                     continue;
                 }
-
-                /*
-                if let Some(_hit_rec) = current_bvh_node
-                    .bvh_node_box
-                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                {
-                    current_pos -= 1;
-                    // not hitable having node's is not current_pos = 1, so not needs index == 0 check
-                    continue;
-                }
-                */
             }
             // if not hit bvh_node's aabb or check's after has_hitable node.
-            //current_pos = current_bvh_node.skip_pos;
             current_pos = return_stack.pop().unwrap();
             if current_pos == 0 {
                 break; // no more hit node, ealy return;
