@@ -15,6 +15,7 @@ pub struct BvhTree {
     aabb_box: Aabb,
     last_node_num: usize,
     nor_hitable_list_num: f64,
+    bvh_tree_depth: usize,
 }
 
 #[derive(Clone)]
@@ -140,7 +141,8 @@ enum Axis {
 //                      10              13            15    16
 //                  6       9        11    12
 //                4   5   7   8
-// skip_node is (last right top-parent's left brother node)
+
+// at traversal use return_rec(stack), push(node_pos) if aabb' hit(without most right node), and pop() if last_node or not aabb'hit.
 
 fn build_bvh(
     hitable_list: &HitableList,
@@ -295,7 +297,7 @@ impl BvhTree {
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
-        //let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
+        let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
         let last_node_num = build_bvh(
             &hitable_list,
             &handle,
@@ -321,6 +323,7 @@ impl BvhTree {
             aabb_box,
             last_node_num,
             nor_hitable_list_num,
+            bvh_tree_depth,
         }
     }
 }
@@ -331,7 +334,8 @@ impl Hitable for BvhTree {
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
         let r_dir_inv = &r.get_inv_dir();
-        let mut return_stack: alloc::vec::Vec<usize> = alloc::vec::Vec::new(); //TODO: with_capacity(bvh_max_depth + 1)
+        let mut return_stack: alloc::vec::Vec<usize> =
+            alloc::vec::Vec::with_capacity(self.bvh_tree_depth);
         return_stack.push(0);
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
