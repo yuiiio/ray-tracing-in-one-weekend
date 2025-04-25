@@ -1,3 +1,5 @@
+#![feature(portable_simd)]
+
 use image::{open, Rgba, RgbaImage};
 use rand::prelude::*;
 use std::fs::File;
