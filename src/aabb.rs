@@ -46,12 +46,22 @@ impl Aabb {
     }
 }
 
+// BvhNode owned ?
+#[derive(Clone)]
+pub struct QBoxes {
+    // for simd iteration
+    pub bboxes: [[[f64; 4]; 3]; 2], /* quad-boxes; x,y,z; min,max*/
+}
+
 // expect compiler simd ?
 pub fn aabb_hit_simd(
+    /*
     aabb_one: &Aabb,
     aabb_two: &Aabb,
     aabb_three: &Aabb,
     aabb_four: &Aabb,
+    */
+    qbox: &QBoxes,
     r_origin: &Vector3<f64>,
     r_dir_div: &Vector3<f64>,
     t_min: f64,

@@ -1,7 +1,7 @@
 extern crate alloc;
 use rand::prelude::*;
 
-use crate::aabb::{aabb_hit_simd, surrounding_box, Aabb};
+use crate::aabb::{aabb_hit_simd, surrounding_box, Aabb, QBoxes};
 use crate::hitable::{HitRecord, Hitable};
 use crate::hitablelist::HitableList;
 use crate::quotation::Rotation;
@@ -20,7 +20,8 @@ pub struct BvhTree {
 
 #[derive(Clone)]
 pub struct BvhNode {
-    bvh_node_box: Aabb,
+    //bvh_node_box: Aabb,
+    qbox: QBoxes,
     child: [usize; 4],
     this_node_has_hitable: bool,
     max_childs: usize,
@@ -149,54 +150,241 @@ fn build_bvh(
     pre_sort_axis: &Axis,
     bvh_node_list: &mut Vec<BvhNode>,
     center_list: &Vec<Vector3<f64>>,
-) -> usize {
+) -> (usize, Aabb) {
     let handle_size = handle.len();
     match handle_size {
         1 => {
             let new_node = BvhNode {
-                bvh_node_box: (hitable_list[handle[0]].bounding_box()).clone(),
+                qbox: QBoxes {
+                    bboxes: [
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[0],
+                                0.0,
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[1],
+                                0.0,
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[2],
+                                0.0,
+                                0.0,
+                                0.0,
+                            ],
+                        ],
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[0],
+                                0.0,
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[1],
+                                0.0,
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[2],
+                                0.0,
+                                0.0,
+                                0.0,
+                            ],
+                        ],
+                    ],
+                },
                 child: [handle[0], 0, 0, 0],
                 this_node_has_hitable: true,
                 max_childs: 1,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            pos
+            (pos, (hitable_list[handle[0]].bounding_box()).clone())
         }
         2 => {
             let new_node = BvhNode {
-                bvh_node_box: surrounding_box(
-                    hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[1]].bounding_box(),
-                ),
+                qbox: QBoxes {
+                    bboxes: [
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[0],
+                                hitable_list[handle[1]].bounding_box().b_min[0],
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[1],
+                                hitable_list[handle[1]].bounding_box().b_min[1],
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[2],
+                                hitable_list[handle[1]].bounding_box().b_min[2],
+                                0.0,
+                                0.0,
+                            ],
+                        ],
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[0],
+                                hitable_list[handle[1]].bounding_box().b_max[0],
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[1],
+                                hitable_list[handle[1]].bounding_box().b_max[1],
+                                0.0,
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[2],
+                                hitable_list[handle[1]].bounding_box().b_max[2],
+                                0.0,
+                                0.0,
+                            ],
+                        ],
+                    ],
+                },
                 child: [handle[0], handle[1], 0, 0],
                 this_node_has_hitable: true,
                 max_childs: 2,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            pos
+            (
+                pos,
+                surrounding_box(
+                    hitable_list[handle[0]].bounding_box(),
+                    hitable_list[handle[1]].bounding_box(),
+                ),
+            )
         }
         3 => {
             let new_node = BvhNode {
-                bvh_node_box: surrounding_box(
-                    &surrounding_box(
-                        hitable_list[handle[0]].bounding_box(),
-                        hitable_list[handle[1]].bounding_box(),
-                    ),
-                    hitable_list[handle[2]].bounding_box(),
-                ),
+                qbox: QBoxes {
+                    bboxes: [
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[0],
+                                hitable_list[handle[1]].bounding_box().b_min[0],
+                                hitable_list[handle[2]].bounding_box().b_min[0],
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[1],
+                                hitable_list[handle[1]].bounding_box().b_min[1],
+                                hitable_list[handle[2]].bounding_box().b_min[1],
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[2],
+                                hitable_list[handle[1]].bounding_box().b_min[2],
+                                hitable_list[handle[2]].bounding_box().b_min[2],
+                                0.0,
+                            ],
+                        ],
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[0],
+                                hitable_list[handle[1]].bounding_box().b_max[0],
+                                hitable_list[handle[2]].bounding_box().b_max[0],
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[1],
+                                hitable_list[handle[1]].bounding_box().b_max[1],
+                                hitable_list[handle[2]].bounding_box().b_max[1],
+                                0.0,
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[2],
+                                hitable_list[handle[1]].bounding_box().b_max[2],
+                                hitable_list[handle[2]].bounding_box().b_max[2],
+                                0.0,
+                            ],
+                        ],
+                    ],
+                },
                 child: [handle[0], handle[1], handle[2], 0],
                 this_node_has_hitable: true,
                 max_childs: 3,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            pos
+            (
+                pos,
+                surrounding_box(
+                    &surrounding_box(
+                        hitable_list[handle[0]].bounding_box(),
+                        hitable_list[handle[1]].bounding_box(),
+                    ),
+                    hitable_list[handle[2]].bounding_box(),
+                ),
+            )
         }
         4 => {
             let new_node = BvhNode {
-                bvh_node_box: surrounding_box(
+                qbox: QBoxes {
+                    bboxes: [
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[0],
+                                hitable_list[handle[1]].bounding_box().b_min[0],
+                                hitable_list[handle[2]].bounding_box().b_min[0],
+                                hitable_list[handle[3]].bounding_box().b_min[0],
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[1],
+                                hitable_list[handle[1]].bounding_box().b_min[1],
+                                hitable_list[handle[2]].bounding_box().b_min[1],
+                                hitable_list[handle[3]].bounding_box().b_min[1],
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_min[2],
+                                hitable_list[handle[1]].bounding_box().b_min[2],
+                                hitable_list[handle[2]].bounding_box().b_min[2],
+                                hitable_list[handle[3]].bounding_box().b_min[2],
+                            ],
+                        ],
+                        [
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[0],
+                                hitable_list[handle[1]].bounding_box().b_max[0],
+                                hitable_list[handle[2]].bounding_box().b_max[0],
+                                hitable_list[handle[3]].bounding_box().b_max[0],
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[1],
+                                hitable_list[handle[1]].bounding_box().b_max[1],
+                                hitable_list[handle[2]].bounding_box().b_max[1],
+                                hitable_list[handle[3]].bounding_box().b_max[1],
+                            ],
+                            [
+                                hitable_list[handle[0]].bounding_box().b_max[2],
+                                hitable_list[handle[1]].bounding_box().b_max[2],
+                                hitable_list[handle[2]].bounding_box().b_max[2],
+                                hitable_list[handle[3]].bounding_box().b_max[2],
+                            ],
+                        ],
+                    ],
+                },
+                child: [handle[0], handle[1], handle[2], handle[3]],
+                this_node_has_hitable: true,
+                max_childs: 4,
+            };
+            let pos = bvh_node_list.len();
+            bvh_node_list.push(new_node);
+            (
+                pos,
+                surrounding_box(
                     &surrounding_box(
                         hitable_list[handle[0]].bounding_box(),
                         hitable_list[handle[1]].bounding_box(),
@@ -206,13 +394,7 @@ fn build_bvh(
                         hitable_list[handle[3]].bounding_box(),
                     ),
                 ),
-                child: [handle[0], handle[1], handle[2], handle[3]],
-                this_node_has_hitable: true,
-                max_childs: 4,
-            };
-            let pos = bvh_node_list.len();
-            bvh_node_list.push(new_node);
-            pos
+            )
         }
         _ => {
             let mut handle_2: Vec<usize> = handle.to_owned();
@@ -372,14 +554,14 @@ fn build_bvh(
 
             let (handle_e, handle_f) = selected_handle.split_at(handle_b_size / 2);
 
-            let first_handle = build_bvh(
+            let (first_handle, first_aabb) = build_bvh(
                 hitable_list,
                 handle_c,
                 &pre_sort_axis_a,
                 bvh_node_list,
                 center_list,
             );
-            let second_handle = build_bvh(
+            let (second_handle, second_aabb) = build_bvh(
                 hitable_list,
                 handle_d,
                 &pre_sort_axis_a,
@@ -387,14 +569,14 @@ fn build_bvh(
                 center_list,
             );
 
-            let third_handle = build_bvh(
+            let (third_handle, third_aabb) = build_bvh(
                 hitable_list,
                 handle_e,
                 &pre_sort_axis_b,
                 bvh_node_list,
                 center_list,
             );
-            let fourth_handle = build_bvh(
+            let (fourth_handle, fourth_aabb) = build_bvh(
                 hitable_list,
                 handle_f,
                 &pre_sort_axis_b,
@@ -403,23 +585,63 @@ fn build_bvh(
             );
 
             let new_node = BvhNode {
-                bvh_node_box: surrounding_box(
-                    &surrounding_box(
-                        &bvh_node_list[first_handle].bvh_node_box,
-                        &bvh_node_list[second_handle].bvh_node_box,
-                    ),
-                    &surrounding_box(
-                        &bvh_node_list[third_handle].bvh_node_box,
-                        &bvh_node_list[fourth_handle].bvh_node_box,
-                    ),
-                ),
+                qbox: QBoxes {
+                    bboxes: [
+                        [
+                            [
+                                first_aabb.b_min[0],
+                                second_aabb.b_min[0],
+                                third_aabb.b_min[0],
+                                fourth_aabb.b_min[0],
+                            ],
+                            [
+                                first_aabb.b_min[1],
+                                second_aabb.b_min[1],
+                                third_aabb.b_min[1],
+                                fourth_aabb.b_min[1],
+                            ],
+                            [
+                                first_aabb.b_min[2],
+                                second_aabb.b_min[2],
+                                third_aabb.b_min[2],
+                                fourth_aabb.b_min[2],
+                            ],
+                        ],
+                        [
+                            [
+                                first_aabb.b_max[0],
+                                second_aabb.b_max[0],
+                                third_aabb.b_max[0],
+                                fourth_aabb.b_max[0],
+                            ],
+                            [
+                                first_aabb.b_max[1],
+                                second_aabb.b_max[1],
+                                third_aabb.b_max[1],
+                                fourth_aabb.b_max[1],
+                            ],
+                            [
+                                first_aabb.b_max[2],
+                                second_aabb.b_max[2],
+                                third_aabb.b_max[2],
+                                fourth_aabb.b_max[2],
+                            ],
+                        ],
+                    ],
+                },
                 child: [first_handle, second_handle, third_handle, fourth_handle],
                 this_node_has_hitable: false,
                 max_childs: 4,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            pos
+            (
+                pos,
+                surrounding_box(
+                    &surrounding_box(&first_aabb, &second_aabb),
+                    &surrounding_box(&third_aabb, &fourth_aabb),
+                ),
+            )
         }
     }
 }
@@ -447,9 +669,8 @@ impl BvhTree {
         let mut bvh_node_list: Vec<BvhNode> = Vec::with_capacity((hitable_list_len - 1) / (4 - 1)); // qbvh min node size
 
         bvh_node_list.push(BvhNode {
-            bvh_node_box: Aabb {
-                b_min: [0.0, 0.0, 0.0],
-                b_max: [0.0, 0.0, 0.0],
+            qbox: QBoxes {
+                bboxes: [[[0.0; 4]; 3]; 2],
             },
             child: [0, 0, 0, 0],
             this_node_has_hitable: false,
@@ -458,7 +679,7 @@ impl BvhTree {
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
         let bvh_tree_depth: usize = (hitable_list_len.next_power_of_two() * 2).ilog(4) as usize + 2;
-        let last_node_num = build_bvh(
+        let (last_node_num, bvh_aabb) = build_bvh(
             &hitable_list,
             &handle,
             &Axis::X,
@@ -469,11 +690,10 @@ impl BvhTree {
 
         let nor_hitable_list_num = 1.0 / (hitable_list_len as f64);
 
-        let aabb_box = bvh_node_list[last_node_num].bvh_node_box.clone();
         BvhTree {
             hitable_list,
             bvh_node_list,
-            aabb_box,
+            aabb_box: bvh_aabb,
             last_node_num,
             nor_hitable_list_num,
             bvh_tree_depth,
@@ -508,10 +728,13 @@ impl Hitable for BvhTree {
             } else {
                 // this node has other nodes
                 let (aabb_one, aabb_two, aabb_three, aabb_four) = aabb_hit_simd(
+                    /*
                     &self.bvh_node_list[current_bvh_node.child[0]].bvh_node_box,
                     &self.bvh_node_list[current_bvh_node.child[1]].bvh_node_box,
                     &self.bvh_node_list[current_bvh_node.child[2]].bvh_node_box,
                     &self.bvh_node_list[current_bvh_node.child[3]].bvh_node_box,
+                    */
+                    &current_bvh_node.qbox,
                     &r.origin,
                     r_dir_inv,
                     t_min,
