@@ -1,3 +1,4 @@
+extern crate alloc;
 use rand::prelude::*;
 
 use crate::aabb::{surrounding_box, Aabb};
@@ -366,6 +367,8 @@ impl Hitable for BvhTree {
         let mut min_hit_t: f64 = t_max; //f64::MAX;
         let mut return_rec: Option<HitRecord> = None;
         let r_dir_inv = &r.get_inv_dir();
+        let mut return_stack: alloc::vec::Vec<usize> = alloc::vec::Vec::new(); //TODO: with_capacity(bvh_max_depth + 1)
+        return_stack.push(0);
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
@@ -397,6 +400,22 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
+                if let Some(_left_hit_rec) = self.bvh_node_list[current_bvh_node.left]
+                    .bvh_node_box
+                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
+                {
+                    return_stack.push(current_bvh_node.left);
+                }
+
+                if let Some(_right_hit_rec) = self.bvh_node_list[current_bvh_node.right]
+                    .bvh_node_box
+                    .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
+                {
+                    current_pos -= 1;
+                    continue;
+                }
+
+                /*
                 if let Some(_hit_rec) = current_bvh_node
                     .bvh_node_box
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
@@ -405,9 +424,11 @@ impl Hitable for BvhTree {
                     // not hitable having node's is not current_pos = 1, so not needs index == 0 check
                     continue;
                 }
+                */
             }
             // if not hit bvh_node's aabb or check's after has_hitable node.
-            current_pos = current_bvh_node.skip_pos;
+            //current_pos = current_bvh_node.skip_pos;
+            current_pos = return_stack.pop().unwrap();
             if current_pos == 0 {
                 break; // no more hit node, ealy return;
             } else {
