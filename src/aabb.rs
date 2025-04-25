@@ -17,7 +17,7 @@ pub struct Aabb {
 impl Aabb {
     pub fn aabb_hit(
         &self,
-        r: &Ray,
+        r_origin: &Vector3<f64>,
         r_dir_div: &Vector3<f64>,
         t_min: f64,
         t_max: f64,
@@ -25,8 +25,8 @@ impl Aabb {
         let mut tmin = t_min;
         let mut tmax = t_max;
         for i in 0..3 {
-            let mut t0 = (self.b_min[i] - r.origin[i]) * r_dir_div[i];
-            let mut t1 = (self.b_max[i] - r.origin[i]) * r_dir_div[i];
+            let mut t0 = (self.b_min[i] - r_origin[i]) * r_dir_div[i];
+            let mut t1 = (self.b_max[i] - r_origin[i]) * r_dir_div[i];
 
             if r_dir_div[i].is_sign_negative() {
                 swap(&mut t0, &mut t1);
@@ -52,16 +52,11 @@ pub fn aabb_hit_simd(
     aabb_two: &Aabb,
     aabb_three: &Aabb,
     aabb_four: &Aabb,
-    r: &Ray,
+    r_origin: &Vector3<f64>,
     r_dir_div: &Vector3<f64>,
     t_min: f64,
     t_max: f64,
-) -> (
-    Option<AabbHitRecord>,
-    Option<AabbHitRecord>,
-    Option<AabbHitRecord>,
-    Option<AabbHitRecord>,
-) {
+) -> (bool, bool, bool, bool) {
     let mut one_tmin = t_min;
     let mut one_tmax = t_max;
     let mut two_tmin = t_min;
@@ -71,14 +66,14 @@ pub fn aabb_hit_simd(
     let mut four_tmin = t_min;
     let mut four_tmax = t_max;
     for i in 0..3 {
-        let mut one_t0 = (aabb_one.b_min[i] - r.origin[i]) * r_dir_div[i];
-        let mut one_t1 = (aabb_one.b_max[i] - r.origin[i]) * r_dir_div[i];
-        let mut two_t0 = (aabb_two.b_min[i] - r.origin[i]) * r_dir_div[i];
-        let mut two_t1 = (aabb_two.b_max[i] - r.origin[i]) * r_dir_div[i];
-        let mut three_t0 = (aabb_three.b_min[i] - r.origin[i]) * r_dir_div[i];
-        let mut three_t1 = (aabb_three.b_max[i] - r.origin[i]) * r_dir_div[i];
-        let mut four_t0 = (aabb_four.b_min[i] - r.origin[i]) * r_dir_div[i];
-        let mut four_t1 = (aabb_four.b_max[i] - r.origin[i]) * r_dir_div[i];
+        let mut one_t0 = (aabb_one.b_min[i] - r_origin[i]) * r_dir_div[i];
+        let mut one_t1 = (aabb_one.b_max[i] - r_origin[i]) * r_dir_div[i];
+        let mut two_t0 = (aabb_two.b_min[i] - r_origin[i]) * r_dir_div[i];
+        let mut two_t1 = (aabb_two.b_max[i] - r_origin[i]) * r_dir_div[i];
+        let mut three_t0 = (aabb_three.b_min[i] - r_origin[i]) * r_dir_div[i];
+        let mut three_t1 = (aabb_three.b_max[i] - r_origin[i]) * r_dir_div[i];
+        let mut four_t0 = (aabb_four.b_min[i] - r_origin[i]) * r_dir_div[i];
+        let mut four_t1 = (aabb_four.b_max[i] - r_origin[i]) * r_dir_div[i];
 
         if r_dir_div[i].is_sign_negative() {
             swap(&mut one_t0, &mut one_t1);
@@ -97,38 +92,10 @@ pub fn aabb_hit_simd(
         four_tmax = min(four_t1, four_tmax);
     }
 
-    let one_result = if one_tmax < one_tmin {
-        None
-    } else {
-        Some(AabbHitRecord {
-            t_max: one_tmax,
-            t_min: one_tmin,
-        })
-    };
-    let two_result = if two_tmax < two_tmin {
-        None
-    } else {
-        Some(AabbHitRecord {
-            t_max: two_tmax,
-            t_min: two_tmin,
-        })
-    };
-    let three_result = if three_tmax < three_tmin {
-        None
-    } else {
-        Some(AabbHitRecord {
-            t_max: three_tmax,
-            t_min: three_tmin,
-        })
-    };
-    let four_result = if four_tmax < four_tmin {
-        None
-    } else {
-        Some(AabbHitRecord {
-            t_max: four_tmax,
-            t_min: four_tmin,
-        })
-    };
+    let one_result = if one_tmax < one_tmin { false } else { true };
+    let two_result = if two_tmax < two_tmin { false } else { true };
+    let three_result = if three_tmax < three_tmin { false } else { true };
+    let four_result = if four_tmax < four_tmin { false } else { true };
     (one_result, two_result, three_result, four_result)
 }
 
@@ -155,7 +122,7 @@ mod test {
             origin: [0.0, 0.0, 0.0],
             direction: [1.5, 1.5, 1.5],
         };
-        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r.origin, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };
@@ -164,7 +131,7 @@ mod test {
             origin: [0.0, 0.0, 0.0],
             direction: [1.5, 0.0, 1.5],
         };
-        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r.origin, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };
@@ -173,7 +140,7 @@ mod test {
             origin: [3.0, 3.0, 3.0],
             direction: [-1.0, -1.0, -1.0],
         };
-        let result = match aabb_box.aabb_hit(&r, &r.get_inv_dir(), 0.00001, 10000.0) {
+        let result = match aabb_box.aabb_hit(&r.origin, &r.get_inv_dir(), 0.00001, 10000.0) {
             Some(_hitrec) => true,
             None => false,
         };

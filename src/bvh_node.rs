@@ -497,7 +497,7 @@ impl Hitable for BvhTree {
                     let child_obj = &self.hitable_list[current_bvh_node.child[i]];
                     if let Some(aabb_rec) = child_obj
                         .bounding_box()
-                        .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
+                        .aabb_hit(&r.origin, r_dir_inv, t_min, min_hit_t)
                     {
                         if let Some(child_rec) = child_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
                             min_hit_t = child_rec.t;
@@ -512,23 +512,23 @@ impl Hitable for BvhTree {
                     &self.bvh_node_list[current_bvh_node.child[1]].bvh_node_box,
                     &self.bvh_node_list[current_bvh_node.child[2]].bvh_node_box,
                     &self.bvh_node_list[current_bvh_node.child[3]].bvh_node_box,
-                    r,
+                    &r.origin,
                     r_dir_inv,
                     t_min,
                     min_hit_t,
                 );
 
-                if let Some(_) = aabb_one {
+                if aabb_one == true {
                     return_stack.push(current_bvh_node.child[0]);
                 }
-                if let Some(_) = aabb_two {
+                if aabb_two == true {
                     return_stack.push(current_bvh_node.child[1]);
                 }
-                if let Some(_) = aabb_three {
+                if aabb_three == true {
                     return_stack.push(current_bvh_node.child[2]);
                 }
 
-                if let Some(_) = aabb_four {
+                if aabb_four == true {
                     current_pos -= 1;
                     continue;
                 }
@@ -555,9 +555,9 @@ impl Hitable for BvhTree {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self
-            .aabb_box
-            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
+        if let Some(_aabb_hit) =
+            self.aabb_box
+                .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
         {
             let hitable_list_len = self.hitable_list.len();
             let mut pdf_sum: f64 = 0.0;

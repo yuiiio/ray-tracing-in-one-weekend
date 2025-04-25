@@ -93,9 +93,9 @@ impl Hitable for HitableList {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) = self
-            .aabb_box
-            .aabb_hit(ray, &ray.get_inv_dir(), 0.00001, 10000.0)
+        if let Some(_aabb_hit) =
+            self.aabb_box
+                .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
         {
             let mut sum: f64 = 0.0;
             for i in self.iter() {
