@@ -1,7 +1,7 @@
 extern crate alloc;
 use rand::prelude::*;
 
-use crate::aabb::{surrounding_box, Aabb};
+use crate::aabb::{aabb_hit_simd, surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
 use crate::hitablelist::HitableList;
 use crate::quotation::Rotation;
@@ -387,17 +387,29 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
+                let (left_aabb, right_aabb) = aabb_hit_simd(
+                    &self.bvh_node_list[current_bvh_node.left].bvh_node_box,
+                    &self.bvh_node_list[current_bvh_node.right].bvh_node_box,
+                    r,
+                    r_dir_inv,
+                    t_min,
+                    min_hit_t,
+                );
+                /*
                 if let Some(_left_hit_rec) = self.bvh_node_list[current_bvh_node.left]
                     .bvh_node_box
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                {
+                */
+                if let Some(_left_aabb) = left_aabb {
                     return_stack.push(current_bvh_node.left);
                 }
 
+                /*
                 if let Some(_right_hit_rec) = self.bvh_node_list[current_bvh_node.right]
                     .bvh_node_box
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
-                {
+                */
+                if let Some(_right_aabb) = right_aabb {
                     current_pos -= 1;
                     continue;
                 }

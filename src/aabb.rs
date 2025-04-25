@@ -46,6 +46,55 @@ impl Aabb {
     }
 }
 
+// expect compiler simd ?
+pub fn aabb_hit_simd(
+    aabb_one: &Aabb,
+    aabb_second: &Aabb,
+    r: &Ray,
+    r_dir_div: &Vector3<f64>,
+    t_min: f64,
+    t_max: f64,
+) -> (Option<AabbHitRecord>, Option<AabbHitRecord>) {
+    let mut one_tmin = t_min;
+    let mut one_tmax = t_max;
+    let mut second_tmin = t_min;
+    let mut second_tmax = t_max;
+    for i in 0..3 {
+        let mut one_t0 = (aabb_one.b_min[i] - r.origin[i]) * r_dir_div[i];
+        let mut one_t1 = (aabb_one.b_max[i] - r.origin[i]) * r_dir_div[i];
+        let mut second_t0 = (aabb_second.b_min[i] - r.origin[i]) * r_dir_div[i];
+        let mut second_t1 = (aabb_second.b_max[i] - r.origin[i]) * r_dir_div[i];
+
+        if r_dir_div[i].is_sign_negative() {
+            swap(&mut one_t0, &mut one_t1);
+            swap(&mut second_t0, &mut second_t1);
+        }
+
+        one_tmin = max(one_t0, one_tmin);
+        one_tmax = min(one_t1, one_tmax);
+        second_tmin = max(second_t0, second_tmin);
+        second_tmax = min(second_t1, second_tmax);
+    }
+
+    let one_result = if one_tmax < one_tmin {
+        None
+    } else {
+        Some(AabbHitRecord {
+            t_max: one_tmax,
+            t_min: one_tmin,
+        })
+    };
+    let second_result = if second_tmax < second_tmin {
+        None
+    } else {
+        Some(AabbHitRecord {
+            t_max: second_tmax,
+            t_min: second_tmin,
+        })
+    };
+    (one_result, second_result)
+}
+
 mod test {
     #![allow(unused_imports)]
     use super::*;
