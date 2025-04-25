@@ -49,31 +49,52 @@ impl Aabb {
 // expect compiler simd ?
 pub fn aabb_hit_simd(
     aabb_one: &Aabb,
-    aabb_second: &Aabb,
+    aabb_two: &Aabb,
+    aabb_three: &Aabb,
+    aabb_four: &Aabb,
     r: &Ray,
     r_dir_div: &Vector3<f64>,
     t_min: f64,
     t_max: f64,
-) -> (Option<AabbHitRecord>, Option<AabbHitRecord>) {
+) -> (
+    Option<AabbHitRecord>,
+    Option<AabbHitRecord>,
+    Option<AabbHitRecord>,
+    Option<AabbHitRecord>,
+) {
     let mut one_tmin = t_min;
     let mut one_tmax = t_max;
-    let mut second_tmin = t_min;
-    let mut second_tmax = t_max;
+    let mut two_tmin = t_min;
+    let mut two_tmax = t_max;
+    let mut three_tmin = t_min;
+    let mut three_tmax = t_max;
+    let mut four_tmin = t_min;
+    let mut four_tmax = t_max;
     for i in 0..3 {
         let mut one_t0 = (aabb_one.b_min[i] - r.origin[i]) * r_dir_div[i];
         let mut one_t1 = (aabb_one.b_max[i] - r.origin[i]) * r_dir_div[i];
-        let mut second_t0 = (aabb_second.b_min[i] - r.origin[i]) * r_dir_div[i];
-        let mut second_t1 = (aabb_second.b_max[i] - r.origin[i]) * r_dir_div[i];
+        let mut two_t0 = (aabb_two.b_min[i] - r.origin[i]) * r_dir_div[i];
+        let mut two_t1 = (aabb_two.b_max[i] - r.origin[i]) * r_dir_div[i];
+        let mut three_t0 = (aabb_three.b_min[i] - r.origin[i]) * r_dir_div[i];
+        let mut three_t1 = (aabb_three.b_max[i] - r.origin[i]) * r_dir_div[i];
+        let mut four_t0 = (aabb_four.b_min[i] - r.origin[i]) * r_dir_div[i];
+        let mut four_t1 = (aabb_four.b_max[i] - r.origin[i]) * r_dir_div[i];
 
         if r_dir_div[i].is_sign_negative() {
             swap(&mut one_t0, &mut one_t1);
-            swap(&mut second_t0, &mut second_t1);
+            swap(&mut two_t0, &mut two_t1);
+            swap(&mut three_t0, &mut three_t1);
+            swap(&mut four_t0, &mut four_t1);
         }
 
         one_tmin = max(one_t0, one_tmin);
         one_tmax = min(one_t1, one_tmax);
-        second_tmin = max(second_t0, second_tmin);
-        second_tmax = min(second_t1, second_tmax);
+        two_tmin = max(two_t0, two_tmin);
+        two_tmax = min(two_t1, two_tmax);
+        three_tmin = max(three_t0, three_tmin);
+        three_tmax = min(three_t1, three_tmax);
+        four_tmin = max(four_t0, four_tmin);
+        four_tmax = min(four_t1, four_tmax);
     }
 
     let one_result = if one_tmax < one_tmin {
@@ -84,15 +105,31 @@ pub fn aabb_hit_simd(
             t_min: one_tmin,
         })
     };
-    let second_result = if second_tmax < second_tmin {
+    let two_result = if two_tmax < two_tmin {
         None
     } else {
         Some(AabbHitRecord {
-            t_max: second_tmax,
-            t_min: second_tmin,
+            t_max: two_tmax,
+            t_min: two_tmin,
         })
     };
-    (one_result, second_result)
+    let three_result = if three_tmax < three_tmin {
+        None
+    } else {
+        Some(AabbHitRecord {
+            t_max: three_tmax,
+            t_min: three_tmin,
+        })
+    };
+    let four_result = if four_tmax < four_tmin {
+        None
+    } else {
+        Some(AabbHitRecord {
+            t_max: four_tmax,
+            t_min: four_tmin,
+        })
+    };
+    (one_result, two_result, three_result, four_result)
 }
 
 mod test {

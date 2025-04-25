@@ -21,11 +21,9 @@ pub struct BvhTree {
 #[derive(Clone)]
 pub struct BvhNode {
     bvh_node_box: Aabb,
-    //left: usize,
-    //right: usize,
-    child: [usize; 2],
+    child: [usize; 4],
     this_node_has_hitable: bool,
-    max_childs: usize, //only_have_left_obj: bool,
+    max_childs: usize,
 }
 
 fn dmerge(
@@ -157,7 +155,7 @@ fn build_bvh(
         1 => {
             let new_node = BvhNode {
                 bvh_node_box: (hitable_list[handle[0]].bounding_box()).clone(),
-                child: [handle[0], handle[0]], // max_childs: 1, child([0] == [1])
+                child: [handle[0], 0, 0, 0],
                 this_node_has_hitable: true,
                 max_childs: 1,
             };
@@ -171,9 +169,46 @@ fn build_bvh(
                     hitable_list[handle[0]].bounding_box(),
                     hitable_list[handle[1]].bounding_box(),
                 ),
-                child: [handle[0], handle[1]],
+                child: [handle[0], handle[1], 0, 0],
                 this_node_has_hitable: true,
                 max_childs: 2,
+            };
+            let pos = bvh_node_list.len();
+            bvh_node_list.push(new_node);
+            pos
+        }
+        3 => {
+            let new_node = BvhNode {
+                bvh_node_box: surrounding_box(
+                    &surrounding_box(
+                        hitable_list[handle[0]].bounding_box(),
+                        hitable_list[handle[1]].bounding_box(),
+                    ),
+                    hitable_list[handle[2]].bounding_box(),
+                ),
+                child: [handle[0], handle[1], handle[2], 0],
+                this_node_has_hitable: true,
+                max_childs: 3,
+            };
+            let pos = bvh_node_list.len();
+            bvh_node_list.push(new_node);
+            pos
+        }
+        4 => {
+            let new_node = BvhNode {
+                bvh_node_box: surrounding_box(
+                    &surrounding_box(
+                        hitable_list[handle[0]].bounding_box(),
+                        hitable_list[handle[1]].bounding_box(),
+                    ),
+                    &surrounding_box(
+                        hitable_list[handle[2]].bounding_box(),
+                        hitable_list[handle[3]].bounding_box(),
+                    ),
+                ),
+                child: [handle[0], handle[1], handle[2], handle[3]],
+                this_node_has_hitable: true,
+                max_childs: 4,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -200,14 +235,7 @@ fn build_bvh(
                     (&handle_2, &handle_3, handle)
                 }
             };
-            /*
-            let x_max: f64 = center_list[handle_x[handle_size - 1]][0]
-                - center_list[handle_x[0]][0];
-            let y_max: f64 = center_list[handle_x[handle_size - 1]][1]
-                - center_list[handle_x[0]][1];
-            let z_max: f64 = center_list[handle_x[handle_size - 1]][2]
-                - center_list[handle_x[0]][2];
-            */
+
             let x_max: f64 = hitable_list[handle_x[handle_size - 1]].bounding_box().b_max[0]
                 - hitable_list[handle_x[0]].bounding_box().b_min[0];
             let y_max: f64 = hitable_list[handle_y[handle_size - 1]].bounding_box().b_max[1]
@@ -215,35 +243,179 @@ fn build_bvh(
             let z_max: f64 = hitable_list[handle_z[handle_size - 1]].bounding_box().b_max[2]
                 - hitable_list[handle_z[0]].bounding_box().b_min[2];
 
-            let sorted_axis: Axis;
+            let pre_sort_axis: Axis;
             let selected_handle = if x_max < y_max {
                 if y_max < z_max {
-                    sorted_axis = Axis::Z;
+                    pre_sort_axis = Axis::Z;
                     handle_z
                 } else {
-                    sorted_axis = Axis::Y;
+                    pre_sort_axis = Axis::Y;
                     handle_y
                 }
             } else if x_max < z_max {
-                sorted_axis = Axis::Z;
+                pre_sort_axis = Axis::Z;
                 handle_z
             } else {
-                sorted_axis = Axis::X;
+                pre_sort_axis = Axis::X;
                 handle_x
             };
 
-            let (a, b) = selected_handle.split_at(handle_size / 2);
+            let (handle_a, handle_b) = selected_handle.split_at(handle_size / 2);
 
-            let left_handle = build_bvh(hitable_list, a, &sorted_axis, bvh_node_list, center_list);
-            let right_handle = build_bvh(hitable_list, b, &sorted_axis, bvh_node_list, center_list);
+            // handle_a split
+            let handle_a_size = handle_a.len();
+            let mut handle_2: Vec<usize> = handle_a.to_owned();
+            let mut handle_3: Vec<usize> = handle_a.to_owned();
+            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis
+            {
+                Axis::X => {
+                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
+                    (handle_a, &handle_2, &handle_3)
+                }
+                Axis::Y => {
+                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
+                    (&handle_2, handle_a, &handle_3)
+                }
+                Axis::Z => {
+                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
+                    (&handle_2, &handle_3, handle_a)
+                }
+            };
+
+            let x_max: f64 = hitable_list[handle_x[handle_a_size - 1]]
+                .bounding_box()
+                .b_max[0]
+                - hitable_list[handle_x[0]].bounding_box().b_min[0];
+            let y_max: f64 = hitable_list[handle_y[handle_a_size - 1]]
+                .bounding_box()
+                .b_max[1]
+                - hitable_list[handle_y[0]].bounding_box().b_min[1];
+            let z_max: f64 = hitable_list[handle_z[handle_a_size - 1]]
+                .bounding_box()
+                .b_max[2]
+                - hitable_list[handle_z[0]].bounding_box().b_min[2];
+
+            let pre_sort_axis_a: Axis;
+            let selected_handle = if x_max < y_max {
+                if y_max < z_max {
+                    pre_sort_axis_a = Axis::Z;
+                    handle_z
+                } else {
+                    pre_sort_axis_a = Axis::Y;
+                    handle_y
+                }
+            } else if x_max < z_max {
+                pre_sort_axis_a = Axis::Z;
+                handle_z
+            } else {
+                pre_sort_axis_a = Axis::X;
+                handle_x
+            };
+
+            let (handle_c, handle_d) = selected_handle.split_at(handle_a_size / 2);
+
+            // handle_b split
+            let handle_b_size = handle_b.len();
+            let mut handle_2: Vec<usize> = handle_b.to_owned();
+            let mut handle_3: Vec<usize> = handle_b.to_owned();
+            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis
+            {
+                Axis::X => {
+                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
+                    (handle_b, &handle_2, &handle_3)
+                }
+                Axis::Y => {
+                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
+                    (&handle_2, handle_b, &handle_3)
+                }
+                Axis::Z => {
+                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
+                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
+                    (&handle_2, &handle_3, handle_b)
+                }
+            };
+
+            let x_max: f64 = hitable_list[handle_x[handle_b_size - 1]]
+                .bounding_box()
+                .b_max[0]
+                - hitable_list[handle_x[0]].bounding_box().b_min[0];
+            let y_max: f64 = hitable_list[handle_y[handle_b_size - 1]]
+                .bounding_box()
+                .b_max[1]
+                - hitable_list[handle_y[0]].bounding_box().b_min[1];
+            let z_max: f64 = hitable_list[handle_z[handle_b_size - 1]]
+                .bounding_box()
+                .b_max[2]
+                - hitable_list[handle_z[0]].bounding_box().b_min[2];
+
+            let pre_sort_axis_b: Axis;
+            let selected_handle = if x_max < y_max {
+                if y_max < z_max {
+                    pre_sort_axis_b = Axis::Z;
+                    handle_z
+                } else {
+                    pre_sort_axis_b = Axis::Y;
+                    handle_y
+                }
+            } else if x_max < z_max {
+                pre_sort_axis_b = Axis::Z;
+                handle_z
+            } else {
+                pre_sort_axis_b = Axis::X;
+                handle_x
+            };
+
+            let (handle_e, handle_f) = selected_handle.split_at(handle_b_size / 2);
+
+            let first_handle = build_bvh(
+                hitable_list,
+                handle_c,
+                &pre_sort_axis_a,
+                bvh_node_list,
+                center_list,
+            );
+            let second_handle = build_bvh(
+                hitable_list,
+                handle_d,
+                &pre_sort_axis_a,
+                bvh_node_list,
+                center_list,
+            );
+
+            let third_handle = build_bvh(
+                hitable_list,
+                handle_e,
+                &pre_sort_axis_b,
+                bvh_node_list,
+                center_list,
+            );
+            let fourth_handle = build_bvh(
+                hitable_list,
+                handle_f,
+                &pre_sort_axis_b,
+                bvh_node_list,
+                center_list,
+            );
+
             let new_node = BvhNode {
                 bvh_node_box: surrounding_box(
-                    &bvh_node_list[left_handle].bvh_node_box,
-                    &bvh_node_list[right_handle].bvh_node_box,
+                    &surrounding_box(
+                        &bvh_node_list[first_handle].bvh_node_box,
+                        &bvh_node_list[second_handle].bvh_node_box,
+                    ),
+                    &surrounding_box(
+                        &bvh_node_list[third_handle].bvh_node_box,
+                        &bvh_node_list[fourth_handle].bvh_node_box,
+                    ),
                 ),
-                child: [left_handle, right_handle],
+                child: [first_handle, second_handle, third_handle, fourth_handle],
                 this_node_has_hitable: false,
-                max_childs: 2,
+                max_childs: 4,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -272,6 +444,7 @@ impl BvhTree {
             aabb_center_list.push(center_point);
         }
 
+        // TODO: change for qbvh
         let hitable_list_next_power_of_two_len = hitable_list_len.next_power_of_two();
         let mut bvh_node_list: Vec<BvhNode> =
             Vec::with_capacity(hitable_list_next_power_of_two_len * 2); // n:(0~k), sigma(2*n)
@@ -284,9 +457,9 @@ impl BvhTree {
                 b_min: [0.0, 0.0, 0.0],
                 b_max: [0.0, 0.0, 0.0],
             },
-            child: [0, 0],
+            child: [0, 0, 0, 0],
             this_node_has_hitable: false,
-            max_childs: 2,
+            max_childs: 4,
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
@@ -347,20 +520,28 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
-                let (left_aabb, right_aabb) = aabb_hit_simd(
+                let (aabb_one, aabb_two, aabb_three, aabb_four) = aabb_hit_simd(
                     &self.bvh_node_list[current_bvh_node.child[0]].bvh_node_box,
                     &self.bvh_node_list[current_bvh_node.child[1]].bvh_node_box,
+                    &self.bvh_node_list[current_bvh_node.child[2]].bvh_node_box,
+                    &self.bvh_node_list[current_bvh_node.child[3]].bvh_node_box,
                     r,
                     r_dir_inv,
                     t_min,
                     min_hit_t,
                 );
 
-                if let Some(_left_aabb) = left_aabb {
+                if let Some(_) = aabb_one {
                     return_stack.push(current_bvh_node.child[0]);
                 }
+                if let Some(_) = aabb_two {
+                    return_stack.push(current_bvh_node.child[1]);
+                }
+                if let Some(_) = aabb_three {
+                    return_stack.push(current_bvh_node.child[2]);
+                }
 
-                if let Some(_right_aabb) = right_aabb {
+                if let Some(_) = aabb_four {
                     current_pos -= 1;
                     continue;
                 }
