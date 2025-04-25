@@ -373,31 +373,30 @@ impl Hitable for BvhTree {
             let current_bvh_node = &self.bvh_node_list[current_pos];
             if current_bvh_node.this_node_has_hitable == true {
                 // this node has actual item
+                /*
                 if let Some(mut aabb_hit_rec) = current_bvh_node
                     .bvh_node_box
                     .aabb_hit(r, r_dir_inv, t_min, min_hit_t)
                 {
-                    let left_obj = &self.hitable_list[current_bvh_node.left];
-                    if let Some(left_rec) = left_obj.hit(r, aabb_hit_rec.t_min, aabb_hit_rec.t_max)
-                    {
-                        aabb_hit_rec.t_max = left_rec.t; // for below right_obj hit
-                        min_hit_t = left_rec.t;
-                        return_rec = Some(left_rec);
-                    };
+                */
+                let left_obj = &self.hitable_list[current_bvh_node.left];
+                if let Some(left_rec) = left_obj.hit(r, t_min, min_hit_t) {
+                    min_hit_t = left_rec.t;
+                    return_rec = Some(left_rec);
+                };
 
-                    if current_bvh_node.only_have_left_obj {
-                        // not need check right
-                    } else {
-                        let right_obj = &self.hitable_list[current_bvh_node.right];
-                        if let Some(right_rec) =
-                            right_obj.hit(r, aabb_hit_rec.t_min, aabb_hit_rec.t_max)
-                        // aabb_hit_rec.t_max = left_rec.t(if left hit), so when hit always right_rec.t < left_rec.t
-                        {
-                            min_hit_t = right_rec.t;
-                            return_rec = Some(right_rec);
-                        };
-                    }
+                if current_bvh_node.only_have_left_obj {
+                    // not need check right
+                } else {
+                    let right_obj = &self.hitable_list[current_bvh_node.right];
+                    if let Some(right_rec) = right_obj.hit(r, t_min, min_hit_t)
+                    // aabb_hit_rec.t_max = left_rec.t(if left hit), so when hit always right_rec.t < left_rec.t
+                    {
+                        min_hit_t = right_rec.t;
+                        return_rec = Some(right_rec);
+                    };
                 }
+                //}
             } else {
                 // this node has other nodes
                 if let Some(_left_hit_rec) = self.bvh_node_list[current_bvh_node.left]
