@@ -444,13 +444,7 @@ impl BvhTree {
             aabb_center_list.push(center_point);
         }
 
-        // TODO: change for qbvh
-        let hitable_list_next_power_of_two_len = hitable_list_len.next_power_of_two();
-        let mut bvh_node_list: Vec<BvhNode> =
-            Vec::with_capacity(hitable_list_next_power_of_two_len * 2); // n:(0~k), sigma(2*n)
-                                                                        // = (2*k) - 1
-                                                                        // and not affect bvh_node_list.len();
-                                                                        // affect only bvh_node_list.capacity();
+        let mut bvh_node_list: Vec<BvhNode> = Vec::with_capacity((hitable_list_len - 1) / (4 - 1)); // qbvh min node size
 
         bvh_node_list.push(BvhNode {
             bvh_node_box: Aabb {
@@ -463,7 +457,7 @@ impl BvhTree {
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
-        let bvh_tree_depth: usize = hitable_list_next_power_of_two_len.ilog2() as usize;
+        let bvh_tree_depth: usize = (hitable_list_len.next_power_of_two() * 2).ilog(4) as usize + 2;
         let last_node_num = build_bvh(
             &hitable_list,
             &handle,
@@ -474,14 +468,7 @@ impl BvhTree {
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
         let nor_hitable_list_num = 1.0 / (hitable_list_len as f64);
-        /*
-        let mut k = 1;
-        for now_depth in 0..bvh_tree_depth {
-            for i in 0..k {
-            }
-            k = k*2;
-        }
-        */
+
         let aabb_box = bvh_node_list[last_node_num].bvh_node_box.clone();
         BvhTree {
             hitable_list,
