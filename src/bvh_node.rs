@@ -712,29 +712,25 @@ impl Hitable for BvhTree {
         return_stack.push(0);
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
+            let aabb_result = aabb_hit_simd(
+                &current_bvh_node.qbox,
+                &r.origin,
+                r_dir_inv,
+                t_min,
+                min_hit_t,
+            );
             if current_bvh_node.this_node_has_hitable == true {
                 for i in 0..current_bvh_node.max_childs {
-                    let child_obj = &self.hitable_list[current_bvh_node.child[i]];
-                    if let Some(aabb_rec) = child_obj
-                        .bounding_box()
-                        .aabb_hit(&r.origin, r_dir_inv, t_min, min_hit_t)
-                    {
-                        if let Some(child_rec) = child_obj.hit(r, aabb_rec.t_min, aabb_rec.t_max) {
+                    if aabb_result[i] == true {
+                        let child_obj = &self.hitable_list[current_bvh_node.child[i]];
+                        if let Some(child_rec) = child_obj.hit(r, t_min, min_hit_t) {
                             min_hit_t = child_rec.t;
                             return_rec = Some(child_rec);
                         }
-                    };
+                    }
                 }
             } else {
                 // this node has other nodes
-                let aabb_result = aabb_hit_simd(
-                    &current_bvh_node.qbox,
-                    &r.origin,
-                    r_dir_inv,
-                    t_min,
-                    min_hit_t,
-                );
-
                 if aabb_result[0] == true {
                     return_stack.push(current_bvh_node.child[0]);
                 }
