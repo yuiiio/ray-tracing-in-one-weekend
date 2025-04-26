@@ -139,15 +139,19 @@ fn color(
             }
             None => {
                 // if not hit any obj
-                /*
+
                 // sky
                 let a = (ray.direction[1] + 1.0) * 0.5;
-                let last_emitted = vec3_add(
-                    &vec3_mul_b(&[0.5, 0.1, 0.05], 1.0 - a),
-                    &vec3_mul_b(&[0.1, 0.1, 0.5], a),
-                );
-                */
-                let last_emitted = [0.5, 0.5, 0.5];
+                let last_emitted = if a > 0.5 {
+                    vec3_add(
+                        &vec3_mul_b(&[0.0, 0.0, 0.0], 1.0 - a),
+                        &vec3_mul_b(&[0.5, 0.5, 0.5], a),
+                    )
+                } else {
+                    [0.0, 0.0, 0.0]
+                };
+
+                //let last_emitted = [0.5, 0.5, 0.5];
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
@@ -225,7 +229,7 @@ fn main() {
     obj_list.push(light_rect.clone());
     */
 
-    obj_list.push(FlipNormals::new(Rect::new(
+    let roof_light = FlipNormals::new(Rect::new(
         0.0,
         555.0,
         0.0,
@@ -233,7 +237,7 @@ fn main() {
         555.0,
         AxisType::Kxz,
         white.clone(),
-    )));
+    ));
 
     obj_list.push(FlipNormals::new(Rect::new(
         0.0,
@@ -360,6 +364,7 @@ fn main() {
     //light_list.push(light_rect);
     //light_list.push(floor);
     light_list.push(outdoor_light);
+    light_list.push(roof_light);
     //light_list.push(light_sphere);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
