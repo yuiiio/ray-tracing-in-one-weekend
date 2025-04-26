@@ -84,7 +84,7 @@ fn merge<T: Clone>(
 }
 
 #[allow(dead_code)]
-pub fn merge_sort<T: Clone + std::fmt::Debug>(
+pub fn merge_sort<T: Clone + core::fmt::Debug>(
     vec: &mut [T],
     stock_vec: &mut [T],
     compare: fn(&T, &T) -> bool,

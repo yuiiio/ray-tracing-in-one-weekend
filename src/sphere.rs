@@ -1,5 +1,5 @@
+use core::f64::consts::PI;
 use rand::prelude::*;
-use std::f64::consts::PI;
 
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};

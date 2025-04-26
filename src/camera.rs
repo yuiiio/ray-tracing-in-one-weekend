@@ -1,7 +1,7 @@
 use crate::ray::Ray;
 use crate::vec3::{cross, vec3_add, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
+use core::f64;
 use rand::prelude::*;
-use std::f64;
 
 pub struct Camera {
     origin: Vector3<f64>,

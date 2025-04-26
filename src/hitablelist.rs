@@ -47,7 +47,7 @@ impl HitableList {
     }
 }
 
-impl ::std::ops::Deref for HitableList {
+impl ::core::ops::Deref for HitableList {
     type Target = Vec<Box<dyn Hitable + Send + Sync>>;
 
     fn deref(&self) -> &Vec<Box<dyn Hitable + Send + Sync>> {
@@ -55,7 +55,7 @@ impl ::std::ops::Deref for HitableList {
     }
 }
 
-impl ::std::ops::DerefMut for HitableList {
+impl ::core::ops::DerefMut for HitableList {
     fn deref_mut(&mut self) -> &mut Vec<Box<dyn Hitable + Send + Sync>> {
         &mut self.hitable_list
     }
@@ -79,8 +79,8 @@ impl Hitable for HitableList {
     }
 
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
-        let mut b_min = [std::f64::MAX; 3];
-        let mut b_max = [std::f64::MIN; 3];
+        let mut b_min = [core::f64::MAX; 3];
+        let mut b_max = [core::f64::MIN; 3];
         for i in 0..self.hitable_list.len() {
             for axis in 0..3 {
                 b_min[axis] = b_min[axis]

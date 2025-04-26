@@ -18,8 +18,8 @@ pub trait Hitable: HitableClone {
     fn bounding_box(&self) -> &Aabb;
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
         let bbox = self.bounding_box();
-        let mut b_min = [std::f64::MAX; 3];
-        let mut b_max = [std::f64::MIN; 3];
+        let mut b_min = [core::f64::MAX; 3];
+        let mut b_max = [core::f64::MIN; 3];
         for i in [1, 0].iter() {
             for j in [1, 0].iter() {
                 for k in [1, 0].iter() {

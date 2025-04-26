@@ -1,10 +1,10 @@
 #![feature(portable_simd)]
 
+use core::sync::atomic::AtomicUsize;
+use core::sync::atomic::Ordering::Relaxed;
 use image::{open, Rgba, RgbaImage};
 use rand::prelude::*;
 use std::fs::File;
-use std::sync::atomic::AtomicUsize;
-use std::sync::atomic::Ordering::Relaxed;
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::time::SystemTime;
@@ -30,6 +30,7 @@ mod vec3;
 
 use bvh_node::BvhTree;
 use camera::Camera;
+use core::f64;
 use hitable::Hitable;
 use hitablelist::HitableList;
 use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatterd};
@@ -39,7 +40,6 @@ use pdf::{cosine_pdf_generate, cosine_pdf_value};
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
-use std::f64;
 use texture::{ColorTexture, ImageTexture, TextureList};
 use translate::{Rotate, Translate};
 use vec3::{vec3_add, vec3_mul, vec3_mul_b, Vector3};

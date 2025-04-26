@@ -1,11 +1,11 @@
+use core::f64::consts::PI;
 use rand::prelude::*;
-use std::f64::consts::PI;
 
 use crate::hitable::HitRecord;
 use crate::ray::Ray;
 use crate::texture::{TextureHandle, TextureList};
 use crate::vec3::{vec3_add, vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
-use std::f64;
+use core::f64;
 
 pub enum Scatterd {
     Ray(Ray),

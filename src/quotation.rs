@@ -9,7 +9,7 @@ pub struct Rotation {
 impl Rotation {
     pub fn new(degrees: f64, axis: &Vector3<f64>) -> Self {
         let axis = vec3_unit_vector_f64(axis); // to unit vector
-        let radians: f64 = degrees * std::f64::consts::PI / 180.0 / 2.0;
+        let radians: f64 = degrees * core::f64::consts::PI / 180.0 / 2.0;
         let cos = radians.cos();
         let sin = radians.sin();
         let vec3 = vec3_mul_b(&axis, sin);
