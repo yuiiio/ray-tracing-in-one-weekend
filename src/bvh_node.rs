@@ -727,13 +727,7 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
-                let (aabb_one, aabb_two, aabb_three, aabb_four) = aabb_hit_simd(
-                    /*
-                    &self.bvh_node_list[current_bvh_node.child[0]].bvh_node_box,
-                    &self.bvh_node_list[current_bvh_node.child[1]].bvh_node_box,
-                    &self.bvh_node_list[current_bvh_node.child[2]].bvh_node_box,
-                    &self.bvh_node_list[current_bvh_node.child[3]].bvh_node_box,
-                    */
+                let aabb_result = aabb_hit_simd(
                     &current_bvh_node.qbox,
                     &r.origin,
                     r_dir_inv,
@@ -741,17 +735,17 @@ impl Hitable for BvhTree {
                     min_hit_t,
                 );
 
-                if aabb_one == true {
+                if aabb_result[0] == true {
                     return_stack.push(current_bvh_node.child[0]);
                 }
-                if aabb_two == true {
+                if aabb_result[1] == true {
                     return_stack.push(current_bvh_node.child[1]);
                 }
-                if aabb_three == true {
+                if aabb_result[2] == true {
                     return_stack.push(current_bvh_node.child[2]);
                 }
 
-                if aabb_four == true {
+                if aabb_result[3] == true {
                     current_pos -= 1;
                     continue;
                 }
