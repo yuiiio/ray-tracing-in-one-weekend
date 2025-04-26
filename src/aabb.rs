@@ -5,7 +5,7 @@ use crate::vec3::Vector3;
 use core::mem::swap;
 use core::simd::cmp::SimdPartialOrd;
 use core::simd::num::SimdFloat;
-use core::simd::{f64x4, Simd};
+use core::simd::Simd;
 
 pub struct AabbHitRecord {
     pub t_max: f64,
@@ -64,13 +64,13 @@ pub fn aabb_hit_simd(
     t_min: f64,
     t_max: f64,
 ) -> [bool; 4] {
-    let mut tmin = f64x4::splat(t_min);
-    let mut tmax = f64x4::splat(t_max);
+    let mut tmin = Simd::from([t_min; 4]);
+    let mut tmax = Simd::from([t_max; 4]);
     for i in 0..3 {
-        let origin_i = f64x4::splat(r_origin[i]);
-        let dir_div_i = f64x4::splat(r_dir_div[i]);
-        let mut t0 = (Simd::from(qbox.bboxes[0][i]) - origin_i) * dir_div_i;
-        let mut t1 = (Simd::from(qbox.bboxes[1][i]) - origin_i) * dir_div_i;
+        let mut t0 = (Simd::from(qbox.bboxes[0][i]) - Simd::from([r_origin[i]; 4]))
+            * Simd::from([r_dir_div[i]; 4]);
+        let mut t1 = (Simd::from(qbox.bboxes[1][i]) - Simd::from([r_origin[i]; 4]))
+            * Simd::from([r_dir_div[i]; 4]);
 
         if r_dir_div[i].is_sign_negative() {
             swap(&mut t0, &mut t1);
