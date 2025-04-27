@@ -214,50 +214,12 @@ fn build_bvh(
     match handle_size {
         1 => {
             let new_node = BvhNode {
-                qbox: QBoxes {
-                    bboxes: [
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[0],
-                                0.0,
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[1],
-                                0.0,
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[2],
-                                0.0,
-                                0.0,
-                                0.0,
-                            ],
-                        ],
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[0],
-                                0.0,
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[1],
-                                0.0,
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[2],
-                                0.0,
-                                0.0,
-                                0.0,
-                            ],
-                        ],
-                    ],
-                },
+                qbox: QBoxes::encode_from_four_aabb(&[
+                    hitable_list[handle[0]].bounding_box(),
+                    hitable_list[handle[0]].bounding_box(), //
+                    hitable_list[handle[0]].bounding_box(), //
+                    hitable_list[handle[0]].bounding_box(), // not important
+                ]),
                 child: [handle[0], 0, 0, 0],
                 this_node_has_hitable: true,
                 max_childs: 1,
@@ -268,50 +230,12 @@ fn build_bvh(
         }
         2 => {
             let new_node = BvhNode {
-                qbox: QBoxes {
-                    bboxes: [
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[0],
-                                hitable_list[handle[1]].bounding_box().b_min[0],
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[1],
-                                hitable_list[handle[1]].bounding_box().b_min[1],
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[2],
-                                hitable_list[handle[1]].bounding_box().b_min[2],
-                                0.0,
-                                0.0,
-                            ],
-                        ],
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[0],
-                                hitable_list[handle[1]].bounding_box().b_max[0],
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[1],
-                                hitable_list[handle[1]].bounding_box().b_max[1],
-                                0.0,
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[2],
-                                hitable_list[handle[1]].bounding_box().b_max[2],
-                                0.0,
-                                0.0,
-                            ],
-                        ],
-                    ],
-                },
+                qbox: QBoxes::encode_from_four_aabb(&[
+                    hitable_list[handle[0]].bounding_box(),
+                    hitable_list[handle[1]].bounding_box(), //
+                    hitable_list[handle[1]].bounding_box(), //
+                    hitable_list[handle[1]].bounding_box(), // not important
+                ]),
                 child: [handle[0], handle[1], 0, 0],
                 this_node_has_hitable: true,
                 max_childs: 2,
@@ -328,50 +252,12 @@ fn build_bvh(
         }
         3 => {
             let new_node = BvhNode {
-                qbox: QBoxes {
-                    bboxes: [
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[0],
-                                hitable_list[handle[1]].bounding_box().b_min[0],
-                                hitable_list[handle[2]].bounding_box().b_min[0],
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[1],
-                                hitable_list[handle[1]].bounding_box().b_min[1],
-                                hitable_list[handle[2]].bounding_box().b_min[1],
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[2],
-                                hitable_list[handle[1]].bounding_box().b_min[2],
-                                hitable_list[handle[2]].bounding_box().b_min[2],
-                                0.0,
-                            ],
-                        ],
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[0],
-                                hitable_list[handle[1]].bounding_box().b_max[0],
-                                hitable_list[handle[2]].bounding_box().b_max[0],
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[1],
-                                hitable_list[handle[1]].bounding_box().b_max[1],
-                                hitable_list[handle[2]].bounding_box().b_max[1],
-                                0.0,
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[2],
-                                hitable_list[handle[1]].bounding_box().b_max[2],
-                                hitable_list[handle[2]].bounding_box().b_max[2],
-                                0.0,
-                            ],
-                        ],
-                    ],
-                },
+                qbox: QBoxes::encode_from_four_aabb(&[
+                    hitable_list[handle[0]].bounding_box(),
+                    hitable_list[handle[1]].bounding_box(),
+                    hitable_list[handle[2]].bounding_box(),
+                    hitable_list[handle[2]].bounding_box(), // not important
+                ]),
                 child: [handle[0], handle[1], handle[2], 0],
                 this_node_has_hitable: true,
                 max_childs: 3,
@@ -391,50 +277,12 @@ fn build_bvh(
         }
         4 => {
             let new_node = BvhNode {
-                qbox: QBoxes {
-                    bboxes: [
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[0],
-                                hitable_list[handle[1]].bounding_box().b_min[0],
-                                hitable_list[handle[2]].bounding_box().b_min[0],
-                                hitable_list[handle[3]].bounding_box().b_min[0],
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[1],
-                                hitable_list[handle[1]].bounding_box().b_min[1],
-                                hitable_list[handle[2]].bounding_box().b_min[1],
-                                hitable_list[handle[3]].bounding_box().b_min[1],
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_min[2],
-                                hitable_list[handle[1]].bounding_box().b_min[2],
-                                hitable_list[handle[2]].bounding_box().b_min[2],
-                                hitable_list[handle[3]].bounding_box().b_min[2],
-                            ],
-                        ],
-                        [
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[0],
-                                hitable_list[handle[1]].bounding_box().b_max[0],
-                                hitable_list[handle[2]].bounding_box().b_max[0],
-                                hitable_list[handle[3]].bounding_box().b_max[0],
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[1],
-                                hitable_list[handle[1]].bounding_box().b_max[1],
-                                hitable_list[handle[2]].bounding_box().b_max[1],
-                                hitable_list[handle[3]].bounding_box().b_max[1],
-                            ],
-                            [
-                                hitable_list[handle[0]].bounding_box().b_max[2],
-                                hitable_list[handle[1]].bounding_box().b_max[2],
-                                hitable_list[handle[2]].bounding_box().b_max[2],
-                                hitable_list[handle[3]].bounding_box().b_max[2],
-                            ],
-                        ],
-                    ],
-                },
+                qbox: QBoxes::encode_from_four_aabb(&[
+                    hitable_list[handle[0]].bounding_box(),
+                    hitable_list[handle[1]].bounding_box(),
+                    hitable_list[handle[2]].bounding_box(),
+                    hitable_list[handle[3]].bounding_box(),
+                ]),
                 child: [handle[0], handle[1], handle[2], handle[3]],
                 this_node_has_hitable: true,
                 max_childs: 4,
@@ -522,50 +370,12 @@ fn build_bvh(
             );
 
             let new_node = BvhNode {
-                qbox: QBoxes {
-                    bboxes: [
-                        [
-                            [
-                                first_aabb.b_min[0],
-                                second_aabb.b_min[0],
-                                third_aabb.b_min[0],
-                                fourth_aabb.b_min[0],
-                            ],
-                            [
-                                first_aabb.b_min[1],
-                                second_aabb.b_min[1],
-                                third_aabb.b_min[1],
-                                fourth_aabb.b_min[1],
-                            ],
-                            [
-                                first_aabb.b_min[2],
-                                second_aabb.b_min[2],
-                                third_aabb.b_min[2],
-                                fourth_aabb.b_min[2],
-                            ],
-                        ],
-                        [
-                            [
-                                first_aabb.b_max[0],
-                                second_aabb.b_max[0],
-                                third_aabb.b_max[0],
-                                fourth_aabb.b_max[0],
-                            ],
-                            [
-                                first_aabb.b_max[1],
-                                second_aabb.b_max[1],
-                                third_aabb.b_max[1],
-                                fourth_aabb.b_max[1],
-                            ],
-                            [
-                                first_aabb.b_max[2],
-                                second_aabb.b_max[2],
-                                third_aabb.b_max[2],
-                                fourth_aabb.b_max[2],
-                            ],
-                        ],
-                    ],
-                },
+                qbox: QBoxes::encode_from_four_aabb(&[
+                    &first_aabb,
+                    &second_aabb,
+                    &third_aabb,
+                    &fourth_aabb,
+                ]),
                 child: [first_handle, second_handle, third_handle, fourth_handle],
                 this_node_has_hitable: false,
                 max_childs: 4,

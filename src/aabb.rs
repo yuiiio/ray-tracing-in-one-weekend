@@ -50,11 +50,59 @@ impl Aabb {
     }
 }
 
-// BvhNode owned ?
 #[derive(Clone)]
 pub struct QBoxes {
     // for simd iteration
     pub bboxes: [[[f64; 4]; 3]; 2], /* quad-boxes; x,y,z; min,max*/
+}
+
+impl QBoxes {
+    pub fn encode_from_four_aabb(aabb_list: &[&Aabb; 4]) -> Self {
+        QBoxes {
+            bboxes: [
+                [
+                    [
+                        aabb_list[0].b_min[0],
+                        aabb_list[1].b_min[0],
+                        aabb_list[2].b_min[0],
+                        aabb_list[3].b_min[0],
+                    ],
+                    [
+                        aabb_list[0].b_min[1],
+                        aabb_list[1].b_min[1],
+                        aabb_list[2].b_min[1],
+                        aabb_list[3].b_min[1],
+                    ],
+                    [
+                        aabb_list[0].b_min[2],
+                        aabb_list[1].b_min[2],
+                        aabb_list[2].b_min[2],
+                        aabb_list[3].b_min[2],
+                    ],
+                ],
+                [
+                    [
+                        aabb_list[0].b_max[0],
+                        aabb_list[1].b_max[0],
+                        aabb_list[2].b_max[0],
+                        aabb_list[3].b_max[0],
+                    ],
+                    [
+                        aabb_list[0].b_max[1],
+                        aabb_list[1].b_max[1],
+                        aabb_list[2].b_max[1],
+                        aabb_list[3].b_max[1],
+                    ],
+                    [
+                        aabb_list[0].b_max[2],
+                        aabb_list[1].b_max[2],
+                        aabb_list[2].b_max[2],
+                        aabb_list[3].b_max[2],
+                    ],
+                ],
+            ],
+        }
+    }
 }
 
 pub fn aabb_hit_simd(
