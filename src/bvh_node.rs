@@ -132,6 +132,65 @@ enum Axis {
     Z,
 }
 
+fn split_heuristic<'a>(
+    hitable_list: &HitableList,
+    handle: &'a [usize],
+    handle_2: &'a mut [usize],
+    handle_3: &'a mut [usize],
+    pre_sort_axis: &Axis,
+    center_list: &Vec<Vector3<f64>>,
+) -> (&'a [usize], &'a [usize], Axis) {
+    let handle_size = handle.len();
+    /*
+    let mut handle_2: Vec<usize> = handle.to_owned();
+    let mut handle_3: Vec<usize> = handle.to_owned();
+    */
+    let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis {
+        Axis::X => {
+            dmerge_sort_wrap(handle_2, AI_Y, center_list);
+            dmerge_sort_wrap(handle_3, AI_Z, center_list);
+            (handle, handle_2, handle_3)
+        }
+        Axis::Y => {
+            dmerge_sort_wrap(handle_2, AI_X, center_list);
+            dmerge_sort_wrap(handle_3, AI_Z, center_list);
+            (handle_2, handle, handle_3)
+        }
+        Axis::Z => {
+            dmerge_sort_wrap(handle_2, AI_X, center_list);
+            dmerge_sort_wrap(handle_3, AI_Y, center_list);
+            (handle_2, handle_3, handle)
+        }
+    };
+
+    let x_max: f64 = hitable_list[handle_x[handle_size - 1]].bounding_box().b_max[0]
+        - hitable_list[handle_x[0]].bounding_box().b_min[0];
+    let y_max: f64 = hitable_list[handle_y[handle_size - 1]].bounding_box().b_max[1]
+        - hitable_list[handle_y[0]].bounding_box().b_min[1];
+    let z_max: f64 = hitable_list[handle_z[handle_size - 1]].bounding_box().b_max[2]
+        - hitable_list[handle_z[0]].bounding_box().b_min[2];
+
+    let return_sort_axis: Axis;
+    let selected_handle = if x_max < y_max {
+        if y_max < z_max {
+            return_sort_axis = Axis::Z;
+            handle_z
+        } else {
+            return_sort_axis = Axis::Y;
+            handle_y
+        }
+    } else if x_max < z_max {
+        return_sort_axis = Axis::Z;
+        handle_z
+    } else {
+        return_sort_axis = Axis::X;
+        handle_x
+    };
+
+    let (handle_a, handle_b) = selected_handle.split_at(handle_size / 2);
+    (handle_a, handle_b, return_sort_axis)
+}
+
 // push bvh_node_list and return handle
 //
 // now allow non perfect balance tree.
@@ -399,160 +458,38 @@ fn build_bvh(
         _ => {
             let mut handle_2: Vec<usize> = handle.to_owned();
             let mut handle_3: Vec<usize> = handle.to_owned();
-            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis
-            {
-                Axis::X => {
-                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (handle, &handle_2, &handle_3)
-                }
-                Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (&handle_2, handle, &handle_3)
-                }
-                Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
-                    (&handle_2, &handle_3, handle)
-                }
-            };
-
-            let x_max: f64 = hitable_list[handle_x[handle_size - 1]].bounding_box().b_max[0]
-                - hitable_list[handle_x[0]].bounding_box().b_min[0];
-            let y_max: f64 = hitable_list[handle_y[handle_size - 1]].bounding_box().b_max[1]
-                - hitable_list[handle_y[0]].bounding_box().b_min[1];
-            let z_max: f64 = hitable_list[handle_z[handle_size - 1]].bounding_box().b_max[2]
-                - hitable_list[handle_z[0]].bounding_box().b_min[2];
-
-            let pre_sort_axis: Axis;
-            let selected_handle = if x_max < y_max {
-                if y_max < z_max {
-                    pre_sort_axis = Axis::Z;
-                    handle_z
-                } else {
-                    pre_sort_axis = Axis::Y;
-                    handle_y
-                }
-            } else if x_max < z_max {
-                pre_sort_axis = Axis::Z;
-                handle_z
-            } else {
-                pre_sort_axis = Axis::X;
-                handle_x
-            };
-
-            let (handle_a, handle_b) = selected_handle.split_at(handle_size / 2);
+            let (handle_a, handle_b, pre_sort_axis) = split_heuristic(
+                hitable_list,
+                handle,
+                &mut handle_2,
+                &mut handle_3,
+                pre_sort_axis,
+                center_list,
+            );
 
             // handle_a split
-            let handle_a_size = handle_a.len();
             let mut handle_2: Vec<usize> = handle_a.to_owned();
             let mut handle_3: Vec<usize> = handle_a.to_owned();
-            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis
-            {
-                Axis::X => {
-                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (handle_a, &handle_2, &handle_3)
-                }
-                Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (&handle_2, handle_a, &handle_3)
-                }
-                Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
-                    (&handle_2, &handle_3, handle_a)
-                }
-            };
-
-            let x_max: f64 = hitable_list[handle_x[handle_a_size - 1]]
-                .bounding_box()
-                .b_max[0]
-                - hitable_list[handle_x[0]].bounding_box().b_min[0];
-            let y_max: f64 = hitable_list[handle_y[handle_a_size - 1]]
-                .bounding_box()
-                .b_max[1]
-                - hitable_list[handle_y[0]].bounding_box().b_min[1];
-            let z_max: f64 = hitable_list[handle_z[handle_a_size - 1]]
-                .bounding_box()
-                .b_max[2]
-                - hitable_list[handle_z[0]].bounding_box().b_min[2];
-
-            let pre_sort_axis_a: Axis;
-            let selected_handle = if x_max < y_max {
-                if y_max < z_max {
-                    pre_sort_axis_a = Axis::Z;
-                    handle_z
-                } else {
-                    pre_sort_axis_a = Axis::Y;
-                    handle_y
-                }
-            } else if x_max < z_max {
-                pre_sort_axis_a = Axis::Z;
-                handle_z
-            } else {
-                pre_sort_axis_a = Axis::X;
-                handle_x
-            };
-
-            let (handle_c, handle_d) = selected_handle.split_at(handle_a_size / 2);
+            let (handle_c, handle_d, pre_sort_axis_a) = split_heuristic(
+                hitable_list,
+                handle_a,
+                &mut handle_2,
+                &mut handle_3,
+                &pre_sort_axis,
+                center_list,
+            );
 
             // handle_b split
-            let handle_b_size = handle_b.len();
             let mut handle_2: Vec<usize> = handle_b.to_owned();
             let mut handle_3: Vec<usize> = handle_b.to_owned();
-            let (handle_x, handle_y, handle_z): (&[usize], &[usize], &[usize]) = match pre_sort_axis
-            {
-                Axis::X => {
-                    dmerge_sort_wrap(&mut handle_2, AI_Y, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (handle_b, &handle_2, &handle_3)
-                }
-                Axis::Y => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Z, center_list);
-                    (&handle_2, handle_b, &handle_3)
-                }
-                Axis::Z => {
-                    dmerge_sort_wrap(&mut handle_2, AI_X, center_list);
-                    dmerge_sort_wrap(&mut handle_3, AI_Y, center_list);
-                    (&handle_2, &handle_3, handle_b)
-                }
-            };
-
-            let x_max: f64 = hitable_list[handle_x[handle_b_size - 1]]
-                .bounding_box()
-                .b_max[0]
-                - hitable_list[handle_x[0]].bounding_box().b_min[0];
-            let y_max: f64 = hitable_list[handle_y[handle_b_size - 1]]
-                .bounding_box()
-                .b_max[1]
-                - hitable_list[handle_y[0]].bounding_box().b_min[1];
-            let z_max: f64 = hitable_list[handle_z[handle_b_size - 1]]
-                .bounding_box()
-                .b_max[2]
-                - hitable_list[handle_z[0]].bounding_box().b_min[2];
-
-            let pre_sort_axis_b: Axis;
-            let selected_handle = if x_max < y_max {
-                if y_max < z_max {
-                    pre_sort_axis_b = Axis::Z;
-                    handle_z
-                } else {
-                    pre_sort_axis_b = Axis::Y;
-                    handle_y
-                }
-            } else if x_max < z_max {
-                pre_sort_axis_b = Axis::Z;
-                handle_z
-            } else {
-                pre_sort_axis_b = Axis::X;
-                handle_x
-            };
-
-            let (handle_e, handle_f) = selected_handle.split_at(handle_b_size / 2);
+            let (handle_e, handle_f, pre_sort_axis_b) = split_heuristic(
+                hitable_list,
+                handle_b,
+                &mut handle_2,
+                &mut handle_3,
+                &pre_sort_axis,
+                center_list,
+            );
 
             let (first_handle, first_aabb) = build_bvh(
                 hitable_list,
