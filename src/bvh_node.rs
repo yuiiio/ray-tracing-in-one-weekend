@@ -15,7 +15,7 @@ pub struct BvhTree {
     aabb_box: Aabb,
     last_node_num: usize,
     nor_hitable_list_num: f64,
-    bvh_tree_depth: usize,
+    max_stack_size: usize,
 }
 
 #[derive(Clone)]
@@ -425,7 +425,8 @@ impl BvhTree {
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
-        let bvh_tree_depth: usize = (hitable_list_len.next_power_of_two() * 2).ilog(4) as usize + 2;
+        let bvh_tree_depth: usize = (hitable_list_len.next_power_of_two() * 2).ilog(4) as usize;
+        let max_stack_size = bvh_tree_depth * (4 - 1);
         let (last_node_num, bvh_aabb) = build_bvh(
             &hitable_list,
             &handle,
@@ -443,7 +444,7 @@ impl BvhTree {
             aabb_box: bvh_aabb,
             last_node_num,
             nor_hitable_list_num,
-            bvh_tree_depth,
+            max_stack_size,
         }
     }
 }
@@ -455,7 +456,7 @@ impl Hitable for BvhTree {
         let mut return_rec: Option<HitRecord> = None;
         let r_dir_inv = &r.get_inv_dir();
         let mut return_stack: alloc::vec::Vec<usize> =
-            alloc::vec::Vec::with_capacity(self.bvh_tree_depth);
+            alloc::vec::Vec::with_capacity(self.max_stack_size);
         return_stack.push(0);
         loop {
             let current_bvh_node = &self.bvh_node_list[current_pos];
