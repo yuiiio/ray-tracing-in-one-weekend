@@ -2,3 +2,4 @@
 **/*.rs.bk
 image.png
 profile.json
+profile.json.gz
