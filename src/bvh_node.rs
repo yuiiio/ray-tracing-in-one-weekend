@@ -191,6 +191,12 @@ fn split_heuristic<'a>(
     (handle_a, handle_b, return_sort_axis)
 }
 
+fn aabb_size(aabb: &Aabb) -> f64 {
+    (aabb.b_max[0] - aabb.b_min[0])
+        * (aabb.b_max[1] - aabb.b_min[1])
+        * (aabb.b_max[2] - aabb.b_min[2])
+}
+
 // push bvh_node_list and return handle
 //
 // now allow non perfect balance tree.
@@ -369,14 +375,77 @@ fn build_bvh(
                 center_list,
             );
 
+            //TODO: sort child node by box-size
+            //  for fast traversal.
+            let aabb_sizes = [
+                aabb_size(&first_aabb),
+                aabb_size(&second_aabb),
+                aabb_size(&third_aabb),
+                aabb_size(&fourth_aabb),
+            ];
+            let mut sort_handle = [0, 1, 2, 3];
+            if aabb_sizes[0] < aabb_sizes[1] {
+                sort_handle[0] = 1;
+                sort_handle[1] = 0;
+            }
+            if aabb_sizes[2] < aabb_sizes[3] {
+                sort_handle[2] = 3;
+                sort_handle[3] = 2;
+            }
+            if aabb_sizes[sort_handle[0]] < aabb_sizes[sort_handle[2]] {
+                let tmp0 = sort_handle[0];
+                sort_handle[0] = sort_handle[2];
+                if aabb_sizes[tmp0] < aabb_sizes[sort_handle[3]] {
+                    let tmp1 = sort_handle[1];
+                    sort_handle[1] = sort_handle[3];
+                    sort_handle[2] = tmp0;
+                    sort_handle[3] = tmp1;
+                } else {
+                    let tmp1 = sort_handle[1];
+                    sort_handle[1] = tmp0;
+                    if aabb_sizes[tmp1] < aabb_sizes[sort_handle[3]] {
+                        sort_handle[2] = sort_handle[3];
+                        sort_handle[3] = tmp1;
+                    } else {
+                        sort_handle[2] = tmp1;
+                        //sort_handle[3] = sort_handle[3];
+                    }
+                }
+            } else {
+                //sort_handle[0] = sort_handle[0];
+                let tmp1 = sort_handle[1];
+                if aabb_sizes[tmp1] < aabb_sizes[sort_handle[2]] {
+                    sort_handle[1] = sort_handle[2];
+                    if aabb_sizes[tmp1] < aabb_sizes[sort_handle[3]] {
+                        sort_handle[2] = sort_handle[3];
+                        sort_handle[3] = tmp1;
+                    } else {
+                        sort_handle[2] = tmp1;
+                        //sort_handle[3] = sort_handle[3];
+                    }
+                } else {
+                    //sort_handle[1] = tmp1;
+                    //sort_handle[2] = sort_handle[2];
+                    //sort_handle[3] = sort_handle[3];
+                }
+            }
+
+            let handles = [first_handle, second_handle, third_handle, fourth_handle];
+            let handle_aabbs = [&first_aabb, &second_aabb, &third_aabb, &fourth_aabb];
+
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
-                    &first_aabb,
-                    &second_aabb,
-                    &third_aabb,
-                    &fourth_aabb,
+                    handle_aabbs[sort_handle[0]],
+                    handle_aabbs[sort_handle[1]],
+                    handle_aabbs[sort_handle[2]],
+                    handle_aabbs[sort_handle[3]],
                 ]),
-                child: [first_handle, second_handle, third_handle, fourth_handle],
+                child: [
+                    handles[sort_handle[0]],
+                    handles[sort_handle[1]],
+                    handles[sort_handle[2]],
+                    handles[sort_handle[3]],
+                ],
                 this_node_has_hitable: false,
                 max_childs: 4,
             };
@@ -490,7 +559,7 @@ impl Hitable for BvhTree {
                 }
 
                 if aabb_result[3] == true {
-                    current_pos -= 1;
+                    current_pos = current_bvh_node.child[3];
                     continue;
                 }
             }
