@@ -435,16 +435,16 @@ fn build_bvh(
 
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
-                    handle_aabbs[sort_handle[0]],
-                    handle_aabbs[sort_handle[1]],
-                    handle_aabbs[sort_handle[2]],
                     handle_aabbs[sort_handle[3]],
+                    handle_aabbs[sort_handle[2]],
+                    handle_aabbs[sort_handle[1]],
+                    handle_aabbs[sort_handle[0]],
                 ]),
                 child: [
-                    handles[sort_handle[0]],
-                    handles[sort_handle[1]],
-                    handles[sort_handle[2]],
                     handles[sort_handle[3]],
+                    handles[sort_handle[2]],
+                    handles[sort_handle[1]],
+                    handles[sort_handle[0]],
                 ],
                 this_node_has_hitable: false,
                 max_childs: 4,
