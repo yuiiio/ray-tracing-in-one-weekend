@@ -115,10 +115,10 @@ pub fn aabb_hit_simd(
     let mut tmin = f64x4::splat(t_min);
     let mut tmax = f64x4::splat(t_max);
     for i in 0..3 {
-        let r_dir_div_splat = f64x4::splat(r_dir_div[i]);
-        let origin_splat = f64x4::splat(r_origin[i]);
-        let mut t0 = (Simd::from(qbox.bboxes[0][i]) - origin_splat) * r_dir_div_splat;
-        let mut t1 = (Simd::from(qbox.bboxes[1][i]) - origin_splat) * r_dir_div_splat;
+        let mut t0 = (Simd::from(qbox.bboxes[0][i]) - f64x4::splat(r_origin[i]))
+            * f64x4::splat(r_dir_div[i]);
+        let mut t1 = (Simd::from(qbox.bboxes[1][i]) - f64x4::splat(r_origin[i]))
+            * f64x4::splat(r_dir_div[i]);
 
         if r_dir_div[i].is_sign_negative() {
             swap(&mut t0, &mut t1);
