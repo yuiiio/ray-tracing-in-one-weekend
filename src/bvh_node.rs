@@ -321,59 +321,116 @@ fn build_bvh(
                 center_list,
             );
 
-            // handle_a split
-            let mut handle_2: Vec<usize> = handle_a.to_owned();
-            let mut handle_3: Vec<usize> = handle_a.to_owned();
-            let (handle_c, handle_d, pre_sort_axis_a) = split_heuristic(
-                hitable_list,
-                handle_a,
-                &mut handle_2,
-                &mut handle_3,
-                &pre_sort_axis,
-                center_list,
-            );
+            const INVALID_HANDLE: usize = 0;
+            const INVALID_AABB: Aabb = Aabb {
+                b_min: [0.0; 3],
+                b_max: [0.0; 3],
+            }; // size = 0.0 so sorted last & never hit so, can ignore the INVALID_HANDLE
 
-            // handle_b split
-            let mut handle_2: Vec<usize> = handle_b.to_owned();
-            let mut handle_3: Vec<usize> = handle_b.to_owned();
-            let (handle_e, handle_f, pre_sort_axis_b) = split_heuristic(
-                hitable_list,
-                handle_b,
-                &mut handle_2,
-                &mut handle_3,
-                &pre_sort_axis,
-                center_list,
-            );
+            let (first_handle, second_handle, first_aabb, second_aabb, surrounding_box_a) =
+                if handle_a.len() <= 4 {
+                    let (first_handle, first_aabb) = build_bvh(
+                        hitable_list,
+                        handle_a,
+                        &pre_sort_axis,
+                        bvh_node_list,
+                        center_list,
+                    );
+                    (
+                        first_handle,
+                        INVALID_HANDLE,
+                        first_aabb.clone(),
+                        INVALID_AABB,
+                        first_aabb,
+                    )
+                } else {
+                    // handle_a split
+                    let mut handle_2: Vec<usize> = handle_a.to_owned();
+                    let mut handle_3: Vec<usize> = handle_a.to_owned();
+                    let (handle_c, handle_d, pre_sort_axis_a) = split_heuristic(
+                        hitable_list,
+                        handle_a,
+                        &mut handle_2,
+                        &mut handle_3,
+                        &pre_sort_axis,
+                        center_list,
+                    );
+                    let (first_handle, first_aabb) = build_bvh(
+                        hitable_list,
+                        handle_c,
+                        &pre_sort_axis_a,
+                        bvh_node_list,
+                        center_list,
+                    );
+                    let (second_handle, second_aabb) = build_bvh(
+                        hitable_list,
+                        handle_d,
+                        &pre_sort_axis_a,
+                        bvh_node_list,
+                        center_list,
+                    );
+                    let surrounding_box_a = surrounding_box(&first_aabb, &second_aabb);
+                    (
+                        first_handle,
+                        second_handle,
+                        first_aabb,
+                        second_aabb,
+                        surrounding_box_a,
+                    )
+                };
 
-            let (first_handle, first_aabb) = build_bvh(
-                hitable_list,
-                handle_c,
-                &pre_sort_axis_a,
-                bvh_node_list,
-                center_list,
-            );
-            let (second_handle, second_aabb) = build_bvh(
-                hitable_list,
-                handle_d,
-                &pre_sort_axis_a,
-                bvh_node_list,
-                center_list,
-            );
+            let (third_handle, fourth_handle, third_aabb, fourth_aabb, surrounding_box_b) =
+                if handle_b.len() <= 4 {
+                    let (third_handle, third_aabb) = build_bvh(
+                        hitable_list,
+                        handle_b,
+                        &pre_sort_axis,
+                        bvh_node_list,
+                        center_list,
+                    );
+                    (
+                        third_handle,
+                        INVALID_HANDLE,
+                        third_aabb.clone(),
+                        INVALID_AABB,
+                        third_aabb,
+                    )
+                } else {
+                    // handle_b split
+                    let mut handle_2: Vec<usize> = handle_b.to_owned();
+                    let mut handle_3: Vec<usize> = handle_b.to_owned();
+                    let (handle_e, handle_f, pre_sort_axis_b) = split_heuristic(
+                        hitable_list,
+                        handle_b,
+                        &mut handle_2,
+                        &mut handle_3,
+                        &pre_sort_axis,
+                        center_list,
+                    );
 
-            let (third_handle, third_aabb) = build_bvh(
-                hitable_list,
-                handle_e,
-                &pre_sort_axis_b,
-                bvh_node_list,
-                center_list,
-            );
-            let (fourth_handle, fourth_aabb) = build_bvh(
-                hitable_list,
-                handle_f,
-                &pre_sort_axis_b,
-                bvh_node_list,
-                center_list,
-            );
+                    let (third_handle, third_aabb) = build_bvh(
+                        hitable_list,
+                        handle_e,
+                        &pre_sort_axis_b,
+                        bvh_node_list,
+                        center_list,
+                    );
+                    let (fourth_handle, fourth_aabb) = build_bvh(
+                        hitable_list,
+                        handle_f,
+                        &pre_sort_axis_b,
+                        bvh_node_list,
+                        center_list,
+                    );
+                    let surrounding_box_b = surrounding_box(&third_aabb, &fourth_aabb);
+                    (
+                        third_handle,
+                        fourth_handle,
+                        third_aabb,
+                        fourth_aabb,
+                        surrounding_box_b,
+                    )
+                };
 
             //TODO: sort child node by box-size
             //  for fast traversal.
@@ -451,13 +508,7 @@ fn build_bvh(
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            (
-                pos,
-                surrounding_box(
-                    &surrounding_box(&first_aabb, &second_aabb),
-                    &surrounding_box(&third_aabb, &fourth_aabb),
-                ),
-            )
+            (pos, surrounding_box(&surrounding_box_a, &surrounding_box_b))
         }
     }
 }
