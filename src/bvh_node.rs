@@ -441,50 +441,23 @@ fn build_bvh(
                 aabb_size(&fourth_aabb),
             ];
             let mut sort_handle = [0, 1, 2, 3];
+            //sort4 network
             if aabb_sizes[0] < aabb_sizes[1] {
-                sort_handle[0] = 1;
-                sort_handle[1] = 0;
+                sort_handle.swap(0, 1);
             }
             if aabb_sizes[2] < aabb_sizes[3] {
-                sort_handle[2] = 3;
-                sort_handle[3] = 2;
+                sort_handle.swap(2, 3);
             }
+
             if aabb_sizes[sort_handle[0]] < aabb_sizes[sort_handle[2]] {
-                let tmp0 = sort_handle[0];
-                sort_handle[0] = sort_handle[2];
-                if aabb_sizes[tmp0] < aabb_sizes[sort_handle[3]] {
-                    let tmp1 = sort_handle[1];
-                    sort_handle[1] = sort_handle[3];
-                    sort_handle[2] = tmp0;
-                    sort_handle[3] = tmp1;
-                } else {
-                    let tmp1 = sort_handle[1];
-                    sort_handle[1] = tmp0;
-                    if aabb_sizes[tmp1] < aabb_sizes[sort_handle[3]] {
-                        sort_handle[2] = sort_handle[3];
-                        sort_handle[3] = tmp1;
-                    } else {
-                        sort_handle[2] = tmp1;
-                        //sort_handle[3] = sort_handle[3];
-                    }
-                }
-            } else {
-                //sort_handle[0] = sort_handle[0];
-                let tmp1 = sort_handle[1];
-                if aabb_sizes[tmp1] < aabb_sizes[sort_handle[2]] {
-                    sort_handle[1] = sort_handle[2];
-                    if aabb_sizes[tmp1] < aabb_sizes[sort_handle[3]] {
-                        sort_handle[2] = sort_handle[3];
-                        sort_handle[3] = tmp1;
-                    } else {
-                        sort_handle[2] = tmp1;
-                        //sort_handle[3] = sort_handle[3];
-                    }
-                } else {
-                    //sort_handle[1] = tmp1;
-                    //sort_handle[2] = sort_handle[2];
-                    //sort_handle[3] = sort_handle[3];
-                }
+                sort_handle.swap(0, 2);
+            }
+            if aabb_sizes[sort_handle[1]] < aabb_sizes[sort_handle[3]] {
+                sort_handle.swap(1, 3);
+            }
+
+            if aabb_sizes[sort_handle[1]] < aabb_sizes[sort_handle[2]] {
+                sort_handle.swap(1, 2);
             }
 
             let handles = [first_handle, second_handle, third_handle, fourth_handle];
