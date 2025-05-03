@@ -145,7 +145,7 @@ fn color(
                 let last_emitted = if a > 0.5 {
                     vec3_add(
                         &vec3_mul_b(&[0.0, 0.0, 0.0], 1.0 - a),
-                        &vec3_mul_b(&[0.5, 0.5, 0.5], a),
+                        &vec3_mul_b(&[0.5, 0.5, 0.7], a),
                     )
                 } else {
                     [0.0, 0.0, 0.0]
@@ -166,7 +166,7 @@ fn main() {
     let now = SystemTime::now();
     const OUTPUT_X: usize = 900;
     const OUTPUT_Y: usize = 900;
-    const NS: usize = 8; // x^2 / per pixel sample size;
+    const NS: usize = 16; // x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -182,7 +182,7 @@ fn main() {
     let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
     let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
-    let light_texture = texture_list.add_color_texture(ColorTexture::new([20.0, 15.0, 10.0]));
+    let light_texture = texture_list.add_color_texture(ColorTexture::new([3.0, 1.0, 1.0]));
     let magick_texture = texture_list.add_image_texture(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba8(),
     ));
@@ -289,8 +289,8 @@ fn main() {
     let earth_sphere = Sphere::new([500.0, 300.0, 100.0], 60.0, earth);
     obj_list.push(earth_sphere);
 
-    //let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
-    //obj_list.push(light_sphere.clone());
+    let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
+    obj_list.push(light_sphere.clone());
 
     let pana_list = obj_loader(
         None,
@@ -365,7 +365,7 @@ fn main() {
     //light_list.push(floor);
     light_list.push(outdoor_light);
     light_list.push(roof_light);
-    //light_list.push(light_sphere);
+    light_list.push(light_sphere);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
 
