@@ -24,7 +24,7 @@ pub struct BvhNode {
     qbox: QBoxes,
     child: [usize; 4],
     this_node_has_hitable: bool,
-    max_childs: usize,
+    //max_childs: usize,
 }
 
 fn dmerge(
@@ -197,6 +197,12 @@ fn aabb_size(aabb: &Aabb) -> f64 {
         * (aabb.b_max[2] - aabb.b_min[2])
 }
 
+const INVALID_HANDLE: usize = 0;
+const INVALID_AABB: Aabb = Aabb {
+    b_min: [0.0; 3],
+    b_max: [0.0; 3],
+}; // size = 0.0 so sorted last & never hit so, can ignore the INVALID_HANDLE
+
 // push bvh_node_list and return handle
 //
 // now allow non perfect balance tree.
@@ -222,13 +228,13 @@ fn build_bvh(
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
                     hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[0]].bounding_box(), //
-                    hitable_list[handle[0]].bounding_box(), //
-                    hitable_list[handle[0]].bounding_box(), // not important
+                    &INVALID_AABB,
+                    &INVALID_AABB,
+                    &INVALID_AABB,
                 ]),
-                child: [handle[0], 0, 0, 0],
+                child: [handle[0], INVALID_HANDLE, INVALID_HANDLE, INVALID_HANDLE],
                 this_node_has_hitable: true,
-                max_childs: 1,
+                //max_childs: 1,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -238,13 +244,13 @@ fn build_bvh(
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
                     hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[1]].bounding_box(), //
-                    hitable_list[handle[1]].bounding_box(), //
-                    hitable_list[handle[1]].bounding_box(), // not important
+                    hitable_list[handle[1]].bounding_box(),
+                    &INVALID_AABB,
+                    &INVALID_AABB,
                 ]),
-                child: [handle[0], handle[1], 0, 0],
+                child: [handle[0], handle[1], INVALID_HANDLE, INVALID_HANDLE],
                 this_node_has_hitable: true,
-                max_childs: 2,
+                //max_childs: 2,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -262,11 +268,11 @@ fn build_bvh(
                     hitable_list[handle[0]].bounding_box(),
                     hitable_list[handle[1]].bounding_box(),
                     hitable_list[handle[2]].bounding_box(),
-                    hitable_list[handle[2]].bounding_box(), // not important
+                    &INVALID_AABB,
                 ]),
-                child: [handle[0], handle[1], handle[2], 0],
+                child: [handle[0], handle[1], handle[2], INVALID_HANDLE],
                 this_node_has_hitable: true,
-                max_childs: 3,
+                //max_childs: 3,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -291,7 +297,7 @@ fn build_bvh(
                 ]),
                 child: [handle[0], handle[1], handle[2], handle[3]],
                 this_node_has_hitable: true,
-                max_childs: 4,
+                //max_childs: 4,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -320,12 +326,6 @@ fn build_bvh(
                 pre_sort_axis,
                 center_list,
             );
-
-            const INVALID_HANDLE: usize = 0;
-            const INVALID_AABB: Aabb = Aabb {
-                b_min: [0.0; 3],
-                b_max: [0.0; 3],
-            }; // size = 0.0 so sorted last & never hit so, can ignore the INVALID_HANDLE
 
             let (first_handle, second_handle, first_aabb, second_aabb, surrounding_box_a) =
                 if handle_a.len() <= 4 {
@@ -477,7 +477,7 @@ fn build_bvh(
                     handles[sort_handle[0]],
                 ],
                 this_node_has_hitable: false,
-                max_childs: 4,
+                //max_childs: 4,
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
@@ -514,7 +514,7 @@ impl BvhTree {
             },
             child: [0, 0, 0, 0],
             this_node_has_hitable: false,
-            max_childs: 4,
+            //max_childs: 4,
         }); // [0] dummy node; to actually node start at 1;
         dmerge_sort_wrap(&mut handle, AI_X, &aabb_center_list);
 
@@ -561,7 +561,7 @@ impl Hitable for BvhTree {
                 min_hit_t,
             );
             if current_bvh_node.this_node_has_hitable == true {
-                for i in 0..current_bvh_node.max_childs {
+                for i in 0..4 {
                     if aabb_result & (1 << i) == (1 << i) {
                         let child_obj = &self.hitable_list[current_bvh_node.child[i]];
                         if let Some(child_rec) = child_obj.hit(r, t_min, min_hit_t) {
