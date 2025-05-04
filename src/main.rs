@@ -37,6 +37,7 @@ use material::{Dielectric, DiffuseLight, Lambertian, MaterialList, Metal, Scatte
 use obj_loader::obj_loader;
 use onb::Onb;
 use pdf::{cosine_pdf_generate, cosine_pdf_value};
+use quotation::Rotation;
 use ray::Ray;
 use rectangle::{AxisType, Boxel, FlipNormals, Rect};
 use sphere::Sphere;
@@ -277,8 +278,7 @@ fn main() {
                 [165.0, 330.0, 165.0],
                 metal.clone(),
             )),
-            &[0.0, 1.0, 0.0],
-            15.0,
+            Rotation::new(15.0, &[0.0, 1.0, 0.0]),
         )),
         [265.0, 0.00, 295.0],
     );
@@ -326,12 +326,14 @@ fn main() {
         now1.elapsed().unwrap().as_secs_f64()
     );
 
+    let pana_rotation = Rotation::new(45.0, &[0.0, 1.0, 0.0]);
+
     let translated_pana_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(pana_bvh), &[0.0, 1.0, 0.0], 45.0)),
+        Box::new(Rotate::new(Box::new(pana_bvh), pana_rotation.clone())),
         [-50.0, 200.0, -150.0],
     );
     let translated_face_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(face_bvh), &[0.0, 1.0, 0.0], 45.0)),
+        Box::new(Rotate::new(Box::new(face_bvh), pana_rotation)),
         [-50.0, 200.0, -150.0],
     );
 

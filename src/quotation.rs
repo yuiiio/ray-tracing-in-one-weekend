@@ -9,9 +9,9 @@ pub struct Rotation {
 impl Rotation {
     pub fn new(degrees: f64, axis: &Vector3<f64>) -> Self {
         let axis = vec3_unit_vector_f64(axis); // to unit vector
-        let radians: f64 = degrees * core::f64::consts::PI / 180.0 / 2.0;
-        let cos = radians.cos();
-        let sin = radians.sin();
+        let radians_div2 = degrees.to_radians() / 2.0;
+        let cos = radians_div2.cos();
+        let sin = radians_div2.sin();
         let vec3 = vec3_mul_b(&axis, sin);
         let q = Qotation { w: cos, xyz: vec3 };
         let oq = Qotation {
@@ -19,6 +19,13 @@ impl Rotation {
             xyz: vec3_mul_b(&vec3, -1.0),
         };
         Rotation { q, oq }
+    }
+
+    pub fn get_revq(&self) -> Self {
+        Rotation {
+            q: self.oq.clone(),
+            oq: self.q.clone(),
+        }
     }
 
     pub fn rotate(&self, target: &Vector3<f64>) -> Vector3<f64> {

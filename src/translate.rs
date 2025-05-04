@@ -74,9 +74,8 @@ pub struct Rotate {
 }
 
 impl Rotate {
-    pub fn new(mut obj: Box<dyn Hitable + Send + Sync>, axis: &Vector3<f64>, angle: f64) -> Self {
-        let quat = Rotation::new(angle, axis);
-        let revq = Rotation::new(-angle, axis);
+    pub fn new(mut obj: Box<dyn Hitable + Send + Sync>, quat: Rotation) -> Self {
+        let revq = quat.get_revq();
 
         // let found boundingbox to enough include rotate-obj
 
