@@ -573,12 +573,19 @@ impl Hitable for BvhTree {
             } else {
                 // this node has other nodes
                 if aabb_result[0] == true {
+                    if aabb_result[1..3] == [false, false, false] {
+                        current_pos = current_bvh_node.child[0];
+                        continue;
+                    }
                     return_stack.push(current_bvh_node.child[0]);
                 }
                 if aabb_result[1] == true {
+                    if aabb_result[2..3] == [false, false] {
+                        current_pos = current_bvh_node.child[1];
+                        continue;
+                    }
                     return_stack.push(current_bvh_node.child[1]);
                 }
-                // push&pop cost is more than one if state
                 if aabb_result[2] == true {
                     if aabb_result[3] == false {
                         current_pos = current_bvh_node.child[2];
