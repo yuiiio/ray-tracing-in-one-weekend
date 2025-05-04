@@ -580,13 +580,11 @@ impl Hitable for BvhTree {
                 }
                 // push&pop cost is more than one if state
                 if aabb_result[2] == true {
-                    if aabb_result[3] == true {
-                        return_stack.push(current_bvh_node.child[2]);
-                        current_pos = current_bvh_node.child[3];
+                    if aabb_result[3] == false {
+                        current_pos = current_bvh_node.child[2];
                         continue;
                     }
-                    current_pos = current_bvh_node.child[2];
-                    continue;
+                    return_stack.push(current_bvh_node.child[2]);
                 }
 
                 if aabb_result[3] == true {
