@@ -562,7 +562,7 @@ impl Hitable for BvhTree {
             );
             if current_bvh_node.this_node_has_hitable == true {
                 for i in 0..current_bvh_node.max_childs {
-                    if aabb_result[i] == true {
+                    if aabb_result & (1 << i) == (1 << i) {
                         let child_obj = &self.hitable_list[current_bvh_node.child[i]];
                         if let Some(child_rec) = child_obj.hit(r, t_min, min_hit_t) {
                             min_hit_t = child_rec.t;
@@ -572,29 +572,29 @@ impl Hitable for BvhTree {
                 }
             } else {
                 // this node has other nodes
-                if aabb_result[0] == true {
-                    if aabb_result[1..3] == [false, false, false] {
+                //aabb_result.leading_zeros()
+                if aabb_result & (1 << 0) == (1 << 0) {
+                    if aabb_result & 0b1110 == 0 {
                         current_pos = current_bvh_node.child[0];
                         continue;
                     }
                     return_stack.push(current_bvh_node.child[0]);
                 }
-                if aabb_result[1] == true {
-                    if aabb_result[2..3] == [false, false] {
+                if aabb_result & (1 << 1) == (1 << 1) {
+                    if aabb_result & 0b1100 == 0 {
                         current_pos = current_bvh_node.child[1];
                         continue;
                     }
                     return_stack.push(current_bvh_node.child[1]);
                 }
-                if aabb_result[2] == true {
-                    if aabb_result[3] == false {
+                if aabb_result & (1 << 2) == (1 << 2) {
+                    if aabb_result & 0b1000 == 0 {
                         current_pos = current_bvh_node.child[2];
                         continue;
                     }
                     return_stack.push(current_bvh_node.child[2]);
                 }
-
-                if aabb_result[3] == true {
+                if aabb_result & (1 << 3) == (1 << 3) {
                     current_pos = current_bvh_node.child[3];
                     continue;
                 }

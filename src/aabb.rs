@@ -111,7 +111,7 @@ pub fn aabb_hit_simd(
     r_dir_div: &Vector3<f64>,
     t_min: f64,
     t_max: f64,
-) -> [bool; 4] {
+) -> u64 {
     let mut tmin = f64x4::splat(t_min);
     let mut tmax = f64x4::splat(t_max);
     for i in 0..3 {
@@ -129,7 +129,7 @@ pub fn aabb_hit_simd(
     }
 
     // save result as Mask<i64, 4> for each sign
-    tmax.simd_ge(tmin).to_array()
+    tmax.simd_ge(tmin).to_bitmask()
 }
 
 mod test {
