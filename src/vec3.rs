@@ -1,5 +1,5 @@
 use core::f64;
-use core::ops::{Add, Div, Mul, Sub};
+use core::ops::{Add, Mul, Sub};
 
 pub type Vector3<T> = [T; 3];
 

@@ -1,4 +1,3 @@
-use crate::ray::Ray;
 use crate::utils::{max, min};
 use crate::vec3::Vector3;
 //use core::array;
@@ -135,6 +134,7 @@ pub fn aabb_hit_simd(
 mod test {
     #![allow(unused_imports)]
     use super::*;
+    use crate::ray::Ray;
 
     #[test]
     fn roop_let_test() {
