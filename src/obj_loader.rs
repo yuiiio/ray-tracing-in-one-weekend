@@ -65,9 +65,13 @@ pub fn obj_loader(
         let v0 = vertex[i0 - 1];
         let v1 = vertex[i1 - 1];
         let v2 = vertex[i2 - 1];
-
-        let triangle = Triangle::new(v0, v2, v1, material_handle.clone());
-        hitablelist.push(triangle);
+        //assert!(v0 != v1 && v1 != v2 && v2 != v0)
+        //// same v0, v1, v2 cause NaN in
+        // Triangle::new(at normalize norm_vec / 0)
+        if v0 != v1 && v1 != v2 && v2 != v0 {
+            let triangle = Triangle::new(v0, v2, v1, material_handle.clone());
+            hitablelist.push(triangle);
+        }
     }
 
     hitablelist

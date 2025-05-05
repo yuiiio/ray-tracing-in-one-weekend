@@ -29,10 +29,8 @@ where
 
 #[allow(dead_code)]
 #[inline(always)]
-pub fn vec3_div<T>(a: &Vector3<T>, b: &Vector3<T>) -> Vector3<T>
-where
-    T: Copy + Div<T, Output = T>,
-{
+pub fn vec3_div_f64(a: &Vector3<f64>, b: &Vector3<f64>) -> Vector3<f64> {
+    // assert!(b[0] != 0.0 && b[1] != 0.0 && b[2] != 0.0);
     [a[0] / b[0], a[1] / b[1], a[2] / b[2]]
 }
 
@@ -84,6 +82,7 @@ where
 #[inline(always)]
 pub fn vec3_unit_vector_f64(a: &Vector3<f64>) -> Vector3<f64> {
     let b: f64 = vec3_length_f64(a);
+    //assert!(b != 0.0);
     let c = 1.0 / b;
     vec3_mul_b(a, c)
 }
