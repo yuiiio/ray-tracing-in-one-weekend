@@ -93,11 +93,11 @@ impl Rotate {
 }
 
 impl Hitable for Rotate {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let origin = self.revq.rotate(&r.origin);
-        let direction = self.revq.rotate(&r.direction);
-        let r = Ray { origin, direction };
-        match self.obj.hit(&r, t_min, t_max) {
+    fn hit(&self, input_ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let origin = self.revq.rotate(&input_ray.origin);
+        let direction = self.revq.rotate(&input_ray.direction);
+        let revq_r = Ray { origin, direction };
+        match self.obj.hit(&revq_r, t_min, t_max) {
             Some(hit) => {
                 let normal = match hit.onb_uv {
                     Some(_onb_uv) => hit.normal, // norm and onb is static(eg. rect, triangle)
@@ -107,7 +107,7 @@ impl Hitable for Rotate {
                 Some(HitRecord {
                     t: hit.t,
                     uv: hit.uv,
-                    p: self.quat.rotate(&hit.p),
+                    p: input_ray.point_at_parameter(hit.t), //self.quat.rotate(&hit.p),
                     normal,
                     mat_ptr: hit.mat_ptr,
                     onb_uv: hit.onb_uv,
