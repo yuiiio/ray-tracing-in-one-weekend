@@ -27,6 +27,11 @@ where
     [a[0] * b[0], a[1] * b[1], a[2] * b[2]]
 }
 
+#[inline(always)]
+pub fn vec3_a_abs_mul_f64(a: &Vector3<f64>, b: &Vector3<f64>) -> Vector3<f64> {
+    [a[0].abs() * b[0], a[1].abs() * b[1], a[2].abs() * b[2]]
+}
+
 #[allow(dead_code)]
 #[inline(always)]
 pub fn vec3_div_f64(a: &Vector3<f64>, b: &Vector3<f64>) -> Vector3<f64> {

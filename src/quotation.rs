@@ -29,7 +29,7 @@ pub fn matrix_dot_3x4(
 pub struct Rotation {
     q: Qotation,
     oq: Qotation,
-    left_side_matrix: [Vector3<f64>; 3],
+    pub left_side_matrix: [Vector3<f64>; 3],
 }
 
 impl Rotation {
