@@ -82,11 +82,10 @@ impl Hitable for HitableList {
         let mut b_min = [core::f64::MAX; 3];
         let mut b_max = [core::f64::MIN; 3];
         for i in 0..self.hitable_list.len() {
+            let rotate_recalculated_aabb = self.hitable_list[i].bounding_box_with_rotate(quat);
             for axis in 0..3 {
-                b_min[axis] = b_min[axis]
-                    .min(self.hitable_list[i].bounding_box_with_rotate(quat).b_min[axis]);
-                b_max[axis] = b_max[axis]
-                    .max(self.hitable_list[i].bounding_box_with_rotate(quat).b_max[axis]);
+                b_min[axis] = b_min[axis].min(rotate_recalculated_aabb.b_min[axis]);
+                b_max[axis] = b_max[axis].max(rotate_recalculated_aabb.b_max[axis]);
             }
         }
         Aabb { b_min, b_max }
