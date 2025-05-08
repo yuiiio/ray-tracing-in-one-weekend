@@ -19,7 +19,7 @@ pub struct Triangle {
     mat_ptr: MaterialHandle,
     e1: Vector3<f64>,
     e2: Vector3<f64>,
-    n: Vector3<f64>, // cross(e2, e1) so size is not normal
+    n_cross_e2_e1: Vector3<f64>, // cross(e2, e1) so size is not normal
     n_norm: Vector3<f64>,
     area: f64,
     aabb_box: Aabb,
@@ -35,8 +35,8 @@ impl Triangle {
     ) -> Self {
         let e1 = vec3_sub(&v1, &v0);
         let e2 = vec3_sub(&v2, &v0);
-        let n = cross(&e2, &e1);
-        let area: f64 = vec3_length_f64(&n) / 2.0;
+        let n_cross_e2_e1 = cross(&e2, &e1);
+        let area: f64 = vec3_length_f64(&n_cross_e2_e1) / 2.0;
 
         let b_min = [
             min(min(v0[0], v1[0]), v2[0]),
@@ -50,7 +50,7 @@ impl Triangle {
         ];
         let aabb_box = Aabb { b_min, b_max };
 
-        let n_norm = vec3_unit_vector_f64(&n);
+        let n_norm = vec3_unit_vector_f64(&n_cross_e2_e1);
         let onb = Onb::build_from_w(&n_norm);
         Triangle {
             v0,
@@ -59,7 +59,7 @@ impl Triangle {
             mat_ptr,
             e1,
             e2,
-            n,
+            n_cross_e2_e1,
             n_norm,
             area,
             aabb_box,
@@ -67,36 +67,44 @@ impl Triangle {
         }
     }
 }
+// MEMO:
+// Triangle (v0, v1, v2)
+// in-triangle-point = v0 + (v1 - v0) * u + (v2 - v0) * v;
+// conditions: u,v >= 0 && u,v <= 1 && u + v <= 1
+//
+// 1-a  v2
+//     /   \        (because if choose (v1-v0):ratio u,=> (v2-v0):ratio a=u strict (v2-v0):ratio v <= (1-a = 1-u))
+//   a/      \(v1-v0)*u + (v2-v0)*(1-u) // in ratio: a = u
+//   / \    /  \
+//  /    \ /     \
+// v0-----u-------v1
 
+// ray_origin + ray_direction*t = v0 + (v1 - v0)*u + (v2 - v0)*v;
+// e1 = (v1 - v0); e2 = (v2 - v0);
+// ray_origin - v0 = [ray_direction, e1, e2] dot (t, u, v);
+//
 impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let d = ray.direction;
-        let lal = vec3_dot(&d, &self.n);
+        let lal = vec3_dot(&ray.direction, &self.n_cross_e2_e1);
         if lal == 0.0 {
             return None;
         }
         let nor_lal: f64 = 1.0 / lal;
 
-        let r = vec3_sub(&ray.origin, &self.v0);
-        let m = cross(&d, &r);
+        let v0_to_origin_dir = vec3_sub(&ray.origin, &self.v0);
+        let m = cross(&ray.direction, &v0_to_origin_dir);
 
         let v = nor_lal * vec3_dot(&self.e1, &m);
-        if v.is_sign_negative() || v > 1.0 {
+
+        let nor_lal_minus = -1.0 * nor_lal;
+
+        let u = nor_lal_minus * vec3_dot(&self.e2, &m);
+
+        if u + v > 1.0 || v.is_sign_negative() || u.is_sign_negative() {
             return None;
         }
 
-        let nor_lal = -1.0 * nor_lal;
-
-        let u = nor_lal * vec3_dot(&self.e2, &m);
-        if u.is_sign_negative() || u > 1.0 {
-            return None;
-        }
-
-        if u + v > 1.0 {
-            return None;
-        }
-
-        let t = nor_lal * vec3_dot(&r, &self.n);
+        let t = nor_lal_minus * vec3_dot(&v0_to_origin_dir, &self.n_cross_e2_e1);
         if t < t_min || t > t_max {
             return None;
         }
