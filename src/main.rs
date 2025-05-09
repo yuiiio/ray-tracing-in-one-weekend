@@ -298,16 +298,15 @@ fn main() {
         white.clone(),
         80.0,
     );
-    // pana-wear is much-overwrapped to pana_list, so merge bvh
+    // pana-wear,face is much-overwrapped to pana_list, so merge bvh
     let pana_list = obj_loader(
         Some(pana_list),
         &mut File::open("./pana-wear.obj").unwrap(),
         white.clone(),
         80.0,
     );
-    // pana_face is less-overwrapped to pana_list, so split to another bvh
-    let pana_face = obj_loader(
-        None,
+    let pana_list = obj_loader(
+        Some(pana_list),
         &mut File::open("./pana-face.obj").unwrap(),
         white.clone(),
         80.0,
@@ -320,7 +319,6 @@ fn main() {
 
     let now1 = SystemTime::now();
     let pana_bvh = BvhTree::new(pana_list);
-    let face_bvh = BvhTree::new(pana_face);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -332,13 +330,8 @@ fn main() {
         Box::new(Rotate::new(Box::new(pana_bvh), pana_rotation.clone())),
         [-50.0, 200.0, -150.0],
     );
-    let translated_face_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(face_bvh), pana_rotation)),
-        [-50.0, 200.0, -150.0],
-    );
 
     obj_list.push(translated_pana_bvh.clone());
-    obj_list.push(translated_face_bvh.clone());
 
     /*
     let glass_box = obj_loader(&mut File::open("./box.obj").unwrap(), glass);
