@@ -279,8 +279,13 @@ impl Hitable for Boxel {
         let mut rec: Option<HitRecord> = None;
 
         let r_dir_div = r.get_inv_dir();
-        for i in 0..6 {
-            if let Some(hit_rec) = self.rect[i].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
+        for i in 0..3 {
+            if let Some(hit_rec) = self.rect[i * 2].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
+                hit_min_t = hit_rec.t;
+                hit_count += 1;
+                rec = Some(hit_rec);
+            }
+            if let Some(hit_rec) = self.rect[i * 2 + 1].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
                 hit_min_t = hit_rec.t;
                 hit_count += 1;
                 rec = Some(hit_rec);
