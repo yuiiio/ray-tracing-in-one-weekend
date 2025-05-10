@@ -284,19 +284,50 @@ impl Boxel {
 
 impl Hitable for Boxel {
     // needs to check from out-side and inside(eg: glass) rays.
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+    fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit_min_t = t_max;
         let mut hit_count: usize = 0;
         let mut rec: Option<HitRecord> = None;
 
-        let r_dir_div = r.get_inv_dir();
+        let r_dir_div = ray.get_inv_dir();
+        /*
+        if r_dir_div[0] > 0.0 {
+            if let Some(hit_rec) = self.rect[5].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
+                return Some(hit_rec);
+            }
+        } else {
+            if let Some(hit_rec) = self.rect[2].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
+                return Some(hit_rec);
+            }
+        }
+        if r_dir_div[1] > 0.0 {
+            if let Some(hit_rec) = self.rect[4].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
+                return Some(hit_rec);
+            }
+        } else {
+            if let Some(hit_rec) = self.rect[1].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
+                return Some(hit_rec);
+            }
+        }
+        if r_dir_div[2] > 0.0 {
+            if let Some(hit_rec) = self.rect[3].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
+                return Some(hit_rec);
+            }
+        } else {
+            if let Some(hit_rec) = self.rect[0].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
+                return Some(hit_rec);
+            }
+        }
+        */
+
         for i in 0..3 {
-            if let Some(hit_rec) = self.rect[i * 2].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
+            if let Some(hit_rec) = self.rect[i * 2].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
                 hit_min_t = hit_rec.t;
                 hit_count += 1;
                 rec = Some(hit_rec);
             }
-            if let Some(hit_rec) = self.rect[i * 2 + 1].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
+            if let Some(hit_rec) = self.rect[i * 2 + 1].rect_hit(ray, &r_dir_div, t_min, hit_min_t)
+            {
                 hit_min_t = hit_rec.t;
                 hit_count += 1;
                 rec = Some(hit_rec);
@@ -323,17 +354,17 @@ impl Hitable for Boxel {
         {
             const DIV6: f64 = 1.0 / 6.0;
             let mut pdf_sum = 0.0;
-            if ray.origin[0] > 0.0 {
+            if r_dir_div[0] > 0.0 {
                 pdf_sum += self.rect[5].rect_pdf_value(ray, &r_dir_div);
             } else {
                 pdf_sum += self.rect[2].rect_pdf_value(ray, &r_dir_div);
             }
-            if ray.origin[1] > 0.0 {
+            if r_dir_div[1] > 0.0 {
                 pdf_sum += self.rect[4].rect_pdf_value(ray, &r_dir_div);
             } else {
                 pdf_sum += self.rect[1].rect_pdf_value(ray, &r_dir_div);
             }
-            if ray.origin[2] > 0.0 {
+            if r_dir_div[2] > 0.0 {
                 pdf_sum += self.rect[3].rect_pdf_value(ray, &r_dir_div);
             } else {
                 pdf_sum += self.rect[0].rect_pdf_value(ray, &r_dir_div);
