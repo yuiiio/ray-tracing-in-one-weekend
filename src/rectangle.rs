@@ -6,7 +6,7 @@ use crate::material::MaterialHandle;
 use crate::onb::Onb;
 use crate::quotation::Rotation;
 use crate::ray::Ray;
-use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
+use crate::vec3::{vec3_add, vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -199,6 +199,7 @@ impl Hitable for Rect {
 pub struct Boxel {
     rect: [Rect; 6],
     aabb_box: Aabb,
+    center: [f64; 3],
 }
 
 impl Boxel {
@@ -267,8 +268,13 @@ impl Boxel {
                 true,
             ),
         ];
+        let center = vec3_mul_b(&vec3_add(&b_min, &b_max), 0.5);
         let aabb_box = Aabb { b_min, b_max };
-        Boxel { rect, aabb_box }
+        Boxel {
+            rect,
+            aabb_box,
+            center,
+        }
     }
 }
 
@@ -336,8 +342,13 @@ impl Hitable for Boxel {
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
-        let random_handle = (rand * 6.0) as usize;
-        self.rect[random_handle].random(o)
+        let o_dir = vec3_sub(&self.center, o);
+        let random_handle = (rand * 3.0) as usize;
+        if o_dir[random_handle] > 0.0 {
+            self.rect[5 - random_handle].random(o)
+        } else {
+            self.rect[2 - random_handle].random(o)
+        }
     }
 
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
