@@ -204,6 +204,7 @@ pub struct Boxel {
     rect: [Rect; 6],
     aabb_box: Aabb,
     center: [f64; 3],
+    mat_ptr: MaterialHandle,
 }
 
 impl Boxel {
@@ -278,6 +279,7 @@ impl Boxel {
             rect,
             aabb_box,
             center,
+            mat_ptr,
         }
     }
 }
@@ -285,7 +287,45 @@ impl Boxel {
 impl Hitable for Boxel {
     // needs to check from out-side and inside(eg: glass) rays.
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        let mut tmin = t_min;
+        let mut tmax = t_max;
+
+        let p0 = self.aabb_box.b_min;
+        let p1 = self.aabb_box.b_max;
         let r_dir_div = ray.get_inv_dir();
+        let mut norm_dir = [0.0; 3];
+        for i in 0..3 {
+            let mut t0 = (p0[i] - ray.origin[i]) * r_dir_div[i];
+            let mut t1 = (p1[i] - ray.origin[i]) * r_dir_div[i];
+
+            let mut flip = -1.0;
+            if r_dir_div[i].is_sign_negative() {
+                core::mem::swap(&mut t0, &mut t1);
+                flip = 1.0;
+            }
+            if tmin < t0 {
+                let mut norm_tmp = [0.0; 3];
+                norm_tmp[i] = flip;
+                norm_dir = norm_tmp;
+                tmin = t0;
+            }
+            tmax = tmax.min(t1);
+        }
+        if tmax < tmin {
+            return None;
+        }
+
+        let p = ray.point_at_parameter(tmin);
+        Some(HitRecord {
+            t: tmin,
+            uv: (0.0, 0.0), // TODO
+            p,
+            normal: norm_dir,
+            mat_ptr: &self.mat_ptr,
+            onb_uv: None, //TODO //Some(&self.onb_uv),
+        })
+
+        /*
         let mut rect_index_0 = [5, 4, 3];
         let mut rect_index_1 = [2, 1, 0];
 
@@ -308,8 +348,8 @@ impl Hitable for Boxel {
                 return Some(hit_rec);
             }
         }
-
         None
+        */
     }
 
     fn bounding_box(&self) -> &Aabb {
