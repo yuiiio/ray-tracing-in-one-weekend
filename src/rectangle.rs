@@ -98,15 +98,16 @@ impl Rect {
 
 // Rect hit is valid even ray direction.
 // Rect != actual Surface.
-impl Hitable for Rect {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+
+impl Rect {
+    fn rect_hit(&self, r: &Ray, r_dir_div: &[f64; 3], t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (xi, yi, zi): (usize, usize, usize) = match self.axis {
             AxisType::Kxy => (0, 1, 2),
             AxisType::Kxz => (0, 2, 1),
             AxisType::Kyz => (1, 2, 0),
         };
 
-        let t = (self.k - r.origin[zi]) / r.direction[zi];
+        let t = (self.k - r.origin[zi]) * r_dir_div[zi];
         if t < t_min || t > t_max {
             return None;
         }
@@ -137,6 +138,12 @@ impl Hitable for Rect {
             mat_ptr: &self.mat_ptr,
             onb_uv: Some(&self.onb_uv),
         })
+    }
+}
+
+impl Hitable for Rect {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        self.rect_hit(r, &r.get_inv_dir(), t_min, t_max)
     }
 
     fn bounding_box(&self) -> &Aabb {
@@ -201,11 +208,15 @@ impl FlipNormals {
             onb_uv: (onb.u, onb.v),
         }
     }
-}
 
-impl Hitable for FlipNormals {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        match self.shape.hit(r, t_min, t_max) {
+    fn flip_shape_hit(
+        &self,
+        r: &Ray,
+        r_dir_div: &[f64; 3],
+        t_min: f64,
+        t_max: f64,
+    ) -> Option<HitRecord> {
+        match self.shape.rect_hit(r, r_dir_div, t_min, t_max) {
             Some(hit) => Some(HitRecord {
                 t: hit.t,
                 uv: hit.uv,
@@ -216,6 +227,12 @@ impl Hitable for FlipNormals {
             }),
             None => None,
         }
+    }
+}
+
+impl Hitable for FlipNormals {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
+        self.flip_shape_hit(r, &r.get_inv_dir(), t_min, t_max)
     }
 
     fn bounding_box(&self) -> &Aabb {
@@ -322,13 +339,16 @@ impl Hitable for Boxel {
         let mut hit_min_t = t_max;
         let mut hit_count: usize = 0;
         let mut rec: Option<HitRecord> = None;
+
+        let r_dir_div = r.get_inv_dir();
         for i in 0..3 {
-            if let Some(hit_rec) = self.rect[i].hit(r, t_min, hit_min_t) {
+            if let Some(hit_rec) = self.rect[i].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
                 hit_min_t = hit_rec.t;
                 hit_count += 1;
                 rec = Some(hit_rec);
             }
-            if let Some(hit_rec) = self.flip_rect[i].hit(r, t_min, hit_min_t) {
+            if let Some(hit_rec) = self.flip_rect[i].flip_shape_hit(r, &r_dir_div, t_min, hit_min_t)
+            {
                 hit_min_t = hit_rec.t;
                 hit_count += 1;
                 rec = Some(hit_rec);
