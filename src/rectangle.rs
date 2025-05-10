@@ -44,9 +44,10 @@ impl Rect {
         k: f64,
         axis: AxisType,
         mat_ptr: MaterialHandle,
+        flip_normal: bool,
     ) -> Self {
         let area: f64 = (x1 - x0) * (y1 - y0);
-        let (aabb_box, normal) = match axis {
+        let (aabb_box, mut normal) = match axis {
             AxisType::Kxy => (
                 Aabb {
                     b_min: [x0, y0, k - 0.0001],
@@ -69,6 +70,9 @@ impl Rect {
                 [1.0, 0.0, 0.0],
             ),
         };
+        if flip_normal == true {
+            normal = vec3_mul_b(&normal, -1.0);
+        }
         let width = x1 - x0;
         let height = y1 - y0;
         let nor_width = 1.0 / (x1 - x0);
@@ -192,74 +196,8 @@ impl Hitable for Rect {
 }
 
 #[derive(Clone)]
-pub struct FlipNormals {
-    shape: Rect,
-    normal: Vector3<f64>,
-    onb_uv: (Vector3<f64>, Vector3<f64>),
-}
-
-impl FlipNormals {
-    pub fn new(shape: Rect) -> Self {
-        let normal = vec3_mul_b(&shape.normal, -1.0);
-        let onb = Onb::build_from_w(&normal);
-        FlipNormals {
-            shape,
-            normal,
-            onb_uv: (onb.u, onb.v),
-        }
-    }
-
-    fn flip_shape_hit(
-        &self,
-        r: &Ray,
-        r_dir_div: &[f64; 3],
-        t_min: f64,
-        t_max: f64,
-    ) -> Option<HitRecord> {
-        match self.shape.rect_hit(r, r_dir_div, t_min, t_max) {
-            Some(hit) => Some(HitRecord {
-                t: hit.t,
-                uv: hit.uv,
-                p: hit.p,
-                normal: self.normal,
-                mat_ptr: hit.mat_ptr,
-                onb_uv: Some(&self.onb_uv),
-            }),
-            None => None,
-        }
-    }
-}
-
-impl Hitable for FlipNormals {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        self.flip_shape_hit(r, &r.get_inv_dir(), t_min, t_max)
-    }
-
-    fn bounding_box(&self) -> &Aabb {
-        self.shape.bounding_box()
-    }
-
-    fn pdf_value(&self, ray: &Ray) -> f64 {
-        self.shape.pdf_value(ray)
-    }
-
-    fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        self.shape.random(o)
-    }
-
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
-        self.shape.rotate_onb(quat);
-
-        self.normal = vec3_mul_b(&self.shape.normal, -1.0);
-        let onb = Onb::build_from_w(&self.normal);
-        self.onb_uv = (onb.u, onb.v);
-    }
-}
-
-#[derive(Clone)]
 pub struct Boxel {
-    rect: [Rect; 3],
-    flip_rect: [FlipNormals; 3],
+    rect: [Rect; 6],
     aabb_box: Aabb,
 }
 
@@ -267,7 +205,7 @@ impl Boxel {
     pub fn new(p0: Vector3<f64>, p1: Vector3<f64>, mat_ptr: MaterialHandle) -> Self {
         let b_min = p0;
         let b_max = p1;
-        let rect: [Rect; 3] = [
+        let rect: [Rect; 6] = [
             Rect::new(
                 p0[0],
                 p1[0],
@@ -276,6 +214,7 @@ impl Boxel {
                 p1[2],
                 AxisType::Kxy,
                 mat_ptr.clone(),
+                false,
             ),
             Rect::new(
                 p0[0],
@@ -285,6 +224,7 @@ impl Boxel {
                 p1[1],
                 AxisType::Kxz,
                 mat_ptr.clone(),
+                false,
             ),
             Rect::new(
                 p0[1],
@@ -294,10 +234,9 @@ impl Boxel {
                 p1[0],
                 AxisType::Kyz,
                 mat_ptr.clone(),
+                false,
             ),
-        ];
-        let flip_rect: [FlipNormals; 3] = [
-            FlipNormals::new(Rect::new(
+            Rect::new(
                 p0[0],
                 p1[0],
                 p0[1],
@@ -305,8 +244,9 @@ impl Boxel {
                 p0[2],
                 AxisType::Kxy,
                 mat_ptr.clone(),
-            )),
-            FlipNormals::new(Rect::new(
+                true,
+            ),
+            Rect::new(
                 p0[0],
                 p1[0],
                 p0[2],
@@ -314,8 +254,9 @@ impl Boxel {
                 p0[1],
                 AxisType::Kxz,
                 mat_ptr.clone(),
-            )),
-            FlipNormals::new(Rect::new(
+                true,
+            ),
+            Rect::new(
                 p0[1],
                 p1[1],
                 p0[2],
@@ -323,14 +264,11 @@ impl Boxel {
                 p0[0],
                 AxisType::Kyz,
                 mat_ptr.clone(),
-            )),
+                true,
+            ),
         ];
         let aabb_box = Aabb { b_min, b_max };
-        Boxel {
-            rect,
-            flip_rect,
-            aabb_box,
-        }
+        Boxel { rect, aabb_box }
     }
 }
 
@@ -341,14 +279,8 @@ impl Hitable for Boxel {
         let mut rec: Option<HitRecord> = None;
 
         let r_dir_div = r.get_inv_dir();
-        for i in 0..3 {
+        for i in 0..6 {
             if let Some(hit_rec) = self.rect[i].rect_hit(r, &r_dir_div, t_min, hit_min_t) {
-                hit_min_t = hit_rec.t;
-                hit_count += 1;
-                rec = Some(hit_rec);
-            }
-            if let Some(hit_rec) = self.flip_rect[i].flip_shape_hit(r, &r_dir_div, t_min, hit_min_t)
-            {
                 hit_min_t = hit_rec.t;
                 hit_count += 1;
                 rec = Some(hit_rec);
@@ -374,9 +306,9 @@ impl Hitable for Boxel {
             (self.rect[0].pdf_value(ray)
                 + self.rect[1].pdf_value(ray)
                 + self.rect[2].pdf_value(ray)
-                + self.flip_rect[0].pdf_value(ray)
-                + self.flip_rect[1].pdf_value(ray)
-                + self.flip_rect[2].pdf_value(ray))
+                + self.rect[3].pdf_value(ray)
+                + self.rect[4].pdf_value(ray)
+                + self.rect[5].pdf_value(ray))
                 * DIV6
         } else {
             0.0
@@ -386,19 +318,13 @@ impl Hitable for Boxel {
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
-        let random_handle = (rand * 3.0) as usize;
-        let rand2: f64 = rng.gen();
-        if rand2 < 0.5 {
-            self.rect[random_handle].random(o)
-        } else {
-            self.flip_rect[random_handle].random(o)
-        }
+        let random_handle = (rand * 6.0) as usize;
+        self.rect[random_handle].random(o)
     }
 
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
-        for i in 0..3 {
+        for i in 0..6 {
             self.rect[i].rotate_onb(quat);
-            self.flip_rect[i].rotate_onb(quat);
         }
     }
 }

@@ -39,7 +39,7 @@ use onb::Onb;
 use pdf::{cosine_pdf_generate, cosine_pdf_value};
 use quotation::Rotation;
 use ray::Ray;
-use rectangle::{AxisType, Boxel, FlipNormals, Rect};
+use rectangle::{AxisType, Boxel, Rect};
 use sphere::Sphere;
 use texture::{ColorTexture, ImageTexture, TextureList};
 use translate::{Rotate, Translate};
@@ -206,7 +206,7 @@ fn main() {
     let metal = material_list.add_metal_mat(Metal::new(0.01, metal_texture));
     //let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
-    obj_list.push(FlipNormals::new(Rect::new(
+    obj_list.push(Rect::new(
         0.0,
         555.0,
         0.0,
@@ -214,11 +214,21 @@ fn main() {
         555.0,
         AxisType::Kyz,
         green,
-    )));
-    obj_list.push(Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kyz, red));
+        true,
+    ));
+    obj_list.push(Rect::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        AxisType::Kyz,
+        red,
+        false,
+    ));
 
     /*
-    let light_rect = FlipNormals::new(Rect::new(
+    let light_rect = Rect::new(
         213.0,
         343.0,
         227.0,
@@ -226,11 +236,12 @@ fn main() {
         554.0,
         AxisType::Kxz,
         light.clone(),
-    ));
+        true,
+    );
     obj_list.push(light_rect.clone());
     */
 
-    let roof_light = FlipNormals::new(Rect::new(
+    let roof_light = Rect::new(
         0.0,
         555.0,
         0.0,
@@ -238,9 +249,10 @@ fn main() {
         555.0,
         AxisType::Kxz,
         white.clone(),
-    ));
+        true,
+    );
 
-    obj_list.push(FlipNormals::new(Rect::new(
+    obj_list.push(Rect::new(
         0.0,
         555.0,
         0.0,
@@ -248,11 +260,30 @@ fn main() {
         555.0,
         AxisType::Kxy,
         magick,
-    )));
+        true,
+    ));
 
-    let outdoor_light = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxy, white.clone());
+    let outdoor_light = Rect::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        AxisType::Kxy,
+        white.clone(),
+        false,
+    );
 
-    let floor = Rect::new(0.0, 555.0, 0.0, 555.0, 0.0, AxisType::Kxz, white.clone());
+    let floor = Rect::new(
+        0.0,
+        555.0,
+        0.0,
+        555.0,
+        0.0,
+        AxisType::Kxz,
+        white.clone(),
+        false,
+    );
     obj_list.push(floor.clone());
 
     /*
