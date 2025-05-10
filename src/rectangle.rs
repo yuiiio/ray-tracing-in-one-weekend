@@ -326,17 +326,17 @@ impl Hitable for Boxel {
         {
             const DIV6: f64 = 1.0 / 6.0;
             let mut pdf_sum = 0.0;
-            if r_dir_div[0] > 0.0 {
+            if r_dir_div[0].is_sign_positive() {
                 pdf_sum += self.rect[5].rect_pdf_value(ray, &r_dir_div);
             } else {
                 pdf_sum += self.rect[2].rect_pdf_value(ray, &r_dir_div);
             }
-            if r_dir_div[1] > 0.0 {
+            if r_dir_div[1].is_sign_positive() {
                 pdf_sum += self.rect[4].rect_pdf_value(ray, &r_dir_div);
             } else {
                 pdf_sum += self.rect[1].rect_pdf_value(ray, &r_dir_div);
             }
-            if r_dir_div[2] > 0.0 {
+            if r_dir_div[2].is_sign_positive() {
                 pdf_sum += self.rect[3].rect_pdf_value(ray, &r_dir_div);
             } else {
                 pdf_sum += self.rect[0].rect_pdf_value(ray, &r_dir_div);
