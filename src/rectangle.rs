@@ -143,6 +143,15 @@ impl Rect {
             onb_uv: Some(&self.onb_uv),
         })
     }
+
+    fn rect_pdf_value(&self, ray: &Ray, r_dir_div: &[f64; 3]) -> f64 {
+        if let Some(rec) = self.rect_hit(ray, r_dir_div, 0.00001, 10000.0) {
+            let distance_squared = rec.t.powi(2);
+            let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
+            return distance_squared / (cosine * self.area);
+        }
+        0.0
+    }
 }
 
 impl Hitable for Rect {
@@ -155,12 +164,7 @@ impl Hitable for Rect {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
-            let distance_squared = rec.t.powi(2);
-            let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-            return distance_squared / (cosine * self.area);
-        }
-        0.0
+        self.rect_pdf_value(ray, &ray.get_inv_dir())
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
@@ -312,26 +316,27 @@ impl Hitable for Boxel {
     // not need checks from inside rays ?
     fn pdf_value(&self, ray: &Ray) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
-        if let Some(_aabb_hit) =
-            self.aabb_box
-                .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
+        let r_dir_div = ray.get_inv_dir();
+        if let Some(_aabb_hit) = self
+            .aabb_box
+            .aabb_hit(&ray.origin, &r_dir_div, 0.00001, 10000.0)
         {
             const DIV6: f64 = 1.0 / 6.0;
             let mut pdf_sum = 0.0;
             if ray.origin[0] > 0.0 {
-                pdf_sum += self.rect[5].pdf_value(ray);
+                pdf_sum += self.rect[5].rect_pdf_value(ray, &r_dir_div);
             } else {
-                pdf_sum += self.rect[2].pdf_value(ray);
+                pdf_sum += self.rect[2].rect_pdf_value(ray, &r_dir_div);
             }
             if ray.origin[1] > 0.0 {
-                pdf_sum += self.rect[4].pdf_value(ray);
+                pdf_sum += self.rect[4].rect_pdf_value(ray, &r_dir_div);
             } else {
-                pdf_sum += self.rect[1].pdf_value(ray);
+                pdf_sum += self.rect[1].rect_pdf_value(ray, &r_dir_div);
             }
             if ray.origin[2] > 0.0 {
-                pdf_sum += self.rect[3].pdf_value(ray);
+                pdf_sum += self.rect[3].rect_pdf_value(ray, &r_dir_div);
             } else {
-                pdf_sum += self.rect[0].pdf_value(ray);
+                pdf_sum += self.rect[0].rect_pdf_value(ray, &r_dir_div);
             }
             pdf_sum * DIV6
         } else {
