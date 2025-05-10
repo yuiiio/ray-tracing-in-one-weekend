@@ -273,6 +273,7 @@ impl Boxel {
 }
 
 impl Hitable for Boxel {
+    // needs to check from out-side and inside(eg: glass) rays.
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let mut hit_min_t = t_max;
         let mut hit_count: usize = 0;
@@ -291,6 +292,7 @@ impl Hitable for Boxel {
                 rec = Some(hit_rec);
             }
             if hit_count == 2 {
+                // hit count can take 0, 2, 1(inside ray)
                 break;
             }
         }
@@ -301,6 +303,7 @@ impl Hitable for Boxel {
         &self.aabb_box
     }
 
+    // not need checks from inside rays ?
     fn pdf_value(&self, ray: &Ray) -> f64 {
         // TODO: we needs actual pdf hit surface, now return avg all surface
         if let Some(_aabb_hit) =
@@ -308,13 +311,23 @@ impl Hitable for Boxel {
                 .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
         {
             const DIV6: f64 = 1.0 / 6.0;
-            (self.rect[0].pdf_value(ray)
-                + self.rect[1].pdf_value(ray)
-                + self.rect[2].pdf_value(ray)
-                + self.rect[3].pdf_value(ray)
-                + self.rect[4].pdf_value(ray)
-                + self.rect[5].pdf_value(ray))
-                * DIV6
+            let mut pdf_sum = 0.0;
+            if ray.origin[0] > 0.0 {
+                pdf_sum += self.rect[5].pdf_value(ray);
+            } else {
+                pdf_sum += self.rect[2].pdf_value(ray);
+            }
+            if ray.origin[1] > 0.0 {
+                pdf_sum += self.rect[4].pdf_value(ray);
+            } else {
+                pdf_sum += self.rect[1].pdf_value(ray);
+            }
+            if ray.origin[2] > 0.0 {
+                pdf_sum += self.rect[3].pdf_value(ray);
+            } else {
+                pdf_sum += self.rect[0].pdf_value(ray);
+            }
+            pdf_sum * DIV6
         } else {
             0.0
         }
