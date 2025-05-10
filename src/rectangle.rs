@@ -285,60 +285,31 @@ impl Boxel {
 impl Hitable for Boxel {
     // needs to check from out-side and inside(eg: glass) rays.
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let mut hit_min_t = t_max;
-        let mut hit_count: usize = 0;
-        let mut rec: Option<HitRecord> = None;
-
         let r_dir_div = ray.get_inv_dir();
+        let mut rect_index_0 = [5, 4, 3];
+        let mut rect_index_1 = [2, 1, 0];
+
         for i in 0..3 {
-            if r_dir_div[i] > 0.0 {
-                if let Some(hit_rec) = self.rect[5 - i].rect_hit(ray, &r_dir_div, t_min, hit_min_t)
-                {
-                    return Some(hit_rec);
-                }
-            } else {
-                if let Some(hit_rec) = self.rect[2 - i].rect_hit(ray, &r_dir_div, t_min, hit_min_t)
-                {
-                    return Some(hit_rec);
-                }
+            if r_dir_div[i].is_sign_negative() {
+                core::mem::swap(&mut rect_index_0[i], &mut rect_index_1[i]);
+            }
+            if let Some(hit_rec) =
+                self.rect[rect_index_0[i]].rect_hit(ray, &r_dir_div, t_min, t_max)
+            {
+                return Some(hit_rec);
             }
         }
         // up is enough when only care out-side rays
         // down is needed for inside rays.
         for i in 0..3 {
-            if r_dir_div[i] < 0.0 {
-                if let Some(hit_rec) = self.rect[5 - i].rect_hit(ray, &r_dir_div, t_min, hit_min_t)
-                {
-                    return Some(hit_rec);
-                }
-            } else {
-                if let Some(hit_rec) = self.rect[2 - i].rect_hit(ray, &r_dir_div, t_min, hit_min_t)
-                {
-                    return Some(hit_rec);
-                }
+            if let Some(hit_rec) =
+                self.rect[rect_index_1[i]].rect_hit(ray, &r_dir_div, t_min, t_max)
+            {
+                return Some(hit_rec);
             }
         }
 
-        /*
-        for i in 0..3 {
-            if let Some(hit_rec) = self.rect[i * 2].rect_hit(ray, &r_dir_div, t_min, hit_min_t) {
-                hit_min_t = hit_rec.t;
-                hit_count += 1;
-                rec = Some(hit_rec);
-            }
-            if let Some(hit_rec) = self.rect[i * 2 + 1].rect_hit(ray, &r_dir_div, t_min, hit_min_t)
-            {
-                hit_min_t = hit_rec.t;
-                hit_count += 1;
-                rec = Some(hit_rec);
-            }
-            if hit_count == 2 {
-                // hit count can take 0, 2, 1(inside ray)
-                break;
-            }
-        }
-        */
-        rec
+        None
     }
 
     fn bounding_box(&self) -> &Aabb {
