@@ -324,7 +324,7 @@ impl Hitable for Boxel {
             .aabb_box
             .aabb_hit(&ray.origin, &r_dir_div, 0.00001, 10000.0)
         {
-            const DIV6: f64 = 1.0 / 6.0;
+            const DIV3: f64 = 1.0 / 3.0;
             let mut pdf_sum = 0.0;
             if r_dir_div[0].is_sign_positive() {
                 pdf_sum += self.rect[5].rect_pdf_value(ray, &r_dir_div);
@@ -341,7 +341,7 @@ impl Hitable for Boxel {
             } else {
                 pdf_sum += self.rect[0].rect_pdf_value(ray, &r_dir_div);
             }
-            pdf_sum * DIV6
+            pdf_sum * DIV3
         } else {
             0.0
         }
@@ -352,7 +352,7 @@ impl Hitable for Boxel {
         let rand: f64 = rng.gen();
         let o_dir = vec3_sub(&self.center, o);
         let random_handle = (rand * 3.0) as usize;
-        if o_dir[random_handle] > 0.0 {
+        if o_dir[random_handle].is_sign_positive() {
             self.rect[5 - random_handle].random(o)
         } else {
             self.rect[2 - random_handle].random(o)
