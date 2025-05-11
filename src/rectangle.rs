@@ -6,7 +6,7 @@ use crate::material::MaterialHandle;
 use crate::onb::Onb;
 use crate::quotation::Rotation;
 use crate::ray::Ray;
-use crate::vec3::{vec3_add, vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
+use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
 
 #[derive(Clone)]
 pub enum AxisType {
@@ -203,7 +203,6 @@ impl Hitable for Rect {
 pub struct Boxel {
     rect: [Rect; 6],
     aabb_box: Aabb,
-    center: [f64; 3],
 }
 
 impl Boxel {
@@ -272,13 +271,8 @@ impl Boxel {
                 true,
             ),
         ];
-        let center = vec3_mul_b(&vec3_add(&b_min, &b_max), 0.5);
         let aabb_box = Aabb { b_min, b_max };
-        Boxel {
-            rect,
-            aabb_box,
-            center,
-        }
+        Boxel { rect, aabb_box }
     }
 }
 
@@ -324,24 +318,12 @@ impl Hitable for Boxel {
             .aabb_box
             .aabb_hit(&ray.origin, &r_dir_div, 0.00001, 10000.0)
         {
-            const DIV3: f64 = 1.0 / 3.0;
+            const DIV6: f64 = 1.0 / 6.0;
             let mut pdf_sum = 0.0;
-            if r_dir_div[0].is_sign_positive() {
-                pdf_sum += self.rect[5].rect_pdf_value(ray, &r_dir_div);
-            } else {
-                pdf_sum += self.rect[2].rect_pdf_value(ray, &r_dir_div);
+            for i in 0..6 {
+                pdf_sum += self.rect[i].rect_pdf_value(ray, &r_dir_div);
             }
-            if r_dir_div[1].is_sign_positive() {
-                pdf_sum += self.rect[4].rect_pdf_value(ray, &r_dir_div);
-            } else {
-                pdf_sum += self.rect[1].rect_pdf_value(ray, &r_dir_div);
-            }
-            if r_dir_div[2].is_sign_positive() {
-                pdf_sum += self.rect[3].rect_pdf_value(ray, &r_dir_div);
-            } else {
-                pdf_sum += self.rect[0].rect_pdf_value(ray, &r_dir_div);
-            }
-            pdf_sum * DIV3
+            pdf_sum * DIV6
         } else {
             0.0
         }
@@ -350,13 +332,8 @@ impl Hitable for Boxel {
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let mut rng = rand::thread_rng();
         let rand: f64 = rng.gen();
-        let o_dir = vec3_sub(&self.center, o);
-        let random_handle = (rand * 3.0) as usize;
-        if o_dir[random_handle].is_sign_positive() {
-            self.rect[5 - random_handle].random(o)
-        } else {
-            self.rect[2 - random_handle].random(o)
-        }
+        let random_handle = (rand * 6.0) as usize;
+        self.rect[random_handle].random(o)
     }
 
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
