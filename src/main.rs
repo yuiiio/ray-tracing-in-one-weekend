@@ -377,7 +377,7 @@ fn main() {
     );
 
     let now1 = SystemTime::now();
-    let pana_bvh = BvhTree::new(pana_list);
+    let mut pana_bvh = BvhTree::new(pana_list);
     let dragon_bvh = BvhTree::new(dragon_list);
     let bunny_bvh = BvhTree::new(bunny_list);
     let lucy_bvh = BvhTree::new(lucy_list);
@@ -389,11 +389,18 @@ fn main() {
     let pana_rotation = Rotation::new(45.0, &[0.0, 1.0, 0.0]);
 
     let translated_pana_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(pana_bvh), pana_rotation.clone())),
+        Box::new(Rotate::new(Box::new(pana_bvh.clone()), pana_rotation)),
         [-50.0, 200.0, -150.0],
     );
+    obj_list.push(translated_pana_bvh);
 
-    obj_list.push(translated_pana_bvh.clone());
+    let pana_rotation_2 = Rotation::new(180.0, &[0.0, 1.0, 0.0]);
+    pana_bvh.scale(4.0);
+    let translated_pana_bvh_2 = Translate::new(
+        Box::new(Rotate::new(Box::new(pana_bvh), pana_rotation_2)),
+        [-500.0, 800.0, 3000.0],
+    );
+    obj_list.push(translated_pana_bvh_2);
 
     let dragon_rotation = Rotation::new(45.0, &[0.0, 1.0, 1.0]);
 
