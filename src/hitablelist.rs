@@ -2,6 +2,7 @@ use rand::prelude::*;
 
 use crate::aabb::{surrounding_box, Aabb};
 use crate::hitable::{HitRecord, Hitable};
+use crate::material::MaterialHandle;
 use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
@@ -125,5 +126,10 @@ impl Hitable for HitableList {
         self.hitable_list
             .iter_mut()
             .for_each(|hitable| hitable.scale(scale_value));
+    }
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.hitable_list
+            .iter_mut()
+            .for_each(|hitable| hitable.set_material(mat_ptr.clone()));
     }
 }

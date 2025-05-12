@@ -4,6 +4,7 @@ use rand::prelude::*;
 use crate::aabb::{aabb_hit_simd, surrounding_box, Aabb, QBoxes};
 use crate::hitable::{HitRecord, Hitable};
 use crate::hitablelist::HitableList;
+use crate::material::MaterialHandle;
 use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::Vector3;
@@ -654,5 +655,8 @@ impl Hitable for BvhTree {
             .iter_mut()
             .for_each(|bvh_node| bvh_node.qbox.scale(scale_value));
         self.aabb_box.scale(scale_value);
+    }
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.hitable_list.set_material(mat_ptr);
     }
 }

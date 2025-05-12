@@ -196,4 +196,8 @@ impl Hitable for Triangle {
 
         self.aabb_box.scale(scale_value);
     }
+
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.mat_ptr = mat_ptr;
+    }
 }

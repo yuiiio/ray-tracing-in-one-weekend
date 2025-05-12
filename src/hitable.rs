@@ -55,6 +55,7 @@ pub trait Hitable: HitableClone {
     }
     fn rotate_onb(&mut self, quat: &Rotation); // rotate onb and normal vec used at build time
     fn scale(&mut self, scale_value: f64);
+    fn set_material(&mut self, mat_ptr: MaterialHandle);
 }
 
 pub trait HitableClone {

@@ -200,6 +200,10 @@ impl Hitable for Rect {
         self.area = self.area * scale_value * scale_value;
         self.aabb_box.scale(scale_value);
     }
+
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.mat_ptr = mat_ptr;
+    }
 }
 
 #[derive(Clone)]
@@ -344,5 +348,10 @@ impl Hitable for Boxel {
             self.rect[i].scale(scale_value);
         }
         self.aabb_box.scale(scale_value);
+    }
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        for i in 0..6 {
+            self.rect[i].set_material(mat_ptr.clone());
+        }
     }
 }

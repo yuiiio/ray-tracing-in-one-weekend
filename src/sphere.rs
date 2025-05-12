@@ -174,6 +174,9 @@ impl Hitable for Sphere {
         self.radius_sq = self.radius_sq * scale_value * scale_value;
         self.aabb_box.scale(scale_value);
     }
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.mat_ptr = mat_ptr;
+    }
 }
 
 fn random_to_sphere(radius_sq: f64, distabce_squared: f64, nor_dist: f64) -> Vector3<f64> {

@@ -1,5 +1,6 @@
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
+use crate::material::MaterialHandle;
 use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::{vec3_add, vec3_sub, Vector3};
@@ -69,6 +70,9 @@ impl Hitable for Translate {
 
         //scale func is affected after translated(obj)
         self.aabb_box.scale(scale_value);
+    }
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.obj.set_material(mat_ptr);
     }
 }
 
@@ -157,5 +161,8 @@ impl Hitable for Rotate {
 
         //scale func is affected after translated(obj)
         self.aabb_box.scale(scale_value);
+    }
+    fn set_material(&mut self, mat_ptr: MaterialHandle) {
+        self.obj.set_material(mat_ptr);
     }
 }

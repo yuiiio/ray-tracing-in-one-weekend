@@ -190,7 +190,7 @@ fn main() {
         open("./texture.jpg").unwrap().into_rgba8(),
     ));
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
-    //let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
+    let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
     //let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
@@ -204,7 +204,7 @@ fn main() {
     let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
     let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_metal_mat(Metal::new(0.01, metal_texture));
-    //let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
+    let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
     /*
     obj_list.push(Rect::new(
@@ -404,8 +404,11 @@ fn main() {
 
     let dragon_rotation = Rotation::new(45.0, &[0.0, 1.0, 1.0]);
 
+    let mut dragon_bvh_1 = dragon_bvh.clone();
+    dragon_bvh_1.set_material(fuzzy_metal);
+
     let translated_dragon_bvh = Translate::new(
-        Box::new(Rotate::new(Box::new(dragon_bvh.clone()), dragon_rotation)),
+        Box::new(Rotate::new(Box::new(dragon_bvh_1), dragon_rotation)),
         [300.0, 600.0, 300.0],
     );
     obj_list.push(translated_dragon_bvh);
