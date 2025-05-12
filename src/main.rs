@@ -91,7 +91,7 @@ fn color(
                             continue;
                         }
                         Scatterd::CosinePdf => {
-                            const LIGHT_SOURCE_WEIGHT: f64 = 0.2;
+                            const LIGHT_SOURCE_WEIGHT: f64 = 0.0;
                             let mut rng = rand::thread_rng();
                             let rand: f64 = rng.gen();
                             let next_ray = if rand < LIGHT_SOURCE_WEIGHT {
