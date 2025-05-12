@@ -320,6 +320,19 @@ fn main() {
     );
     obj_list.push(metal_box.clone());
 
+    let metal_box_2 = Translate::new(
+        Box::new(Rotate::new(
+            Box::new(Boxel::new(
+                [0.0, 0.0, 0.0],
+                [165.0, 330.0, 165.0],
+                metal.clone(),
+            )),
+            Rotation::new(45.0, &[0.0, 1.0, 0.0]),
+        )),
+        [-400.0, 0.00, 400.0],
+    );
+    obj_list.push(metal_box_2.clone());
+
     let glass_sphere = Sphere::new([455.0, 100.0, 100.0], 100.0, glass.clone());
     obj_list.push(glass_sphere.clone());
     let earth_sphere = Sphere::new([500.0, 300.0, 100.0], 60.0, earth);
@@ -466,7 +479,8 @@ fn main() {
     //light_list.push(roof_light);
     light_list.push(light_sphere);
     light_list.push(light_sphere_2);
-    light_list.push(metal_box);
+    //light_list.push(metal_box);
+    //light_list.push(metal_box_2);
     light_list.push(glass_sphere);
 
     let cam = Camera::new(
