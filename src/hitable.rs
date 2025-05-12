@@ -53,7 +53,7 @@ pub trait Hitable: HitableClone {
         // should return normalized vector
         [1.0, 0.0, 0.0]
     }
-    fn rotate_onb(&mut self, quat: &Rotation) -> (); // rotate onb and normal vec used at build time
+    fn rotate_onb(&mut self, quat: &Rotation); // rotate onb and normal vec used at build time
     fn scale(&mut self, scale_value: f64);
 }
 

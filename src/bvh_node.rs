@@ -138,7 +138,7 @@ fn split_heuristic<'a>(
     handle_2: &'a mut [usize],
     handle_3: &'a mut [usize],
     pre_sort_axis: &Axis,
-    center_list: &Vec<Vector3<f64>>,
+    center_list: &[Vector3<f64>],
 ) -> (&'a [usize], &'a [usize], Axis) {
     let handle_size = handle.len();
     /*
@@ -644,7 +644,7 @@ impl Hitable for BvhTree {
         self.hitable_list[rand_handle].random(o)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         self.hitable_list.rotate_onb(quat);
     }
 

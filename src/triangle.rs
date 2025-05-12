@@ -177,7 +177,7 @@ impl Hitable for Triangle {
         vec3_unit_vector_f64(&vec3_sub(&random_point, o)) // random should return normalized vec
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         self.n_norm = quat.rotate(&self.n_norm);
         let onb = Onb::build_from_w(&self.n_norm);
         self.onb_uv = (onb.u, onb.v);

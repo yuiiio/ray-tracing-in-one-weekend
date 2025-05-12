@@ -182,7 +182,7 @@ impl Hitable for Rect {
         vec3_unit_vector_f64(&vec3_sub(&random_point, o))
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         self.normal = quat.rotate(&self.normal);
         let onb = Onb::build_from_w(&self.normal);
         self.onb_uv = (onb.u, onb.v);
@@ -334,7 +334,7 @@ impl Hitable for Boxel {
         self.rect[random_handle].random(o)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         for i in 0..6 {
             self.rect[i].rotate_onb(quat);
         }

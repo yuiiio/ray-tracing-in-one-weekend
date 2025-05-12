@@ -60,7 +60,7 @@ impl Hitable for Translate {
         self.obj.random(&on)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         self.obj.rotate_onb(quat);
     }
 
@@ -148,7 +148,7 @@ impl Hitable for Rotate {
         self.quat.rotate(&rv)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         self.obj.rotate_onb(quat);
     }
 

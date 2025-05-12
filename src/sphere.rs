@@ -167,7 +167,7 @@ impl Hitable for Sphere {
         ))
     }
 
-    fn rotate_onb(&mut self, _quat: &Rotation) -> () {}
+    fn rotate_onb(&mut self, _quat: &Rotation) {}
     fn scale(&mut self, scale_value: f64) {
         self.center = vec3_mul_b(&self.center, scale_value);
         self.nor_radius /= scale_value;

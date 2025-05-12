@@ -79,8 +79,8 @@ impl Hitable for HitableList {
     }
 
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
-        let mut b_min = [core::f64::MAX; 3];
-        let mut b_max = [core::f64::MIN; 3];
+        let mut b_min = [f64::MAX; 3];
+        let mut b_max = [f64::MIN; 3];
         for i in 0..self.hitable_list.len() {
             let rotate_recalculated_aabb = self.hitable_list[i].bounding_box_with_rotate(quat);
             for axis in 0..3 {
@@ -115,7 +115,7 @@ impl Hitable for HitableList {
         self.hitable_list[index as usize].random(o)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) -> () {
+    fn rotate_onb(&mut self, quat: &Rotation) {
         for i in self.iter_mut() {
             i.rotate_onb(quat);
         }
