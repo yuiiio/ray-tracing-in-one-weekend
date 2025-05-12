@@ -91,9 +91,10 @@ fn color(
                             continue;
                         }
                         Scatterd::CosinePdf => {
+                            const LIGHT_SOURCE_WEIGHT: f64 = 0.2;
                             let mut rng = rand::thread_rng();
                             let rand: f64 = rng.gen();
-                            let next_ray = if rand < 0.4 {
+                            let next_ray = if rand < LIGHT_SOURCE_WEIGHT {
                                 Ray {
                                     origin: hit_rec.p,
                                     direction: light_list.random(&hit_rec.p),
@@ -118,7 +119,8 @@ fn color(
                             let light_list_pdf = light_list.pdf_value(&next_ray);
                             let cosine_pdf = cosine_pdf_value(&hit_rec.normal, &next_ray.direction);
 
-                            let pdf_value = light_list_pdf * 0.4 + cosine_pdf * 0.6;
+                            let pdf_value = light_list_pdf * LIGHT_SOURCE_WEIGHT
+                                + cosine_pdf * (1.0 - LIGHT_SOURCE_WEIGHT);
 
                             if pdf_value > 0.0 {
                                 let spdf_value = material_list.scattering_pdf(&next_ray, &hit_rec);
@@ -143,14 +145,10 @@ fn color(
 
                 // sky
                 let a = (ray.direction[1] + 1.0) * 0.5;
-                let last_emitted = if a > 0.5 {
-                    vec3_add(
-                        &vec3_mul_b(&[0.0, 0.0, 0.0], 1.0 - a),
-                        &vec3_mul_b(&[0.5, 0.5, 0.7], a),
-                    )
-                } else {
-                    [0.0, 0.0, 0.0]
-                };
+                let last_emitted = vec3_add(
+                    &vec3_mul_b(&[0.0, 0.0, 0.0], 1.0 - a),
+                    &vec3_mul_b(&[1.0, 1.0, 1.0], a),
+                );
 
                 //let last_emitted = [0.5, 0.5, 0.5];
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
@@ -165,9 +163,9 @@ fn color(
 
 fn main() {
     let now = SystemTime::now();
-    const OUTPUT_X: usize = 900;
-    const OUTPUT_Y: usize = 900;
-    const NS: usize = 16; // x^2 / per pixel sample size;
+    const OUTPUT_X: usize = 1920;
+    const OUTPUT_Y: usize = 1080;
+    const NS: usize = 8; // x^2 / per pixel sample size;
     const NX: usize = OUTPUT_X * NS;
     const NY: usize = OUTPUT_Y * NS;
 
@@ -180,10 +178,11 @@ fn main() {
     let mut material_list = MaterialList::new();
 
     let mut texture_list = TextureList::new();
-    let red_texture = texture_list.add_color_texture(ColorTexture::new([0.65, 0.05, 0.05]));
+    //let red_texture = texture_list.add_color_texture(ColorTexture::new([0.8, 0.01, 0.2]));
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
-    let green_texture = texture_list.add_color_texture(ColorTexture::new([0.12, 0.45, 0.15]));
+    let green_texture = texture_list.add_color_texture(ColorTexture::new([0.2, 0.4, 0.01]));
     let light_texture = texture_list.add_color_texture(ColorTexture::new([3.0, 1.0, 1.0]));
+    let light_texture_2 = texture_list.add_color_texture(ColorTexture::new([1.0, 1.0, 3.0]));
     let magick_texture = texture_list.add_image_texture(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba8(),
     ));
@@ -193,19 +192,21 @@ fn main() {
     let metal_texture = texture_list.add_color_texture(ColorTexture::new([0.5, 0.7, 0.7]));
     //let fuzzy_metal_texture = texture_list.add_color_texture(ColorTexture::new([0.7, 0.7, 0.7]));
 
-    let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
+    //let red = material_list.add_lambertian_mat(Lambertian::new(red_texture));
     let white = material_list.add_lambertian_mat(Lambertian::new(white_texture));
     let green = material_list.add_lambertian_mat(Lambertian::new(green_texture));
-    let light = // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
-                // but, > 1.0 can happen when powerfull light ?
-        material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
+    // light looks good on 1.0 ~ 0.0, because { emitted + (nasted result) } * accum(0.0 ~ 1.0), over flow and overflow on next path
+    // but, > 1.0 can happen when powerfull light ?
+    let light = material_list.add_diffuselight_mat(DiffuseLight::new(light_texture));
+    let light_2 = material_list.add_diffuselight_mat(DiffuseLight::new(light_texture_2));
     let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
     let earth = material_list.add_lambertian_mat(Lambertian::new(earth_texture));
     let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
-    //let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
+    let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
     let metal = material_list.add_metal_mat(Metal::new(0.01, metal_texture));
     //let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
+    /*
     obj_list.push(Rect::new(
         0.0,
         555.0,
@@ -226,6 +227,7 @@ fn main() {
         red,
         false,
     ));
+    */
 
     /*
     let light_rect = Rect::new(
@@ -241,6 +243,7 @@ fn main() {
     obj_list.push(light_rect.clone());
     */
 
+    /*
     let roof_light = Rect::new(
         0.0,
         555.0,
@@ -251,7 +254,9 @@ fn main() {
         white.clone(),
         true,
     );
+    */
 
+    /*
     obj_list.push(Rect::new(
         0.0,
         555.0,
@@ -262,7 +267,9 @@ fn main() {
         magick,
         true,
     ));
+    */
 
+    /*
     let outdoor_light = Rect::new(
         0.0,
         555.0,
@@ -273,34 +280,32 @@ fn main() {
         white.clone(),
         false,
     );
+    */
 
     let floor = Rect::new(
-        0.0,
-        555.0,
-        0.0,
-        555.0,
+        -1000000.0,
+        1000000.0,
+        -1000000.0,
+        1000000.0,
         0.0,
         AxisType::Kxz,
-        white.clone(),
+        green.clone(),
         false,
     );
     obj_list.push(floor.clone());
 
-    /*
     let box_1 = Translate::new(
         Box::new(Rotate::new(
             Box::new(Boxel::new(
                 [0.0, 0.0, 0.0],
-                [165.0, 165.0, 165.0],
-                white.clone(),
+                [300.0, 300.0, 300.0],
+                magick.clone(),
             )),
-            &[0.0, 1.0, 0.0],
-            -18.0,
+            Rotation::new(45.0, &[1.0, 0.0, 1.0]),
         )),
-        [130.0, 0.0, 65.0],
+        [700.0, 400.0, 500.0],
     );
     obj_list.push(box_1.clone());
-    */
 
     let metal_box = Translate::new(
         Box::new(Rotate::new(
@@ -322,6 +327,8 @@ fn main() {
 
     let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
     obj_list.push(light_sphere.clone());
+    let light_sphere_2 = Sphere::new([900.0, 100.0, 700.0], 100.0, light_2);
+    obj_list.push(light_sphere_2.clone());
 
     let pana_list = obj_loader(
         None,
@@ -343,6 +350,27 @@ fn main() {
         80.0,
     );
 
+    let dragon_list = obj_loader(
+        None,
+        &mut File::open("./dragon.obj").unwrap(),
+        white.clone(),
+        200.0,
+    );
+
+    let bunny_list = obj_loader(
+        None,
+        &mut File::open("./bunny.obj").unwrap(),
+        red_glass.clone(),
+        100.0,
+    );
+
+    let lucy_list = obj_loader(
+        None,
+        &mut File::open("./lucy.obj").unwrap(),
+        white.clone(),
+        0.4,
+    );
+
     println!(
         "object load & translate & rotate time: {}",
         now.elapsed().unwrap().as_secs_f64()
@@ -350,6 +378,9 @@ fn main() {
 
     let now1 = SystemTime::now();
     let pana_bvh = BvhTree::new(pana_list);
+    let dragon_bvh = BvhTree::new(dragon_list);
+    let bunny_bvh = BvhTree::new(bunny_list);
+    let lucy_bvh = BvhTree::new(lucy_list);
     println!(
         "BVH-1 Build Time elapsed: {}",
         now1.elapsed().unwrap().as_secs_f64()
@@ -363,6 +394,38 @@ fn main() {
     );
 
     obj_list.push(translated_pana_bvh.clone());
+
+    let dragon_rotation = Rotation::new(45.0, &[0.0, 1.0, 1.0]);
+
+    let translated_dragon_bvh = Translate::new(
+        Box::new(Rotate::new(Box::new(dragon_bvh.clone()), dragon_rotation)),
+        [300.0, 600.0, 300.0],
+    );
+    obj_list.push(translated_dragon_bvh);
+
+    let dragon_rotation_2 = Rotation::new(-130.0, &[0.0, 1.0, 0.0]);
+
+    let translated_dragon_bvh_2 = Translate::new(
+        Box::new(Rotate::new(Box::new(dragon_bvh), dragon_rotation_2)),
+        [800.0, 200.0, 500.0],
+    );
+    obj_list.push(translated_dragon_bvh_2);
+
+    let bunny_rotation = Rotation::new(-90.0, &[1.0, 1.0, 0.0]);
+
+    let translated_bunny_bvh = Translate::new(
+        Box::new(Rotate::new(Box::new(bunny_bvh), bunny_rotation)),
+        [700.0, 100.0, 100.0],
+    );
+    obj_list.push(translated_bunny_bvh);
+
+    let lucy_rotation = Rotation::new(-90.0, &[1.0, 0.0, 0.0]);
+
+    let translated_lucy_bvh = Translate::new(
+        Box::new(Rotate::new(Box::new(lucy_bvh), lucy_rotation)),
+        [-300.0, 250.0, 200.0],
+    );
+    obj_list.push(translated_lucy_bvh);
 
     /*
     let glass_box = obj_loader(&mut File::open("./box.obj").unwrap(), glass);
@@ -389,9 +452,10 @@ fn main() {
 
     //light_list.push(light_rect);
     //light_list.push(floor);
-    light_list.push(outdoor_light);
-    light_list.push(roof_light);
+    //light_list.push(outdoor_light);
+    //light_list.push(roof_light);
     light_list.push(light_sphere);
+    light_list.push(light_sphere_2);
     light_list.push(metal_box);
     light_list.push(glass_sphere);
 
