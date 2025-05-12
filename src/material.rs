@@ -199,10 +199,10 @@ pub struct Lambertian {
 }
 
 fn random_in_unit_sphere() -> Vector3<f64> {
-    let mut rng = rand::thread_rng();
-    let r1: f64 = rng.gen();
-    let r2: f64 = rng.gen();
-    let r3: f64 = rng.gen();
+    let mut rng = rand::rng();
+    let r1: f64 = rng.random();
+    let r2: f64 = rng.random();
+    let r3: f64 = rng.random();
 
     let a = 2.0 * PI * r1;
     let b = 2.0 * (r2 * (1.0 - r2)).sqrt();
@@ -330,8 +330,8 @@ impl Dielectric {
             match refract(&r_in.direction, &outward_normal, ni_over_nt, ni_over_nt_seq) {
                 Refract::Refracted(refracted) => {
                     reflect_prob = schlick(cosine, self.schlick_r0, self.schlick_r1); // for real glass maty
-                    let mut rng = rand::thread_rng();
-                    let rand: f64 = rng.gen();
+                    let mut rng = rand::rng();
+                    let rand: f64 = rng.random();
                     if rand < reflect_prob {
                         Ray {
                             origin: hit_record.p,

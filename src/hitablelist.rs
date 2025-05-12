@@ -108,8 +108,8 @@ impl Hitable for HitableList {
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         // we can clarify self.0.len() >= 1. after push some obj...
         let n = self.hitable_list.len();
-        let mut rng = rand::thread_rng();
-        let rand: f64 = rng.gen();
+        let mut rng = rand::rng();
+        let rand: f64 = rng.random();
 
         let index: f64 = n as f64 * rand; // (1 * 0.9) as usize = 0
         self.hitable_list[index as usize].random(o)

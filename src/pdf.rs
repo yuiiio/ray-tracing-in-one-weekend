@@ -20,9 +20,9 @@ pub fn cosine_pdf_generate(uvw: &Onb) -> Vector3<f64> {
 }
 
 fn random_cosine_direction() -> Vector3<f64> {
-    let mut rng = rand::thread_rng();
-    let r1: f64 = rng.gen();
-    let r2: f64 = rng.gen();
+    let mut rng = rand::rng();
+    let r1: f64 = rng.random();
+    let r2: f64 = rng.random();
 
     let a = 2.0 * PI * r1;
     let b = r2.sqrt();

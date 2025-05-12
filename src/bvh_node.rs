@@ -638,8 +638,8 @@ impl Hitable for BvhTree {
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let hitable_list_len = self.hitable_list.len();
-        let mut rng = rand::thread_rng();
-        let rand: f64 = rng.gen();
+        let mut rng = rand::rng();
+        let rand: f64 = rng.random();
         let rand_handle = (rand * hitable_list_len as f64) as usize;
         self.hitable_list[rand_handle].random(o)
     }

@@ -158,9 +158,9 @@ impl Hitable for Rect {
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        let mut rng = rand::thread_rng();
-        let rng_x: f64 = rng.gen();
-        let rng_y: f64 = rng.gen();
+        let mut rng = rand::rng();
+        let rng_x: f64 = rng.random();
+        let rng_y: f64 = rng.random();
         let random_point = match self.axis {
             AxisType::Kxy => [
                 self.x0 + rng_x * self.width,
@@ -328,8 +328,8 @@ impl Hitable for Boxel {
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        let mut rng = rand::thread_rng();
-        let rand: f64 = rng.gen();
+        let mut rng = rand::rng();
+        let rand: f64 = rng.random();
         let random_handle = (rand * 6.0) as usize;
         self.rect[random_handle].random(o)
     }

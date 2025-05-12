@@ -60,9 +60,9 @@ impl Camera {
 
 #[allow(dead_code)]
 fn random_in_unit_disk() -> Vector3<f64> {
-    let mut rng = rand::thread_rng();
-    let rand_a: f64 = rng.gen();
-    let rand_b: f64 = rng.gen();
+    let mut rng = rand::rng();
+    let rand_a: f64 = rng.random();
+    let rand_b: f64 = rng.random();
 
     let sqrt_a: f64 = rand_a.sqrt();
     let seeta: f64 = rand_b * 2.0 * f64::consts::PI;

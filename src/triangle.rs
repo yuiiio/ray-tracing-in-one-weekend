@@ -151,9 +151,9 @@ impl Hitable for Triangle {
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
-        let mut rng = rand::thread_rng();
-        let rng_i: f64 = rng.gen();
-        let rng_j: f64 = rng.gen();
+        let mut rng = rand::rng();
+        let rng_i: f64 = rng.random();
+        let rng_j: f64 = rng.random();
 
         let max: f64;
         let min: f64;
