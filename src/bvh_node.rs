@@ -647,4 +647,12 @@ impl Hitable for BvhTree {
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
         self.hitable_list.rotate_onb(quat);
     }
+
+    fn scale(&mut self, scale_value: f64) {
+        self.hitable_list.scale(scale_value);
+        self.bvh_node_list
+            .iter_mut()
+            .for_each(|bvh_node| bvh_node.qbox.scale(scale_value));
+        self.aabb_box.scale(scale_value);
+    }
 }

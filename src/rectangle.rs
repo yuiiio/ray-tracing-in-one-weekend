@@ -187,6 +187,19 @@ impl Hitable for Rect {
         let onb = Onb::build_from_w(&self.normal);
         self.onb_uv = (onb.u, onb.v);
     }
+    fn scale(&mut self, scale_value: f64) {
+        self.x0 *= scale_value;
+        self.x1 *= scale_value;
+        self.width *= scale_value;
+        self.nor_width /= scale_value;
+        self.y0 *= scale_value;
+        self.y1 *= scale_value;
+        self.height *= scale_value;
+        self.nor_height /= scale_value;
+        self.k *= scale_value;
+        self.area = self.area * scale_value * scale_value;
+        self.aabb_box.scale(scale_value);
+    }
 }
 
 #[derive(Clone)]
@@ -325,5 +338,11 @@ impl Hitable for Boxel {
         for i in 0..6 {
             self.rect[i].rotate_onb(quat);
         }
+    }
+    fn scale(&mut self, scale_value: f64) {
+        for i in 0..6 {
+            self.rect[i].scale(scale_value);
+        }
+        self.aabb_box.scale(scale_value);
     }
 }

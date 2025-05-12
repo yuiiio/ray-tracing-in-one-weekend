@@ -120,4 +120,10 @@ impl Hitable for HitableList {
             i.rotate_onb(quat);
         }
     }
+
+    fn scale(&mut self, scale_value: f64) {
+        self.hitable_list
+            .iter_mut()
+            .for_each(|hitable| hitable.scale(scale_value));
+    }
 }

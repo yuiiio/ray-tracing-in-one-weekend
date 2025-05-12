@@ -182,4 +182,18 @@ impl Hitable for Triangle {
         let onb = Onb::build_from_w(&self.n_norm);
         self.onb_uv = (onb.u, onb.v);
     }
+
+    fn scale(&mut self, scale_value: f64) {
+        self.v0 = vec3_mul_b(&self.v0, scale_value);
+        self.v1 = vec3_mul_b(&self.v1, scale_value);
+        self.v2 = vec3_mul_b(&self.v2, scale_value);
+
+        self.e1 = vec3_mul_b(&self.e1, scale_value);
+        self.e2 = vec3_mul_b(&self.e2, scale_value);
+
+        self.n_cross_e2_e1 = vec3_mul_b(&self.n_cross_e2_e1, scale_value * scale_value);
+        self.area = self.area * scale_value * scale_value;
+
+        self.aabb_box.scale(scale_value);
+    }
 }

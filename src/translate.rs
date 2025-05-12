@@ -63,6 +63,13 @@ impl Hitable for Translate {
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
         self.obj.rotate_onb(quat);
     }
+
+    fn scale(&mut self, scale_value: f64) {
+        self.obj.scale(scale_value);
+
+        //scale func is affected after translated(obj)
+        self.aabb_box.scale(scale_value);
+    }
 }
 
 #[derive(Clone)]
@@ -143,5 +150,12 @@ impl Hitable for Rotate {
 
     fn rotate_onb(&mut self, quat: &Rotation) -> () {
         self.obj.rotate_onb(quat);
+    }
+
+    fn scale(&mut self, scale_value: f64) {
+        self.obj.scale(scale_value);
+
+        //scale func is affected after translated(obj)
+        self.aabb_box.scale(scale_value);
     }
 }

@@ -1,5 +1,5 @@
 use crate::utils::{max, min};
-use crate::vec3::Vector3;
+use crate::vec3::{vec3_mul_b, Vector3};
 //use core::array;
 use core::mem::swap;
 use core::simd::cmp::SimdPartialOrd;
@@ -46,6 +46,10 @@ impl Aabb {
             t_max: tmax,
             t_min: tmin,
         })
+    }
+    pub fn scale(&mut self, scale_value: f64) {
+        self.b_min = vec3_mul_b(&self.b_min, scale_value);
+        self.b_max = vec3_mul_b(&self.b_max, scale_value);
     }
 }
 
@@ -101,6 +105,15 @@ impl QBoxes {
                 ],
             ],
         }
+    }
+    pub fn scale(&mut self, scale_value: f64) {
+        self.bboxes[0][0] = (Simd::from(self.bboxes[0][0]) * f64x4::splat(scale_value)).to_array();
+        self.bboxes[0][1] = (Simd::from(self.bboxes[0][1]) * f64x4::splat(scale_value)).to_array();
+        self.bboxes[0][2] = (Simd::from(self.bboxes[0][2]) * f64x4::splat(scale_value)).to_array();
+
+        self.bboxes[1][0] = (Simd::from(self.bboxes[1][0]) * f64x4::splat(scale_value)).to_array();
+        self.bboxes[1][1] = (Simd::from(self.bboxes[1][1]) * f64x4::splat(scale_value)).to_array();
+        self.bboxes[1][2] = (Simd::from(self.bboxes[1][2]) * f64x4::splat(scale_value)).to_array();
     }
 }
 

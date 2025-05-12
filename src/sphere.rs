@@ -168,6 +168,12 @@ impl Hitable for Sphere {
     }
 
     fn rotate_onb(&mut self, _quat: &Rotation) -> () {}
+    fn scale(&mut self, scale_value: f64) {
+        self.center = vec3_mul_b(&self.center, scale_value);
+        self.nor_radius /= scale_value;
+        self.radius_sq = self.radius_sq * scale_value * scale_value;
+        self.aabb_box.scale(scale_value);
+    }
 }
 
 fn random_to_sphere(radius_sq: f64, distabce_squared: f64, nor_dist: f64) -> Vector3<f64> {
