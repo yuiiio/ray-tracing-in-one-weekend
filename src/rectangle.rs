@@ -103,15 +103,15 @@ impl Rect {
 // Rect hit is valid even ray direction.
 // Rect != actual Surface.
 
-impl Rect {
-    fn rect_hit(&self, r: &Ray, r_dir_div: &[f64; 3], t_min: f64, t_max: f64) -> Option<HitRecord> {
+impl Hitable for Rect {
+    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
         let (xi, yi, zi): (usize, usize, usize) = match self.axis {
             AxisType::Kxy => (0, 1, 2),
             AxisType::Kxz => (0, 2, 1),
             AxisType::Kyz => (1, 2, 0),
         };
 
-        let t = (self.k - r.origin[zi]) * r_dir_div[zi];
+        let t = (self.k - r.origin[zi]) / r.direction[zi];
         if t < t_min || t > t_max {
             return None;
         }
@@ -144,27 +144,17 @@ impl Rect {
         })
     }
 
-    fn rect_pdf_value(&self, ray: &Ray, r_dir_div: &[f64; 3]) -> f64 {
-        if let Some(rec) = self.rect_hit(ray, r_dir_div, 0.00001, 10000.0) {
-            let distance_squared = rec.t.powi(2);
-            let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-            return distance_squared / (cosine * self.area);
-        }
-        0.0
-    }
-}
-
-impl Hitable for Rect {
-    fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        self.rect_hit(r, &r.get_inv_dir(), t_min, t_max)
-    }
-
     fn bounding_box(&self) -> &Aabb {
         &self.aabb_box
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        self.rect_pdf_value(ray, &ray.get_inv_dir())
+        if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
+            let distance_squared = rec.t.powi(2);
+            let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
+            return distance_squared / (cosine * self.area);
+        }
+        0.0
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
@@ -279,26 +269,21 @@ impl Boxel {
 impl Hitable for Boxel {
     // needs to check from out-side and inside(eg: glass) rays.
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let r_dir_div = ray.get_inv_dir();
         let mut rect_index_0 = [5, 4, 3];
         let mut rect_index_1 = [2, 1, 0];
 
         for i in 0..3 {
-            if r_dir_div[i].is_sign_negative() {
+            if ray.direction[i].is_sign_negative() {
                 core::mem::swap(&mut rect_index_0[i], &mut rect_index_1[i]);
             }
-            if let Some(hit_rec) =
-                self.rect[rect_index_0[i]].rect_hit(ray, &r_dir_div, t_min, t_max)
-            {
+            if let Some(hit_rec) = self.rect[rect_index_0[i]].hit(ray, t_min, t_max) {
                 return Some(hit_rec);
             }
         }
         // up is enough when only care out-side rays
         // down is needed for inside rays.
         for i in 0..3 {
-            if let Some(hit_rec) =
-                self.rect[rect_index_1[i]].rect_hit(ray, &r_dir_div, t_min, t_max)
-            {
+            if let Some(hit_rec) = self.rect[rect_index_1[i]].hit(ray, t_min, t_max) {
                 return Some(hit_rec);
             }
         }
@@ -321,7 +306,7 @@ impl Hitable for Boxel {
             const DIV6: f64 = 1.0 / 6.0;
             let mut pdf_sum = 0.0;
             for i in 0..6 {
-                pdf_sum += self.rect[i].rect_pdf_value(ray, &r_dir_div);
+                pdf_sum += self.rect[i].pdf_value(ray);
             }
             pdf_sum * DIV6
         } else {
