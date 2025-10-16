@@ -127,17 +127,20 @@ pub fn aabb_hit_simd(
     let mut tmin = f64x4::splat(t_min);
     let mut tmax = f64x4::splat(t_max);
     for i in 0..3 {
-        let mut t0 = (Simd::from(qbox.bboxes[0][i]) - f64x4::splat(r_origin[i]))
+        let t0 = (Simd::from(qbox.bboxes[0][i]) - f64x4::splat(r_origin[i]))
             * f64x4::splat(r_dir_div[i]);
-        let mut t1 = (Simd::from(qbox.bboxes[1][i]) - f64x4::splat(r_origin[i]))
+        let t1 = (Simd::from(qbox.bboxes[1][i]) - f64x4::splat(r_origin[i]))
             * f64x4::splat(r_dir_div[i]);
+
+        let mut t0 = &t0;
+        let mut t1 = &t1;
 
         if r_dir_div[i].is_sign_negative() {
             swap(&mut t0, &mut t1);
         }
 
-        tmin = tmin.simd_max(t0);
-        tmax = tmax.simd_min(t1);
+        tmin = tmin.simd_max(*t0);
+        tmax = tmax.simd_min(*t1);
     }
 
     // save result as Mask<i64, 4> for each sign
