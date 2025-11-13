@@ -4,13 +4,12 @@ use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::{vec3_a_abs_mul_f64, vec3_add, vec3_mul_b, vec3_sub, Vector3};
 
-pub struct HitRecord<'a> {
+pub struct HitRecord {
     pub t: f64,
     pub uv: (f64, f64),
     pub p: Vector3<f64>,
     pub normal: Vector3<f64>,
-    pub mat_ptr: &'a MaterialHandle,
-    pub onb_uv: Option<&'a (Vector3<f64>, Vector3<f64>)>,
+    pub mat_ptr: MaterialHandle,
 }
 
 pub trait Hitable: HitableClone {
@@ -53,7 +52,6 @@ pub trait Hitable: HitableClone {
         // should return normalized vector
         [1.0, 0.0, 0.0]
     }
-    fn rotate_onb(&mut self, quat: &Rotation); // rotate onb and normal vec used at build time
     fn scale(&mut self, scale_value: f64);
     fn set_material(&mut self, mat_ptr: MaterialHandle);
 }

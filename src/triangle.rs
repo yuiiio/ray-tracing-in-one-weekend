@@ -3,7 +3,6 @@ use rand::prelude::*;
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
-use crate::onb::Onb;
 use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::utils::{max, min};
@@ -17,10 +16,7 @@ pub struct Triangle {
     v1: Vector3<f64>,
     v2: Vector3<f64>,
     mat_ptr: MaterialHandle,
-    n_norm: Vector3<f64>,
-    area: f64,
     aabb_box: Aabb,
-    onb_uv: (Vector3<f64>, Vector3<f64>),
 }
 
 impl Triangle {
@@ -30,11 +26,6 @@ impl Triangle {
         v2: Vector3<f64>,
         mat_ptr: MaterialHandle,
     ) -> Self {
-        let e1 = vec3_sub(&v1, &v0);
-        let e2 = vec3_sub(&v2, &v0);
-        let n_cross_e2_e1 = cross(&e2, &e1);
-        let area: f64 = vec3_length_f64(&n_cross_e2_e1) / 2.0;
-
         let b_min = [
             min(min(v0[0], v1[0]), v2[0]),
             min(min(v0[1], v1[1]), v2[1]),
@@ -47,17 +38,12 @@ impl Triangle {
         ];
         let aabb_box = Aabb { b_min, b_max };
 
-        let n_norm = vec3_unit_vector_f64(&n_cross_e2_e1);
-        let onb = Onb::build_from_w(&n_norm);
         Triangle {
             v0,
             v1,
             v2,
             mat_ptr,
-            n_norm,
-            area,
             aabb_box,
-            onb_uv: (onb.u, onb.v),
         }
     }
 }
@@ -107,13 +93,13 @@ impl Hitable for Triangle {
         }
 
         let p: Vector3<f64> = ray.point_at_parameter(t);
+        let n_norm = vec3_unit_vector_f64(&n_cross_e2_e1);
         Some(HitRecord {
             t,
             uv: (u, v),
             p,
-            normal: self.n_norm,
-            mat_ptr: &self.mat_ptr,
-            onb_uv: Some(&self.onb_uv),
+            normal: n_norm,
+            mat_ptr: self.mat_ptr.clone(),
         })
     }
 
@@ -142,7 +128,11 @@ impl Hitable for Triangle {
         if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
             let distance_squared = rec.t.powi(2);
             let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-            return distance_squared / (cosine * self.area);
+            let e1 = vec3_sub(&self.v1, &self.v0);
+            let e2 = vec3_sub(&self.v2, &self.v0);
+            let n_cross_e2_e1 = cross(&e2, &e1);
+            let area: f64 = vec3_length_f64(&n_cross_e2_e1) / 2.0;
+            return distance_squared / (cosine * area);
         }
         0.0
     }
@@ -174,18 +164,10 @@ impl Hitable for Triangle {
         vec3_unit_vector_f64(&vec3_sub(&random_point, o)) // random should return normalized vec
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        self.n_norm = quat.rotate(&self.n_norm);
-        let onb = Onb::build_from_w(&self.n_norm);
-        self.onb_uv = (onb.u, onb.v);
-    }
-
     fn scale(&mut self, scale_value: f64) {
         self.v0 = vec3_mul_b(&self.v0, scale_value);
         self.v1 = vec3_mul_b(&self.v1, scale_value);
         self.v2 = vec3_mul_b(&self.v2, scale_value);
-
-        self.area = self.area * scale_value * scale_value;
 
         self.aabb_box.scale(scale_value);
     }

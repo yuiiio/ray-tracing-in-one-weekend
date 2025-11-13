@@ -39,7 +39,6 @@ impl Hitable for Translate {
                 p: vec3_add(&hit.p, &self.offset),
                 normal: hit.normal,
                 mat_ptr: hit.mat_ptr,
-                onb_uv: hit.onb_uv,
             }),
             None => None,
         }
@@ -59,10 +58,6 @@ impl Hitable for Translate {
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let on = vec3_sub(o, &self.offset);
         self.obj.random(&on)
-    }
-
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        self.obj.rotate_onb(quat);
     }
 
     fn scale(&mut self, scale_value: f64) {
@@ -85,14 +80,12 @@ pub struct Rotate {
 }
 
 impl Rotate {
-    pub fn new(mut obj: Box<dyn Hitable + Send + Sync>, quat: Rotation) -> Self {
+    pub fn new(obj: Box<dyn Hitable + Send + Sync>, quat: Rotation) -> Self {
         let revq = quat.get_revq();
 
         // let found boundingbox to enough include rotate-obj
 
         let aabb_box = obj.bounding_box_with_rotate(&quat);
-
-        obj.rotate_onb(&quat); // rotate obj's normal and onb
 
         Rotate {
             obj,
@@ -110,18 +103,13 @@ impl Hitable for Rotate {
         let revq_r = Ray { origin, direction };
         match self.obj.hit(&revq_r, t_min, t_max) {
             Some(hit) => {
-                let normal = match hit.onb_uv {
-                    Some(_onb_uv) => hit.normal, // norm and onb is static(eg. rect, triangle)
-                    // already rotated
-                    None => self.quat.rotate(&hit.normal), // norm and onb is not static(eg. sphere)
-                };
+                let normal = self.quat.rotate(&hit.normal);
                 Some(HitRecord {
                     t: hit.t,
                     uv: hit.uv,
                     p: input_ray.point_at_parameter(hit.t), //self.quat.rotate(&hit.p),
                     normal,
                     mat_ptr: hit.mat_ptr,
-                    onb_uv: hit.onb_uv,
                 })
             }
             None => None,
@@ -150,10 +138,6 @@ impl Hitable for Rotate {
         let ro = self.revq.rotate(o);
         let rv = self.obj.random(&ro);
         self.quat.rotate(&rv)
-    }
-
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        self.obj.rotate_onb(quat);
     }
 
     fn scale(&mut self, scale_value: f64) {

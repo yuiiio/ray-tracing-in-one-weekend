@@ -98,8 +98,7 @@ impl Hitable for Sphere {
                         uv,
                         p: point,
                         normal: nnormal,
-                        mat_ptr: &self.mat_ptr,
-                        onb_uv: None, // normal is not static so have calc cost
+                        mat_ptr: self.mat_ptr.clone(),
                     });
                 }
             } else {
@@ -120,8 +119,7 @@ impl Hitable for Sphere {
                     uv,
                     p: point,
                     normal: nnormal,
-                    mat_ptr: &self.mat_ptr,
-                    onb_uv: None,
+                    mat_ptr: self.mat_ptr.clone(),
                 });
             }
         }
@@ -167,7 +165,6 @@ impl Hitable for Sphere {
         ))
     }
 
-    fn rotate_onb(&mut self, _quat: &Rotation) {}
     fn scale(&mut self, scale_value: f64) {
         self.center = vec3_mul_b(&self.center, scale_value);
         self.nor_radius /= scale_value;

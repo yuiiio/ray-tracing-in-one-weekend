@@ -116,12 +116,6 @@ impl Hitable for HitableList {
         self.hitable_list[index as usize].random(o)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        for i in self.iter_mut() {
-            i.rotate_onb(quat);
-        }
-    }
-
     fn scale(&mut self, scale_value: f64) {
         self.hitable_list
             .iter_mut()

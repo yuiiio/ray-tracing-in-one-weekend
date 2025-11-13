@@ -15,7 +15,6 @@ pub struct BvhTree {
     bvh_node_list: Vec<BvhNode>,
     aabb_box: Aabb,
     last_node_num: usize,
-    nor_hitable_list_num: f64,
     max_stack_size: usize,
 }
 
@@ -530,14 +529,12 @@ impl BvhTree {
         );
         //println!("bvh_tree_depth: {}, last_node_num: {}", bvh_tree_depth, last_node_num);
 
-        let nor_hitable_list_num = 1.0 / (hitable_list_len as f64);
 
         BvhTree {
             hitable_list,
             bvh_node_list,
             aabb_box: bvh_aabb,
             last_node_num,
-            nor_hitable_list_num,
             max_stack_size,
         }
     }
@@ -631,7 +628,7 @@ impl Hitable for BvhTree {
             for i in 0..hitable_list_len {
                 pdf_sum += self.hitable_list[i].pdf_value(ray);
             }
-            pdf_sum * self.nor_hitable_list_num
+            pdf_sum / (self.hitable_list.len() as f64)
         } else {
             0.0
         }
@@ -643,10 +640,6 @@ impl Hitable for BvhTree {
         let rand: f64 = rng.random();
         let rand_handle = (rand * hitable_list_len as f64) as usize;
         self.hitable_list[rand_handle].random(o)
-    }
-
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        self.hitable_list.rotate_onb(quat);
     }
 
     fn scale(&mut self, scale_value: f64) {

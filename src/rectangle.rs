@@ -3,8 +3,6 @@ use rand::prelude::*;
 use crate::aabb::Aabb;
 use crate::hitable::{HitRecord, Hitable};
 use crate::material::MaterialHandle;
-use crate::onb::Onb;
-use crate::quotation::Rotation;
 use crate::ray::Ray;
 use crate::vec3::{vec3_dot, vec3_mul_b, vec3_sub, vec3_unit_vector_f64, Vector3};
 
@@ -19,20 +17,14 @@ pub enum AxisType {
 pub struct Rect {
     x0: f64,
     x1: f64,
-    width: f64,
-    nor_width: f64,
     y0: f64,
     y1: f64,
-    height: f64,
-    nor_height: f64,
     k: f64,
     axis: AxisType,
     mat_ptr: MaterialHandle,
-    area: f64,
     aabb_box: Aabb,
     needs_uv: bool,
     normal: Vector3<f64>,
-    onb_uv: (Vector3<f64>, Vector3<f64>),
 }
 
 impl Rect {
@@ -46,7 +38,6 @@ impl Rect {
         mat_ptr: MaterialHandle,
         flip_normal: bool,
     ) -> Self {
-        let area: f64 = (x1 - x0) * (y1 - y0);
         let (aabb_box, mut normal) = match axis {
             AxisType::Kxy => (
                 Aabb {
@@ -73,29 +64,18 @@ impl Rect {
         if flip_normal == true {
             normal = vec3_mul_b(&normal, -1.0);
         }
-        let width = x1 - x0;
-        let height = y1 - y0;
-        let nor_width = 1.0 / (x1 - x0);
-        let nor_height = 1.0 / (y1 - y0);
         let needs_uv = mat_ptr.needs_uv;
-        let onb = Onb::build_from_w(&normal);
         Rect {
             x0,
             x1,
-            width,
-            nor_width,
             y0,
             y1,
-            height,
-            nor_height,
             k,
             axis,
             mat_ptr,
-            area,
             aabb_box,
             needs_uv,
             normal,
-            onb_uv: (onb.u, onb.v),
         }
     }
 }
@@ -125,9 +105,11 @@ impl Hitable for Rect {
         }
 
         let (u, v) = if self.needs_uv {
+            let width = self.x1 - self.x0;
+            let height = self.y1 - self.y0;
             (
-                (x - self.x0) * self.nor_width,
-                (y - self.y0) * self.nor_height,
+                (x - self.x0) / width,
+                (y - self.y0) / height,
             )
         } else {
             (0.0, 0.0)
@@ -139,8 +121,7 @@ impl Hitable for Rect {
             uv: (u, v),
             p,
             normal: self.normal,
-            mat_ptr: &self.mat_ptr,
-            onb_uv: Some(&self.onb_uv),
+            mat_ptr: self.mat_ptr.clone(),
         })
     }
 
@@ -152,7 +133,8 @@ impl Hitable for Rect {
         if let Some(rec) = self.hit(ray, 0.00001, 10000.0) {
             let distance_squared = rec.t.powi(2);
             let cosine = vec3_dot(&ray.direction, &rec.normal).abs();
-            return distance_squared / (cosine * self.area);
+            let area: f64 = (self.x1 - self.x0) * (self.y1 - self.y0);
+            return distance_squared / (cosine * area);
         }
         0.0
     }
@@ -161,43 +143,35 @@ impl Hitable for Rect {
         let mut rng = rand::rng();
         let rng_x: f64 = rng.random();
         let rng_y: f64 = rng.random();
+        let width = self.x1 - self.x0;
+        let height = self.y1 - self.y0;
         let random_point = match self.axis {
             AxisType::Kxy => [
-                self.x0 + rng_x * self.width,
-                self.y0 + rng_y * self.height,
+                self.x0 + rng_x * width,
+                self.y0 + rng_y * height,
                 self.k,
             ],
             AxisType::Kxz => [
-                self.x0 + rng_x * self.width,
+                self.x0 + rng_x * width,
                 self.k,
-                self.y0 + rng_y * self.height,
+                self.y0 + rng_y * height,
             ],
             AxisType::Kyz => [
                 self.k,
-                self.x0 + rng_x * self.width,
-                self.y0 + rng_y * self.height,
+                self.x0 + rng_x * width,
+                self.y0 + rng_y * height,
             ],
         };
         //TODO: need all rewrite
         vec3_unit_vector_f64(&vec3_sub(&random_point, o))
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        self.normal = quat.rotate(&self.normal);
-        let onb = Onb::build_from_w(&self.normal);
-        self.onb_uv = (onb.u, onb.v);
-    }
     fn scale(&mut self, scale_value: f64) {
         self.x0 *= scale_value;
         self.x1 *= scale_value;
-        self.width *= scale_value;
-        self.nor_width /= scale_value;
         self.y0 *= scale_value;
         self.y1 *= scale_value;
-        self.height *= scale_value;
-        self.nor_height /= scale_value;
         self.k *= scale_value;
-        self.area = self.area * scale_value * scale_value;
         self.aabb_box.scale(scale_value);
     }
 
@@ -338,11 +312,6 @@ impl Hitable for Boxel {
         self.rect[random_handle].random(o)
     }
 
-    fn rotate_onb(&mut self, quat: &Rotation) {
-        for i in 0..6 {
-            self.rect[i].rotate_onb(quat);
-        }
-    }
     fn scale(&mut self, scale_value: f64) {
         for i in 0..6 {
             self.rect[i].scale(scale_value);
