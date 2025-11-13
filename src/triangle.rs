@@ -17,9 +17,6 @@ pub struct Triangle {
     v1: Vector3<f64>,
     v2: Vector3<f64>,
     mat_ptr: MaterialHandle,
-    e1: Vector3<f64>,
-    e2: Vector3<f64>,
-    n_cross_e2_e1: Vector3<f64>, // cross(e2, e1) so size is not normal
     n_norm: Vector3<f64>,
     area: f64,
     aabb_box: Aabb,
@@ -57,9 +54,6 @@ impl Triangle {
             v1,
             v2,
             mat_ptr,
-            e1,
-            e2,
-            n_cross_e2_e1,
             n_norm,
             area,
             aabb_box,
@@ -85,7 +79,10 @@ impl Triangle {
 //
 impl Hitable for Triangle {
     fn hit(&self, ray: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord> {
-        let lal = vec3_dot(&ray.direction, &self.n_cross_e2_e1);
+        let e1 = vec3_sub(&self.v1, &self.v0);
+        let e2 = vec3_sub(&self.v2, &self.v0);
+        let n_cross_e2_e1 = cross(&e2, &e1);
+        let lal = vec3_dot(&ray.direction, &n_cross_e2_e1);
         if lal == 0.0 {
             return None;
         }
@@ -94,17 +91,17 @@ impl Hitable for Triangle {
         let v0_to_origin_dir = vec3_sub(&ray.origin, &self.v0);
         let m = cross(&ray.direction, &v0_to_origin_dir);
 
-        let v = nor_lal * vec3_dot(&self.e1, &m);
+        let v = nor_lal * vec3_dot(&e1, &m);
 
         let nor_lal_minus = -1.0 * nor_lal;
 
-        let u = nor_lal_minus * vec3_dot(&self.e2, &m);
+        let u = nor_lal_minus * vec3_dot(&e2, &m);
 
         if u + v > 1.0 || v.is_sign_negative() || u.is_sign_negative() {
             return None;
         }
 
-        let t = nor_lal_minus * vec3_dot(&v0_to_origin_dir, &self.n_cross_e2_e1);
+        let t = nor_lal_minus * vec3_dot(&v0_to_origin_dir, &n_cross_e2_e1);
         if t < t_min || t > t_max {
             return None;
         }
@@ -188,10 +185,6 @@ impl Hitable for Triangle {
         self.v1 = vec3_mul_b(&self.v1, scale_value);
         self.v2 = vec3_mul_b(&self.v2, scale_value);
 
-        self.e1 = vec3_mul_b(&self.e1, scale_value);
-        self.e2 = vec3_mul_b(&self.e2, scale_value);
-
-        self.n_cross_e2_e1 = vec3_mul_b(&self.n_cross_e2_e1, scale_value * scale_value);
         self.area = self.area * scale_value * scale_value;
 
         self.aabb_box.scale(scale_value);
