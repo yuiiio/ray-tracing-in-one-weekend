@@ -13,14 +13,12 @@ use crate::vec3::Vector3;
 pub struct BvhTree {
     hitable_list: HitableList,
     bvh_node_list: Vec<BvhNode>,
-    aabb_box: Aabb,
     last_node_num: usize,
     max_stack_size: usize,
 }
 
 #[derive(Clone)]
 pub struct BvhNode {
-    //bvh_node_box: Aabb,
     qbox: QBoxes,
     child: [usize; 4],
     this_node_has_hitable: bool,
@@ -521,7 +519,7 @@ impl BvhTree {
 
         let bvh_tree_depth: usize = (hitable_list_len.next_power_of_two() * 2).ilog(4) as usize;
         let max_stack_size = bvh_tree_depth * (4 - 1);
-        let (last_node_num, bvh_aabb) = build_bvh(
+        let (last_node_num, _bvh_aabb) = build_bvh(
             &bb_list,
             &handle,
             &Axis::X,
@@ -534,7 +532,6 @@ impl BvhTree {
         BvhTree {
             hitable_list,
             bvh_node_list,
-            aabb_box: bvh_aabb,
             last_node_num,
             max_stack_size,
         }
@@ -610,7 +607,7 @@ impl Hitable for BvhTree {
     }
 
     fn bounding_box(&self) -> Aabb {
-        self.aabb_box.clone()
+        self.hitable_list.bounding_box()
     }
 
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
@@ -620,19 +617,7 @@ impl Hitable for BvhTree {
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) =
-            self.aabb_box
-                .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
-        {
-            let hitable_list_len = self.hitable_list.len();
-            let mut pdf_sum: f64 = 0.0;
-            for i in 0..hitable_list_len {
-                pdf_sum += self.hitable_list[i].pdf_value(ray);
-            }
-            pdf_sum / (self.hitable_list.len() as f64)
-        } else {
-            0.0
-        }
+        self.hitable_list.pdf_value(ray)
     }
 
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
@@ -648,7 +633,6 @@ impl Hitable for BvhTree {
         self.bvh_node_list
             .iter_mut()
             .for_each(|bvh_node| bvh_node.qbox.scale(scale_value));
-        self.aabb_box.scale(scale_value);
     }
     fn set_material(&mut self, mat_ptr: MaterialHandle) {
         self.hitable_list.set_material(mat_ptr);
