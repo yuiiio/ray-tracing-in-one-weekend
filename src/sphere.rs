@@ -15,19 +15,16 @@ use crate::vec3::{
 pub struct Sphere {
     center: Vector3<f64>,
     radius: f64,
-    radius_sq: f64,  // radius^2
     mat_ptr: MaterialHandle,
     needs_uv: bool,
 }
 
 impl Sphere {
     pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Self {
-        let radius_sq = radius * radius;
         let needs_uv = mat_ptr.needs_uv;
         Sphere {
             center,
             radius,
-            radius_sq,
             mat_ptr,
             needs_uv,
         }
@@ -37,7 +34,7 @@ impl Sphere {
         let oc = vec3_sub(&r.origin, &self.center);
         let b = vec3_dot(&r.direction, &oc); // -oc~0~oc
         let oc_sq = vec3_squared_length(&oc);
-        let c = oc_sq - self.radius_sq; // oc^2 - r^2
+        let c = oc_sq - (self.radius * self.radius); // oc^2 - r^2
         let descriminant = b.powi(2) - c; // (0~oc)^2 - (oc^2 - r^2)
         if descriminant.is_sign_positive() {
             let desc_sqrt = descriminant.sqrt();
@@ -70,7 +67,7 @@ impl Hitable for Sphere {
         let rec: Option<HitRecord> = None;
         let oc = vec3_sub(&r.origin, &self.center);
         let b = vec3_dot(&r.direction, &oc); // -oc~0~oc
-        let c = vec3_squared_length(&oc) - self.radius_sq; // oc^2 - r^2
+        let c = vec3_squared_length(&oc) - (self.radius * self.radius); // oc^2 - r^2
         let descriminant = b.powi(2) - c; // (0~oc)^2 - (oc^2 - r^2)
         if descriminant.is_sign_positive() {
             let desc_sqrt = descriminant.sqrt();
@@ -151,7 +148,7 @@ impl Hitable for Sphere {
         let uvw = Onb::build_from_w(&norm_co);
 
         uvw.local(&random_to_sphere(
-            self.radius_sq,
+                self.radius * self.radius,
             distabce_squared,
             nor_dist,
         ))
@@ -160,7 +157,6 @@ impl Hitable for Sphere {
     fn scale(&mut self, scale_value: f64) {
         self.center = vec3_mul_b(&self.center, scale_value);
         self.radius *= scale_value;
-        self.radius_sq = self.radius_sq * scale_value * scale_value;
     }
     fn set_material(&mut self, mat_ptr: MaterialHandle) {
         self.mat_ptr = mat_ptr;
