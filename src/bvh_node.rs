@@ -133,7 +133,7 @@ enum Axis {
 }
 
 fn split_heuristic<'a>(
-    hitable_list: &HitableList,
+    bb_list: &Vec<Aabb>,
     handle: &'a [usize],
     handle_2: &'a mut [usize],
     handle_3: &'a mut [usize],
@@ -163,12 +163,12 @@ fn split_heuristic<'a>(
         }
     };
 
-    let x_max: f64 = hitable_list[handle_x[handle_size - 1]].bounding_box().b_max[0]
-        - hitable_list[handle_x[0]].bounding_box().b_min[0];
-    let y_max: f64 = hitable_list[handle_y[handle_size - 1]].bounding_box().b_max[1]
-        - hitable_list[handle_y[0]].bounding_box().b_min[1];
-    let z_max: f64 = hitable_list[handle_z[handle_size - 1]].bounding_box().b_max[2]
-        - hitable_list[handle_z[0]].bounding_box().b_min[2];
+    let x_max: f64 = bb_list[handle_x[handle_size - 1]].b_max[0]
+        - bb_list[handle_x[0]].b_min[0];
+    let y_max: f64 = bb_list[handle_y[handle_size - 1]].b_max[1]
+        - bb_list[handle_y[0]].b_min[1];
+    let z_max: f64 = bb_list[handle_z[handle_size - 1]].b_max[2]
+        - bb_list[handle_z[0]].b_min[2];
 
     let return_sort_axis: Axis;
     let selected_handle = if x_max < y_max {
@@ -216,7 +216,7 @@ const INVALID_AABB: Aabb = Aabb {
 // at traversal use return_rec(stack), push(node_pos) if aabb' hit(without most right node), and pop() if last_node or not aabb'hit.
 
 fn build_bvh(
-    hitable_list: &HitableList,
+    bb_list: &Vec<Aabb>,
     handle: &[usize],
     pre_sort_axis: &Axis,
     bvh_node_list: &mut Vec<BvhNode>,
@@ -227,7 +227,7 @@ fn build_bvh(
         1 => {
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
-                    hitable_list[handle[0]].bounding_box(),
+                    &bb_list[handle[0]],
                     &INVALID_AABB,
                     &INVALID_AABB,
                     &INVALID_AABB,
@@ -238,13 +238,13 @@ fn build_bvh(
             };
             let pos = bvh_node_list.len();
             bvh_node_list.push(new_node);
-            (pos, (hitable_list[handle[0]].bounding_box()).clone())
+            (pos, bb_list[handle[0]].clone())
         }
         2 => {
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
-                    hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[1]].bounding_box(),
+                    &bb_list[handle[0]],
+                    &bb_list[handle[1]],
                     &INVALID_AABB,
                     &INVALID_AABB,
                 ]),
@@ -257,17 +257,17 @@ fn build_bvh(
             (
                 pos,
                 surrounding_box(
-                    hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[1]].bounding_box(),
+                    &bb_list[handle[0]],
+                    &bb_list[handle[1]],
                 ),
             )
         }
         3 => {
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
-                    hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[1]].bounding_box(),
-                    hitable_list[handle[2]].bounding_box(),
+                    &bb_list[handle[0]],
+                    &bb_list[handle[1]],
+                    &bb_list[handle[2]],
                     &INVALID_AABB,
                 ]),
                 child: [handle[0], handle[1], handle[2], INVALID_HANDLE],
@@ -280,20 +280,20 @@ fn build_bvh(
                 pos,
                 surrounding_box(
                     &surrounding_box(
-                        hitable_list[handle[0]].bounding_box(),
-                        hitable_list[handle[1]].bounding_box(),
+                        &bb_list[handle[0]],
+                        &bb_list[handle[1]],
                     ),
-                    hitable_list[handle[2]].bounding_box(),
+                    &bb_list[handle[2]],
                 ),
             )
         }
         4 => {
             let new_node = BvhNode {
                 qbox: QBoxes::encode_from_four_aabb(&[
-                    hitable_list[handle[0]].bounding_box(),
-                    hitable_list[handle[1]].bounding_box(),
-                    hitable_list[handle[2]].bounding_box(),
-                    hitable_list[handle[3]].bounding_box(),
+                    &bb_list[handle[0]],
+                    &bb_list[handle[1]],
+                    &bb_list[handle[2]],
+                    &bb_list[handle[3]],
                 ]),
                 child: [handle[0], handle[1], handle[2], handle[3]],
                 this_node_has_hitable: true,
@@ -305,12 +305,12 @@ fn build_bvh(
                 pos,
                 surrounding_box(
                     &surrounding_box(
-                        hitable_list[handle[0]].bounding_box(),
-                        hitable_list[handle[1]].bounding_box(),
+                        &bb_list[handle[0]],
+                        &bb_list[handle[1]],
                     ),
                     &surrounding_box(
-                        hitable_list[handle[2]].bounding_box(),
-                        hitable_list[handle[3]].bounding_box(),
+                        &bb_list[handle[2]],
+                        &bb_list[handle[3]],
                     ),
                 ),
             )
@@ -319,7 +319,7 @@ fn build_bvh(
             let mut handle_2: Vec<usize> = handle.to_owned();
             let mut handle_3: Vec<usize> = handle.to_owned();
             let (handle_a, handle_b, pre_sort_axis) = split_heuristic(
-                hitable_list,
+                bb_list,
                 handle,
                 &mut handle_2,
                 &mut handle_3,
@@ -330,7 +330,7 @@ fn build_bvh(
             let (first_handle, second_handle, first_aabb, second_aabb, surrounding_box_a) =
                 if handle_a.len() <= 4 {
                     let (first_handle, first_aabb) = build_bvh(
-                        hitable_list,
+                        bb_list,
                         handle_a,
                         &pre_sort_axis,
                         bvh_node_list,
@@ -348,7 +348,7 @@ fn build_bvh(
                     let mut handle_2: Vec<usize> = handle_a.to_owned();
                     let mut handle_3: Vec<usize> = handle_a.to_owned();
                     let (handle_c, handle_d, pre_sort_axis_a) = split_heuristic(
-                        hitable_list,
+                        bb_list,
                         handle_a,
                         &mut handle_2,
                         &mut handle_3,
@@ -356,14 +356,14 @@ fn build_bvh(
                         center_list,
                     );
                     let (first_handle, first_aabb) = build_bvh(
-                        hitable_list,
+                        bb_list,
                         handle_c,
                         &pre_sort_axis_a,
                         bvh_node_list,
                         center_list,
                     );
                     let (second_handle, second_aabb) = build_bvh(
-                        hitable_list,
+                        bb_list,
                         handle_d,
                         &pre_sort_axis_a,
                         bvh_node_list,
@@ -382,7 +382,7 @@ fn build_bvh(
             let (third_handle, fourth_handle, third_aabb, fourth_aabb, surrounding_box_b) =
                 if handle_b.len() <= 4 {
                     let (third_handle, third_aabb) = build_bvh(
-                        hitable_list,
+                        bb_list,
                         handle_b,
                         &pre_sort_axis,
                         bvh_node_list,
@@ -400,7 +400,7 @@ fn build_bvh(
                     let mut handle_2: Vec<usize> = handle_b.to_owned();
                     let mut handle_3: Vec<usize> = handle_b.to_owned();
                     let (handle_e, handle_f, pre_sort_axis_b) = split_heuristic(
-                        hitable_list,
+                        bb_list,
                         handle_b,
                         &mut handle_2,
                         &mut handle_3,
@@ -409,14 +409,14 @@ fn build_bvh(
                     );
 
                     let (third_handle, third_aabb) = build_bvh(
-                        hitable_list,
+                        bb_list,
                         handle_e,
                         &pre_sort_axis_b,
                         bvh_node_list,
                         center_list,
                     );
                     let (fourth_handle, fourth_aabb) = build_bvh(
-                        hitable_list,
+                        bb_list,
                         handle_f,
                         &pre_sort_axis_b,
                         bvh_node_list,
@@ -495,15 +495,16 @@ impl BvhTree {
         }
 
         let mut aabb_center_list = Vec::with_capacity(hitable_list_len);
+        let mut bb_list = Vec::with_capacity(hitable_list_len);
         for i in 0..hitable_list_len {
-            let bounding_box_max = hitable_list[i].bounding_box().b_max;
-            let bounding_box_min = hitable_list[i].bounding_box().b_min;
+            let bounding_box = hitable_list[i].bounding_box();
             let center_point: Vector3<f64> = [
-                (bounding_box_max[0] + bounding_box_min[0]) * 0.5,
-                (bounding_box_max[1] + bounding_box_min[1]) * 0.5,
-                (bounding_box_max[2] + bounding_box_min[2]) * 0.5,
+                (bounding_box.b_max[0] + bounding_box.b_min[0]) * 0.5,
+                (bounding_box.b_max[1] + bounding_box.b_min[1]) * 0.5,
+                (bounding_box.b_max[2] + bounding_box.b_min[2]) * 0.5,
             ];
             aabb_center_list.push(center_point);
+            bb_list.push(bounding_box);
         }
 
         let mut bvh_node_list: Vec<BvhNode> = Vec::with_capacity((hitable_list_len - 1) / (4 - 1)); // qbvh min node size
@@ -521,7 +522,7 @@ impl BvhTree {
         let bvh_tree_depth: usize = (hitable_list_len.next_power_of_two() * 2).ilog(4) as usize;
         let max_stack_size = bvh_tree_depth * (4 - 1);
         let (last_node_num, bvh_aabb) = build_bvh(
-            &hitable_list,
+            &bb_list,
             &handle,
             &Axis::X,
             &mut bvh_node_list,
@@ -608,8 +609,8 @@ impl Hitable for BvhTree {
         return_rec
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        self.aabb_box.clone()
     }
 
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {

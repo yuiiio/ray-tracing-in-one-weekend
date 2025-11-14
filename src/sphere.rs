@@ -14,30 +14,21 @@ use crate::vec3::{
 #[derive(Clone)]
 pub struct Sphere {
     center: Vector3<f64>,
-    //radius: f64,
-    nor_radius: f64, // for fn hit(), pre compute
+    radius: f64,
     radius_sq: f64,  // radius^2
     mat_ptr: MaterialHandle,
-    aabb_box: Aabb,
     needs_uv: bool,
 }
 
 impl Sphere {
     pub fn new(center: Vector3<f64>, radius: f64, mat_ptr: MaterialHandle) -> Self {
-        let aabb_box = Aabb {
-            b_min: vec3_sub_b(&center, radius),
-            b_max: vec3_add_b(&center, radius),
-        };
-        let nor_radius = 1.0 / radius;
         let radius_sq = radius * radius;
         let needs_uv = mat_ptr.needs_uv;
         Sphere {
             center,
-            //radius,
-            nor_radius,
+            radius,
             radius_sq,
             mat_ptr,
-            aabb_box,
             needs_uv,
         }
     }
@@ -87,7 +78,7 @@ impl Hitable for Sphere {
             if temp < t_max {
                 if temp > t_min {
                     let point = r.point_at_parameter(temp);
-                    let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
+                    let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), 1.0 / self.radius);
                     let uv = if self.needs_uv {
                         get_sphere_uv(nnormal)
                     } else {
@@ -108,7 +99,7 @@ impl Hitable for Sphere {
             let temp = -b + desc_sqrt;
             if temp < t_max && temp > t_min {
                 let point = r.point_at_parameter(temp);
-                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), self.nor_radius);
+                let nnormal = vec3_mul_b(&vec3_sub(&point, &self.center), 1.0 / self.radius);
                 let uv = if self.needs_uv {
                     get_sphere_uv(nnormal)
                 } else {
@@ -126,27 +117,28 @@ impl Hitable for Sphere {
         rec
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        Aabb {
+            b_min: vec3_sub_b(&self.center, self.radius),
+            b_max: vec3_add_b(&self.center, self.radius),
+        }
     }
 
     fn bounding_box_with_rotate(&self, _revq: &Rotation) -> Aabb {
-        self.aabb_box.clone()
+        Aabb {
+            b_min: vec3_sub_b(&self.center, self.radius),
+            b_max: vec3_add_b(&self.center, self.radius),
+        }
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(aabb_hit) =
-            self.aabb_box
-                .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
+        if let Some((oc_sq, c)) =
+            self.only_hit_check_return_oc_sq_c(ray,  0.00001, 10000.0)
         {
-            if let Some((oc_sq, c)) =
-                self.only_hit_check_return_oc_sq_c(ray, aabb_hit.t_min, aabb_hit.t_max)
-            {
-                let cos_theta_max: f64 = (c / oc_sq).sqrt();
-                // if cos_theta_max == 1,0 return 0.0
-                // but, never happen (radius_sq > 0.0)
-                return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
-            }
+            let cos_theta_max: f64 = (c / oc_sq).sqrt();
+            // if cos_theta_max == 1,0 return 0.0
+            // but, never happen (radius_sq > 0.0)
+            return 1.0 / (2.0 * PI * (1.0 - cos_theta_max));
         }
         0.0
     }
@@ -167,9 +159,8 @@ impl Hitable for Sphere {
 
     fn scale(&mut self, scale_value: f64) {
         self.center = vec3_mul_b(&self.center, scale_value);
-        self.nor_radius /= scale_value;
+        self.radius *= scale_value;
         self.radius_sq = self.radius_sq * scale_value * scale_value;
-        self.aabb_box.scale(scale_value);
     }
     fn set_material(&mut self, mat_ptr: MaterialHandle) {
         self.mat_ptr = mat_ptr;

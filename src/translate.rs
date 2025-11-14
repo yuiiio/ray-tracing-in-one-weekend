@@ -9,19 +9,13 @@ use crate::vec3::{vec3_add, vec3_sub, Vector3};
 pub struct Translate {
     obj: Box<dyn Hitable + Send + Sync>,
     offset: Vector3<f64>,
-    aabb_box: Aabb,
 }
 
 impl Translate {
     pub fn new(obj: Box<dyn Hitable + Send + Sync>, offset: Vector3<f64>) -> Self {
-        let aabb_box = Aabb {
-            b_min: vec3_add(&obj.bounding_box().b_min, &offset),
-            b_max: vec3_add(&obj.bounding_box().b_max, &offset),
-        };
         Translate {
             obj,
             offset,
-            aabb_box,
         }
     }
 }
@@ -44,8 +38,11 @@ impl Hitable for Translate {
         }
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        Aabb {
+            b_min: vec3_add(&self.obj.bounding_box().b_min, &self.offset),
+            b_max: vec3_add(&self.obj.bounding_box().b_max, &self.offset),
+        }
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
@@ -64,7 +61,6 @@ impl Hitable for Translate {
         self.obj.scale(scale_value);
 
         //scale func is affected after translated(obj)
-        self.aabb_box.scale(scale_value);
     }
     fn set_material(&mut self, mat_ptr: MaterialHandle) {
         self.obj.set_material(mat_ptr);
@@ -76,22 +72,16 @@ pub struct Rotate {
     obj: Box<dyn Hitable + Send + Sync>,
     quat: Rotation,
     revq: Rotation,
-    aabb_box: Aabb,
 }
 
 impl Rotate {
     pub fn new(obj: Box<dyn Hitable + Send + Sync>, quat: Rotation) -> Self {
         let revq = quat.get_revq();
 
-        // let found boundingbox to enough include rotate-obj
-
-        let aabb_box = obj.bounding_box_with_rotate(&quat);
-
         Rotate {
             obj,
             quat,
             revq,
-            aabb_box,
         }
     }
 }
@@ -116,23 +106,18 @@ impl Hitable for Rotate {
         }
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        // let found boundingbox to enough include rotate-obj
+        self.obj.bounding_box_with_rotate(&self.quat)
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
-        if let Some(_aabb_hit) =
-            self.aabb_box
-                .aabb_hit(&ray.origin, &ray.get_inv_dir(), 0.00001, 10000.0)
-        {
-            let ro = self.revq.rotate(&ray.origin);
-            let rv = self.revq.rotate(&ray.direction);
-            return self.obj.pdf_value(&Ray {
-                origin: ro,
-                direction: rv,
-            });
-        }
-        0.0
+        let ro = self.revq.rotate(&ray.origin);
+        let rv = self.revq.rotate(&ray.direction);
+        return self.obj.pdf_value(&Ray {
+            origin: ro,
+            direction: rv,
+        });
     }
     fn random(&self, o: &Vector3<f64>) -> Vector3<f64> {
         let ro = self.revq.rotate(o);
@@ -144,7 +129,6 @@ impl Hitable for Rotate {
         self.obj.scale(scale_value);
 
         //scale func is affected after translated(obj)
-        self.aabb_box.scale(scale_value);
     }
     fn set_material(&mut self, mat_ptr: MaterialHandle) {
         self.obj.set_material(mat_ptr);

@@ -41,7 +41,7 @@ impl HitableList {
         self.aabb_box = if self.hitable_list.is_empty() {
             hitable.bounding_box().clone()
         } else {
-            surrounding_box(&self.aabb_box, hitable.bounding_box())
+            surrounding_box(&self.aabb_box, &hitable.bounding_box())
         };
         self.hitable_list.push(Box::new(hitable));
         self.nor_hitable_list_len = 1.0 / (self.hitable_list.len() as f64);
@@ -75,8 +75,8 @@ impl Hitable for HitableList {
         rec
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        self.aabb_box.clone()
     }
 
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {

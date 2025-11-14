@@ -16,7 +16,6 @@ pub struct Triangle {
     v1: Vector3<f64>,
     v2: Vector3<f64>,
     mat_ptr: MaterialHandle,
-    aabb_box: Aabb,
 }
 
 impl Triangle {
@@ -26,24 +25,11 @@ impl Triangle {
         v2: Vector3<f64>,
         mat_ptr: MaterialHandle,
     ) -> Self {
-        let b_min = [
-            min(min(v0[0], v1[0]), v2[0]),
-            min(min(v0[1], v1[1]), v2[1]),
-            min(min(v0[2], v1[2]), v2[2]),
-        ];
-        let b_max = [
-            max(max(v0[0], v1[0]), v2[0]),
-            max(max(v0[1], v1[1]), v2[1]),
-            max(max(v0[2], v1[2]), v2[2]),
-        ];
-        let aabb_box = Aabb { b_min, b_max };
-
         Triangle {
             v0,
             v1,
             v2,
             mat_ptr,
-            aabb_box,
         }
     }
 }
@@ -103,8 +89,19 @@ impl Hitable for Triangle {
         })
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        let b_min = [
+            min(min(self.v0[0], self.v1[0]), self.v2[0]),
+            min(min(self.v0[1], self.v1[1]), self.v2[1]),
+            min(min(self.v0[2], self.v1[2]), self.v2[2]),
+        ];
+        let b_max = [
+            max(max(self.v0[0], self.v1[0]), self.v2[0]),
+            max(max(self.v0[1], self.v1[1]), self.v2[1]),
+            max(max(self.v0[2], self.v1[2]), self.v2[2]),
+        ];
+        Aabb { b_min, b_max }
+
     }
 
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
@@ -168,8 +165,6 @@ impl Hitable for Triangle {
         self.v0 = vec3_mul_b(&self.v0, scale_value);
         self.v1 = vec3_mul_b(&self.v1, scale_value);
         self.v2 = vec3_mul_b(&self.v2, scale_value);
-
-        self.aabb_box.scale(scale_value);
     }
 
     fn set_material(&mut self, mat_ptr: MaterialHandle) {

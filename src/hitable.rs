@@ -14,7 +14,7 @@ pub struct HitRecord {
 
 pub trait Hitable: HitableClone {
     fn hit(&self, r: &Ray, t_min: f64, t_max: f64) -> Option<HitRecord>;
-    fn bounding_box(&self) -> &Aabb;
+    fn bounding_box(&self) -> Aabb;
     fn bounding_box_with_rotate(&self, quat: &Rotation) -> Aabb {
         let bbox = self.bounding_box();
         // https://zeux.io/2010/10/17/aabb-from-obb-with-component-wise-abs/

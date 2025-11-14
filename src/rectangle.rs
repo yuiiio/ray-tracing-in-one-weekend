@@ -22,7 +22,6 @@ pub struct Rect {
     k: f64,
     axis: AxisType,
     mat_ptr: MaterialHandle,
-    aabb_box: Aabb,
     needs_uv: bool,
     normal: Vector3<f64>,
 }
@@ -38,28 +37,13 @@ impl Rect {
         mat_ptr: MaterialHandle,
         flip_normal: bool,
     ) -> Self {
-        let (aabb_box, mut normal) = match axis {
-            AxisType::Kxy => (
-                Aabb {
-                    b_min: [x0, y0, k - 0.0001],
-                    b_max: [x1, y1, k + 0.0001],
-                },
+        let mut normal = match axis {
+            AxisType::Kxy => 
                 [0.0, 0.0, 1.0],
-            ),
-            AxisType::Kxz => (
-                Aabb {
-                    b_min: [x0, k - 0.0001, y0],
-                    b_max: [x1, k + 0.0001, y1],
-                },
+            AxisType::Kxz => 
                 [0.0, 1.0, 0.0],
-            ),
-            AxisType::Kyz => (
-                Aabb {
-                    b_min: [k - 0.0001, x0, y0],
-                    b_max: [k + 0.0001, x1, y1],
-                },
+            AxisType::Kyz => 
                 [1.0, 0.0, 0.0],
-            ),
         };
         if flip_normal == true {
             normal = vec3_mul_b(&normal, -1.0);
@@ -73,7 +57,6 @@ impl Rect {
             k,
             axis,
             mat_ptr,
-            aabb_box,
             needs_uv,
             normal,
         }
@@ -125,8 +108,24 @@ impl Hitable for Rect {
         })
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        match self.axis {
+            AxisType::Kxy => 
+                Aabb {
+                    b_min: [self.x0, self.y0, self.k - 0.0001],
+                    b_max: [self.x1, self.y1, self.k + 0.0001],
+                },
+            AxisType::Kxz => 
+                Aabb {
+                    b_min: [self.x0, self.k - 0.0001, self.y0],
+                    b_max: [self.x1, self.k + 0.0001, self.y1],
+                },
+            AxisType::Kyz => 
+                Aabb {
+                    b_min: [self.k - 0.0001, self.x0, self.y0],
+                    b_max: [self.k + 0.0001, self.x1, self.y1],
+                },
+        }
     }
 
     fn pdf_value(&self, ray: &Ray) -> f64 {
@@ -172,7 +171,6 @@ impl Hitable for Rect {
         self.y0 *= scale_value;
         self.y1 *= scale_value;
         self.k *= scale_value;
-        self.aabb_box.scale(scale_value);
     }
 
     fn set_material(&mut self, mat_ptr: MaterialHandle) {
@@ -282,8 +280,8 @@ impl Hitable for Boxel {
         None
     }
 
-    fn bounding_box(&self) -> &Aabb {
-        &self.aabb_box
+    fn bounding_box(&self) -> Aabb {
+        self.aabb_box.clone()
     }
 
     // not need checks from inside rays ?
