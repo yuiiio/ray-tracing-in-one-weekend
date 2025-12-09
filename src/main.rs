@@ -45,7 +45,15 @@ use texture::{ColorTexture, ImageTexture, TextureList};
 use translate::{Rotate, Translate};
 use vec3::{vec3_add, vec3_mul, vec3_mul_b, Vector3};
 
+const OUTPUT_X: usize = 1920;
+const OUTPUT_Y: usize = 1080;
+const NS: usize = 8; // x^2 / per pixel sample size;
+const NX: usize = OUTPUT_X * NS;
+const NY: usize = OUTPUT_Y * NS;
+const N_TASK: usize = 1024; // task number ( expect larger than real cpu threads )
 const MAX_DEPTH: usize = 20;
+
+const LIGHT_SOURCE_WEIGHT: f64 = 0.2;
 
 fn color(
     ray: Ray,
@@ -91,7 +99,6 @@ fn color(
                             continue;
                         }
                         Scatterd::CosinePdf => {
-                            const LIGHT_SOURCE_WEIGHT: f64 = 0.0;
                             let mut rng = rand::rng();
                             let rand: f64 = rng.random();
                             let next_ray = if rand < LIGHT_SOURCE_WEIGHT {
@@ -135,13 +142,15 @@ fn color(
                 // if not hit any obj
 
                 // sky
+                /*
                 let a = (ray.direction[1] + 1.0) * 0.5;
                 let last_emitted = vec3_add(
                     &vec3_mul_b(&[0.0, 0.0, 0.0], 1.0 - a),
                     &vec3_mul_b(&[1.0, 1.0, 1.0], a),
                 );
+                */
 
-                //let last_emitted = [0.5, 0.5, 0.5];
+                let last_emitted = [0.0, 0.0, 0.0];
                 cur_emitted = vec3_add(&cur_emitted, &vec3_mul(&last_throughput, &last_emitted));
                 return cur_emitted;
             }
@@ -154,14 +163,8 @@ fn color(
 
 fn main() {
     let now = SystemTime::now();
-    const OUTPUT_X: usize = 1920;
-    const OUTPUT_Y: usize = 1080;
-    const NS: usize = 8; // x^2 / per pixel sample size;
-    const NX: usize = OUTPUT_X * NS;
-    const NY: usize = OUTPUT_Y * NS;
 
     let imgbuf = Mutex::new(vec![[[0.0, 0.0, 0.0]; NY]; NX]);
-    const N_TASK: usize = 1024; // task number ( expect larger than real cpu threads )
     let cpu_threads: usize = thread::available_parallelism().unwrap().get();
 
     let mut obj_list = HitableList::new();
@@ -172,8 +175,8 @@ fn main() {
     //let red_texture = texture_list.add_color_texture(ColorTexture::new([0.8, 0.01, 0.2]));
     let white_texture = texture_list.add_color_texture(ColorTexture::new([0.73, 0.73, 0.73]));
     let green_texture = texture_list.add_color_texture(ColorTexture::new([0.2, 0.4, 0.01]));
-    let light_texture = texture_list.add_color_texture(ColorTexture::new([3.0, 1.0, 1.0]));
-    let light_texture_2 = texture_list.add_color_texture(ColorTexture::new([1.0, 1.0, 3.0]));
+    let light_texture = texture_list.add_color_texture(ColorTexture::new([30.0, 10.0, 10.0]));
+    let light_texture_2 = texture_list.add_color_texture(ColorTexture::new([20.0, 20.0, 20.0]));
     let magick_texture = texture_list.add_image_texture(ImageTexture::new(
         open("./texture.png").unwrap().into_rgba8(),
     ));
@@ -192,8 +195,8 @@ fn main() {
     let light_2 = material_list.add_diffuselight_mat(DiffuseLight::new(light_texture_2));
     let magick = material_list.add_lambertian_mat(Lambertian::new(magick_texture));
     let earth = material_list.add_lambertian_mat(Lambertian::new(earth_texture));
-    let glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.009, 0.006, 0.0]));
-    let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.5, [0.005, 0.03, 0.045]));
+    let glass = material_list.add_dielectric_mat(Dielectric::new(1.2, [0.005, 0.005, 0.005]));
+    let red_glass = material_list.add_dielectric_mat(Dielectric::new(1.2, [0.005, 0.02, 0.02]));
     let metal = material_list.add_metal_mat(Metal::new(0.01, metal_texture));
     let fuzzy_metal = material_list.add_metal_mat(Metal::new(0.1, fuzzy_metal_texture));
 
@@ -329,10 +332,12 @@ fn main() {
     let earth_sphere = Sphere::new([500.0, 300.0, 100.0], 60.0, earth);
     obj_list.push(earth_sphere);
 
-    let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light);
+    let light_sphere = Sphere::new([455.0, 400.0, 100.0], 50.0, light.clone());
     obj_list.push(light_sphere.clone());
-    let light_sphere_2 = Sphere::new([900.0, 100.0, 700.0], 100.0, light_2);
+    let light_sphere_2 = Sphere::new([900.0, 100.0, 700.0], 100.0, light_2.clone());
     obj_list.push(light_sphere_2.clone());
+    let light_sphere_3 = Sphere::new([-400.0, 1000.0, 1000.0], 100.0, light_2);
+    obj_list.push(light_sphere_3.clone());
 
     let pana_list = obj_loader(
         None,
@@ -371,7 +376,7 @@ fn main() {
     let lucy_list = obj_loader(
         None,
         &mut File::open("./lucy.obj").unwrap(),
-        white.clone(),
+        glass.clone(),
         0.4,
     );
 
@@ -470,6 +475,7 @@ fn main() {
     //light_list.push(roof_light);
     light_list.push(light_sphere);
     light_list.push(light_sphere_2);
+    light_list.push(light_sphere_3);
     //light_list.push(metal_box);
     //light_list.push(metal_box_2);
     light_list.push(glass_sphere);
